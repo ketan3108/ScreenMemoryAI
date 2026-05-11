@@ -15,13 +15,18 @@ public class ThumbnailQueueService
 {
     private readonly ThumbnailService _thumbnailService;
     private readonly ScreenshotRepository _repository;
+    private readonly int _maxConcurrency;
 
     public event Action<ThumbnailQueueProgress>? ProgressChanged;
 
-    public ThumbnailQueueService(ThumbnailService thumbnailService, ScreenshotRepository repository)
+    public ThumbnailQueueService(
+        ThumbnailService thumbnailService,
+        ScreenshotRepository repository,
+        int maxConcurrency = 3)
     {
         _thumbnailService = thumbnailService;
         _repository = repository;
+        _maxConcurrency = Math.Max(1, maxConcurrency);
     }
 
     public async Task GenerateMissingThumbnailsAsync(
@@ -46,12 +51,13 @@ public class ThumbnailQueueService
         var processed = 0;
         var sync = new object();
         var updatedBatch = new List<ScreenshotRecord>();
+        var dbBatch = new List<(string Id, string ThumbnailPath)>();
 
         await Parallel.ForEachAsync(
             pending,
             new ParallelOptions
             {
-                MaxDegreeOfParallelism = 2,
+                MaxDegreeOfParallelism = _maxConcurrency,
                 CancellationToken = cancellationToken
             },
             async (record, ct) =>
@@ -60,7 +66,6 @@ public class ThumbnailQueueService
                 {
                     var thumbnailPath = _thumbnailService.GenerateThumbnail(record.FilePath);
                     record.ThumbnailPath = thumbnailPath;
-                    _repository.UpdateThumbnailPath(record.Id, thumbnailPath);
                 }
                 catch
                 {
@@ -76,10 +81,14 @@ public class ThumbnailQueueService
                     if (!string.IsNullOrWhiteSpace(record.ThumbnailPath))
                     {
                         updatedBatch.Add(record);
+                        dbBatch.Add((record.Id, record.ThumbnailPath));
                     }
 
                     if (updatedBatch.Count >= 10 || processed == pending.Count)
                     {
+                        _repository.UpdateThumbnailPathsBatch(dbBatch);
+                        dbBatch.Clear();
+
                         progressToRaise = new ThumbnailQueueProgress
                         {
                             Processed = processed,

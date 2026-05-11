@@ -47,5 +47,43 @@ public class DatabaseService
         """;
 
         command.ExecuteNonQuery();
+
+        EnsureColumnExists(connection, "screenshots", "ocr_text", "TEXT");
+        EnsureColumnExists(connection, "screenshots", "ocr_status", "TEXT DEFAULT 'pending'");
+
+        using var ftsCommand = connection.CreateCommand();
+        ftsCommand.CommandText =
+        """
+        CREATE VIRTUAL TABLE IF NOT EXISTS screenshot_fts USING fts5(
+            screenshot_id UNINDEXED,
+            file_name,
+            ocr_text
+        );
+        """;
+        ftsCommand.ExecuteNonQuery();
+    }
+
+    private static void EnsureColumnExists(
+        SqliteConnection connection,
+        string tableName,
+        string columnName,
+        string columnDefinition)
+    {
+        using var check = connection.CreateCommand();
+        check.CommandText = $"PRAGMA table_info({tableName});";
+
+        using var reader = check.ExecuteReader();
+        while (reader.Read())
+        {
+            var name = reader["name"]?.ToString();
+            if (string.Equals(name, columnName, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+        }
+
+        using var alter = connection.CreateCommand();
+        alter.CommandText = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnDefinition};";
+        alter.ExecuteNonQuery();
     }
 }

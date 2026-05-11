@@ -142,6 +142,18 @@ public class FileWatcherService : IDisposable
         _recentEvents[path] = now;
         _queue.Enqueue(path);
         _queueSignal.Release();
+
+        if (_recentEvents.Count > 2000)
+        {
+            var cutoff = DateTime.UtcNow.AddMinutes(-10);
+            foreach (var kvp in _recentEvents)
+            {
+                if (kvp.Value < cutoff)
+                {
+                    _recentEvents.TryRemove(kvp.Key, out _);
+                }
+            }
+        }
     }
 
     private async Task RunWorkerAsync(CancellationToken token)

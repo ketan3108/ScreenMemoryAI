@@ -4,45 +4,43 @@
         Title="ScreenMemory AI"
         Height="760"
         Width="1200"
-        MinHeight="640"
-        MinWidth="960"
+        MinHeight="600"
+        MinWidth="920"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
         Background="#0D0F14">
 
     <Window.Resources>
 
-        <!-- ═══════════════════════════════════════
-             COLOR PALETTE
-        ═══════════════════════════════════════ -->
-        <SolidColorBrush x:Key="BgBase"            Color="#0D0F14"/>
-        <SolidColorBrush x:Key="BgSurface"         Color="#13161D"/>
-        <SolidColorBrush x:Key="BgCard"            Color="#181C25"/>
-        <SolidColorBrush x:Key="BgCardHover"       Color="#1E2330"/>
-        <SolidColorBrush x:Key="BorderSubtle"      Color="#1F2533"/>
-        <SolidColorBrush x:Key="BorderMed"         Color="#293044"/>
-        <SolidColorBrush x:Key="AccentPrimary"     Color="#6366F1"/>
-        <SolidColorBrush x:Key="AccentGlow"        Color="#818CF8"/>
-        <SolidColorBrush x:Key="AccentMuted"       Color="#1E2040"/>
-        <SolidColorBrush x:Key="TextPrimary"       Color="#F0F2F8"/>
-        <SolidColorBrush x:Key="TextSecondary"     Color="#8892A4"/>
-        <SolidColorBrush x:Key="TextMuted"         Color="#4A5568"/>
-        <SolidColorBrush x:Key="StatusGreen"       Color="#10B981"/>
-        <SolidColorBrush x:Key="TagBg"             Color="#1A2035"/>
+        <!-- ══════════════════════════════
+             PALETTE
+        ══════════════════════════════ -->
+        <SolidColorBrush x:Key="BgBase"         Color="#0D0F14"/>
+        <SolidColorBrush x:Key="BgSurface"      Color="#13161D"/>
+        <SolidColorBrush x:Key="BgCard"         Color="#181C25"/>
+        <SolidColorBrush x:Key="BorderSubtle"   Color="#1F2533"/>
+        <SolidColorBrush x:Key="BorderMed"      Color="#293044"/>
+        <SolidColorBrush x:Key="AccentPrimary"  Color="#6366F1"/>
+        <SolidColorBrush x:Key="AccentGlow"     Color="#818CF8"/>
+        <SolidColorBrush x:Key="AccentMuted"    Color="#1E2040"/>
+        <SolidColorBrush x:Key="TextPrimary"    Color="#F0F2F8"/>
+        <SolidColorBrush x:Key="TextSecondary"  Color="#8892A4"/>
+        <SolidColorBrush x:Key="TextMuted"      Color="#4A5568"/>
+        <SolidColorBrush x:Key="StatusGreen"    Color="#10B981"/>
 
-        <!-- ═══════════════════════════════════════
-             NAV BUTTON STYLE
-        ═══════════════════════════════════════ -->
+        <!-- ══════════════════════════════
+             NAV BUTTON
+        ══════════════════════════════ -->
         <Style x:Key="NavButton" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background"              Value="Transparent"/>
+            <Setter Property="BorderThickness"         Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding" Value="12,9"/>
-            <Setter Property="Margin" Value="0,1,0,0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Foreground" Value="#8892A4"/>
-            <Setter Property="FontSize" Value="13.5"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="Padding"                 Value="10,8"/>
+            <Setter Property="Margin"                  Value="0,1,0,0"/>
+            <Setter Property="Cursor"                  Value="Hand"/>
+            <Setter Property="Foreground"              Value="#8892A4"/>
+            <Setter Property="FontSize"                Value="13"/>
+            <Setter Property="FontFamily"              Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -68,25 +66,22 @@
             </Setter>
         </Style>
 
-        <!-- ═══════════════════════════════════════
-             ACTIVE NAV BUTTON (accent highlight)
-        ═══════════════════════════════════════ -->
         <Style x:Key="NavButtonActive" TargetType="Button" BasedOn="{StaticResource NavButton}">
             <Setter Property="Background" Value="#1C203A"/>
             <Setter Property="Foreground" Value="#818CF8"/>
         </Style>
 
-        <!-- ═══════════════════════════════════════
-             PRIMARY ACTION BUTTON
-        ═══════════════════════════════════════ -->
+        <!-- ══════════════════════════════
+             PRIMARY BUTTON
+        ══════════════════════════════ -->
         <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Background" Value="#6366F1"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background"    Value="#6366F1"/>
+            <Setter Property="Foreground"    Value="#FFFFFF"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontSize"      Value="13"/>
+            <Setter Property="FontWeight"    Value="SemiBold"/>
+            <Setter Property="Cursor"        Value="Hand"/>
+            <Setter Property="FontFamily"    Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -109,17 +104,17 @@
             </Setter>
         </Style>
 
-        <!-- ═══════════════════════════════════════
-             GHOST / SECONDARY BUTTON
-        ═══════════════════════════════════════ -->
+        <!-- ══════════════════════════════
+             GHOST BUTTON
+        ══════════════════════════════ -->
         <Style x:Key="GhostButton" TargetType="Button">
-            <Setter Property="Background" Value="#1A1F2E"/>
-            <Setter Property="Foreground" Value="#8892A4"/>
-            <Setter Property="BorderBrush" Value="#1F2533"/>
+            <Setter Property="Background"    Value="#1A1F2E"/>
+            <Setter Property="Foreground"    Value="#8892A4"/>
+            <Setter Property="BorderBrush"   Value="#1F2533"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontSize"      Value="12.5"/>
+            <Setter Property="Cursor"        Value="Hand"/>
+            <Setter Property="FontFamily"    Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -127,7 +122,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
+                                CornerRadius="7"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -146,17 +141,17 @@
             </Setter>
         </Style>
 
-        <!-- ═══════════════════════════════════════
-             COLLECTION PILL BUTTON
-        ═══════════════════════════════════════ -->
+        <!-- ══════════════════════════════
+             PILL BUTTON
+        ══════════════════════════════ -->
         <Style x:Key="PillButton" TargetType="Button">
-            <Setter Property="Background" Value="#181C25"/>
-            <Setter Property="Foreground" Value="#8892A4"/>
-            <Setter Property="BorderBrush" Value="#1F2533"/>
+            <Setter Property="Background"    Value="#181C25"/>
+            <Setter Property="Foreground"    Value="#8892A4"/>
+            <Setter Property="BorderBrush"   Value="#1F2533"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="FontSize" Value="12.5"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontSize"      Value="12"/>
+            <Setter Property="Cursor"        Value="Hand"/>
+            <Setter Property="FontFamily"    Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -183,19 +178,19 @@
             </Setter>
         </Style>
 
-        <!-- ═══════════════════════════════════════
-             SEARCH BOX STYLE
-        ═══════════════════════════════════════ -->
+        <!-- ══════════════════════════════
+             SEARCH BOX
+        ══════════════════════════════ -->
         <Style x:Key="SearchBoxStyle" TargetType="TextBox">
-            <Setter Property="Background" Value="#181C25"/>
-            <Setter Property="Foreground" Value="#F0F2F8"/>
-            <Setter Property="CaretBrush" Value="#6366F1"/>
-            <Setter Property="BorderBrush" Value="#1F2533"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background"           Value="#181C25"/>
+            <Setter Property="Foreground"           Value="#F0F2F8"/>
+            <Setter Property="CaretBrush"           Value="#6366F1"/>
+            <Setter Property="BorderBrush"          Value="#1F2533"/>
+            <Setter Property="BorderThickness"      Value="1"/>
+            <Setter Property="FontSize"             Value="13.5"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="44,0,16,0"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="Padding"              Value="40,0,14,0"/>
+            <Setter Property="FontFamily"           Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -203,14 +198,13 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="10">
+                                CornerRadius="9">
                             <Grid>
-                                <!-- Search icon placeholder (unicode) -->
                                 <TextBlock Text="⌕"
-                                           FontSize="18"
+                                           FontSize="17"
                                            Foreground="#4A5568"
                                            VerticalAlignment="Center"
-                                           Margin="14,0,0,0"
+                                           Margin="13,0,0,0"
                                            IsHitTestVisible="False"/>
                                 <ScrollViewer x:Name="PART_ContentHost"
                                               Margin="{TemplateBinding Padding}"
@@ -231,36 +225,11 @@
             </Setter>
         </Style>
 
-        <!-- ═══════════════════════════════════════
-             LISTBOX STYLE (no selection chrome)
-        ═══════════════════════════════════════ -->
-        <Style x:Key="CleanListBox" TargetType="ListBox">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
-            <Setter Property="ItemContainerStyle">
-                <Setter.Value>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="Padding" Value="0"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <ContentPresenter/>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- ═══════════════════════════════════════
-             SCROLLBAR STYLE — thin & minimal
-        ═══════════════════════════════════════ -->
+        <!-- ══════════════════════════════
+             SCROLLBAR — ultra-thin
+        ══════════════════════════════ -->
         <Style TargetType="ScrollBar">
-            <Setter Property="Width" Value="5"/>
+            <Setter Property="Width"      Value="4"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -274,7 +243,7 @@
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Border Background="#293044" CornerRadius="3" Margin="1"/>
+                                                <Border Background="#293044" CornerRadius="2" Margin="1"/>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -289,354 +258,289 @@
             </Setter>
         </Style>
 
+        <DataTemplate x:Key="ScreenshotCardTemplate">
+            <Border Width="192" Margin="0,0,12,12"
+                    CornerRadius="10" Cursor="Hand"
+                    MouseLeftButtonDown="ScreenshotCard_MouseLeftButtonDown">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#181C25"/>
+                        <Setter Property="BorderBrush" Value="#1F2533"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter Property="BorderBrush" Value="#6366F1"/>
+                                <Setter Property="BorderThickness" Value="1.5"/>
+                                <Setter Property="Background" Value="#1C2036"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <Border Height="118" Background="#0F1219" CornerRadius="9,9,0,0" ClipToBounds="True">
+                        <Image Source="{Binding ThumbnailPath}"
+                               Stretch="UniformToFill"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+                    <StackPanel Margin="10,8,10,10">
+                        <TextBlock Text="{Binding FileName}"
+                                   FontSize="11.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
     </Window.Resources>
 
-    <!-- ═══════════════════════════════════════════════════
-         ROOT LAYOUT  — Sidebar | Main content
-    ═══════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════
+         ROOT — Sidebar | Main | [Preview slide-in]
+    ══════════════════════════════════════════════ -->
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="228"/>
+            <ColumnDefinition Width="220"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition x:Name="PreviewColumn" Width="0"/>
         </Grid.ColumnDefinitions>
 
-        <!-- ╔══════════════════════════════╗
-             ║         SIDEBAR              ║
-             ╚══════════════════════════════╝ -->
+        <!-- ╔══════════════════╗
+             ║    SIDEBAR       ║
+             ╚══════════════════╝ -->
         <Border Grid.Column="0"
                 Background="{StaticResource BgSurface}"
                 BorderBrush="{StaticResource BorderSubtle}"
                 BorderThickness="0,0,1,0">
             <DockPanel>
 
-                <!-- App Logo / Brand -->
+                <!-- Brand -->
                 <Border DockPanel.Dock="Top"
-                        Padding="18,22,18,16"
+                        Padding="16,18,16,14"
                         BorderBrush="{StaticResource BorderSubtle}"
                         BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Horizontal">
-                        <!-- Logo glyph -->
-                        <Border Width="32" Height="32"
-                                Background="#6366F1"
-                                CornerRadius="9">
-                            <TextBlock Text="S"
-                                       FontSize="17"
-                                       FontWeight="Bold"
+                        <Border Width="30" Height="30" Background="#6366F1" CornerRadius="8">
+                            <TextBlock Text="S" FontSize="15" FontWeight="Bold"
                                        Foreground="White"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                        <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="ScreenMemory"
-                                       FontSize="13.5"
-                                       FontWeight="SemiBold"
+                                       FontSize="13" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextPrimary}"/>
-                            <TextBlock Text="AI"
-                                       FontSize="10"
+                            <TextBlock Text="AI  ·  v1.0"
+                                       FontSize="9.5"
                                        Foreground="{StaticResource AccentGlow}"
-                                       Margin="0,-1,0,0"
-                                       FontWeight="SemiBold"/>
+                                       Margin="0,-1,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
 
-                <!-- Status pill at bottom -->
+                <!-- Bottom: settings + status -->
                 <Border DockPanel.Dock="Bottom"
-                        Padding="18,14"
+                        Padding="12,12"
                         BorderBrush="{StaticResource BorderSubtle}"
                         BorderThickness="0,1,0,0">
                     <StackPanel>
-                        <!-- Settings button -->
                         <Button Content="⚙  Settings"
                                 Style="{StaticResource NavButton}"
                                 Click="Settings_Click"
-                                Margin="0,0,0,4"/>
-                        <!-- Status indicator -->
+                                Margin="0,0,0,8"/>
                         <Border Background="#0D1A13"
                                 BorderBrush="#1A3028"
                                 BorderThickness="1"
                                 CornerRadius="6"
-                                Padding="10,7">
+                                Padding="9,6">
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="7" Height="7" Fill="#10B981" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                <Ellipse Width="6" Height="6" Fill="#10B981" Margin="0,0,7,0" VerticalAlignment="Center"/>
                                 <TextBlock x:Name="StatusText"
                                            Text="Ready"
-                                           FontSize="11.5"
+                                           FontSize="11"
                                            Foreground="#4ADE80"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
                 </Border>
 
-                <!-- Nav Items -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="10,14">
+                <!-- Nav -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8,12">
                     <StackPanel>
-
-                        <!-- Section label -->
                         <TextBlock Text="WORKSPACE"
-                                   FontSize="9.5"
-                                   FontWeight="SemiBold"
+                                   FontSize="9" FontWeight="SemiBold"
                                    Foreground="{StaticResource TextMuted}"
-                                   Margin="12,4,0,8"
-                                   />
+                                   Margin="10,2,0,6"/>
 
-                        <Button Content="⌂  Home"
-                                Style="{StaticResource NavButton}"
-                                Click="Home_Click"/>
-                        <Button Content="◷  Recent"
-                                Style="{StaticResource NavButton}"
-                                Click="Recent_Click"/>
+                        <Button Content="⌂  Home"   Style="{StaticResource NavButton}" Click="Home_Click"/>
+                        <Button Content="◷  Recent" Style="{StaticResource NavButton}" Click="Recent_Click"/>
 
-                        <!-- Divider -->
-                        <Border Height="1" Background="{StaticResource BorderSubtle}" Margin="12,12"/>
+                        <Border Height="1" Background="{StaticResource BorderSubtle}" Margin="10,10"/>
 
-                        <!-- Section label -->
                         <TextBlock Text="COLLECTIONS"
-                                   FontSize="9.5"
-                                   FontWeight="SemiBold"
+                                   FontSize="9" FontWeight="SemiBold"
                                    Foreground="{StaticResource TextMuted}"
-                                   Margin="12,0,0,8"
-                                   />
+                                   Margin="10,0,0,6"/>
 
-                        <Button Content="⊞  Invoices"
-                                Style="{StaticResource NavButton}"
-                                Click="Invoices_Click"/>
-                        <Button Content="⚠  Errors"
-                                Style="{StaticResource NavButton}"
-                                Click="Errors_Click"/>
-                        <Button Content="&lt;/&gt;  Code Snippets"
-                                Style="{StaticResource NavButton}"
-                                Click="CodeSnippets_Click"/>
-                        <Button Content="◎  Conversations"
-                                Style="{StaticResource NavButton}"
-                                Click="Conversations_Click"/>
+                        <Button Content="⊞  Invoices"     Style="{StaticResource NavButton}" Click="Invoices_Click"/>
+                        <Button Content="⚠  Errors"        Style="{StaticResource NavButton}" Click="Errors_Click"/>
+                        <Button Content="&lt;/&gt;  Code"  Style="{StaticResource NavButton}" Click="CodeSnippets_Click"/>
+                        <Button Content="◎  Conversations" Style="{StaticResource NavButton}" Click="Conversations_Click"/>
 
-                        <!-- Divider -->
-                        <Border Height="1" Background="{StaticResource BorderSubtle}" Margin="12,12"/>
+                        <Border Height="1" Background="{StaticResource BorderSubtle}" Margin="10,10"/>
 
-                        <Button Content="♡  Favorites"
-                                Style="{StaticResource NavButton}"
-                                Click="Favorites_Click"/>
-
+                        <Button Content="♡  Favorites" Style="{StaticResource NavButton}" Click="Favorites_Click"/>
                     </StackPanel>
                 </ScrollViewer>
             </DockPanel>
         </Border>
 
-        <!-- ╔══════════════════════════════════════════╗
-             ║              MAIN CONTENT                ║
-             ╚══════════════════════════════════════════╝ -->
+        <!-- ╔══════════════════════════════╗
+             ║         MAIN CONTENT         ║
+             ╚══════════════════════════════╝ -->
         <DockPanel Grid.Column="1">
 
-            <!-- ── TOP BAR ── -->
+            <!-- TOP BAR -->
             <Border DockPanel.Dock="Top"
                     Background="{StaticResource BgSurface}"
                     BorderBrush="{StaticResource BorderSubtle}"
                     BorderThickness="0,0,0,1"
-                    Padding="24,14">
+                    Padding="20,11">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Search field -->
                     <TextBox x:Name="SearchBox"
                              Grid.Column="0"
-                             Height="42"
+                             Height="38"
                              Style="{StaticResource SearchBoxStyle}"
                              TextChanged="SearchBox_TextChanged"
-                             ToolTip="Search screenshots — try: Stripe receipt, terminal error, invoice last week"/>
+                             ToolTip="Try: Stripe receipt, terminal error, invoice"/>
 
-                    <!-- Action buttons -->
-                    <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
-                                Margin="12,0,0,0">
-                        <Button Content="Index Now"
-                                Style="{StaticResource PrimaryButton}"
-                                Width="110"
-                                Height="42"
-                                Padding="0"
-                                Click="IndexNow_Click"/>
-                    </StackPanel>
+                    <Button Content="Index Now"
+                            Grid.Column="1"
+                            Style="{StaticResource PrimaryButton}"
+                            Width="106" Height="38"
+                            Padding="0"
+                            Margin="10,0,0,0"
+                            Click="IndexNow_Click"/>
                 </Grid>
             </Border>
 
-            <!-- ── SCROLL CONTENT ── -->
+            <!-- CONTENT AREA -->
             <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          Padding="28,28,28,28"
+                          Padding="24,22,20,24"
                           Background="{StaticResource BgBase}">
                 <Grid>
 
-                    <!-- ════════════════════════════════
+                    <!-- ══════════════════════════
                          HOME DASHBOARD
-                    ════════════════════════════════ -->
+                    ══════════════════════════ -->
                     <StackPanel x:Name="HomeDashboardPanel">
 
                         <!-- Page heading -->
-                        <StackPanel Margin="0,0,0,28">
-                            <TextBlock Text="What are you looking for?"
-                                       FontSize="26"
-                                       FontWeight="SemiBold"
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="Your Screenshot Memory"
+                                       FontSize="21" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextPrimary}"/>
-                            <TextBlock Text="Search across every indexed screenshot. Hint: try &quot;Stripe receipt&quot; or &quot;terminal error&quot;."
-                                       FontSize="13.5"
+                            <TextBlock Text="Search, browse, and rediscover everything you've captured."
+                                       FontSize="12.5"
                                        Foreground="{StaticResource TextSecondary}"
-                                       Margin="0,6,0,0"/>
+                                       Margin="0,4,0,0"/>
                         </StackPanel>
 
-                        <!-- ── STATS ROW ── -->
-                        <Grid Margin="0,0,0,28">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="16"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="16"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <!-- ── COMPACT STAT STRIP ── -->
+                        <Border Background="{StaticResource BgCard}"
+                                BorderBrush="{StaticResource BorderSubtle}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="0"
+                                Margin="0,0,0,22">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="1"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="1"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                            <!-- Card: Imported -->
-                            <Border Grid.Column="0"
-                                    Background="{StaticResource BgCard}"
-                                    BorderBrush="{StaticResource BorderSubtle}"
-                                    BorderThickness="1"
-                                    CornerRadius="12"
-                                    Padding="20,18">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="8"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="6"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <!-- Accent dot -->
-                                    <Ellipse Grid.Row="0" Width="8" Height="8"
-                                             Fill="#6366F1" HorizontalAlignment="Left"/>
-                                    <TextBlock x:Name="ImportedCountText"
-                                               Grid.Row="2"
-                                               Text="0"
-                                               FontSize="36"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimary}"/>
-                                    <TextBlock Grid.Row="4"
-                                               Text="Screenshots Imported"
-                                               FontSize="12"
-                                               Foreground="{StaticResource TextMuted}"/>
-                                </Grid>
-                            </Border>
+                                <!-- Imported -->
+                                <StackPanel Grid.Column="0" Margin="20,14" Orientation="Horizontal">
+                                    <Border Width="6" Background="#6366F1" CornerRadius="3" Margin="0,0,12,0"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock x:Name="ImportedCountText"
+                                                   Text="0"
+                                                   FontSize="22" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimary}"/>
+                                        <TextBlock Text="Imported"
+                                                   FontSize="11"
+                                                   Foreground="{StaticResource TextMuted}"
+                                                   Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
 
-                            <!-- Card: OCR Ready -->
-                            <Border Grid.Column="2"
-                                    Background="{StaticResource BgCard}"
-                                    BorderBrush="{StaticResource BorderSubtle}"
-                                    BorderThickness="1"
-                                    CornerRadius="12"
-                                    Padding="20,18">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="8"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="6"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <Ellipse Grid.Row="0" Width="8" Height="8"
-                                             Fill="#0EA5E9" HorizontalAlignment="Left"/>
-                                    <TextBlock x:Name="OcrReadyCountText"
-                                               Grid.Row="2"
-                                               Text="0"
-                                               FontSize="36"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimary}"/>
-                                    <TextBlock Grid.Row="4"
-                                               Text="OCR Ready"
-                                               FontSize="12"
-                                               Foreground="{StaticResource TextMuted}"/>
-                                </Grid>
-                            </Border>
+                                <!-- Divider -->
+                                <Border Grid.Column="1" Background="{StaticResource BorderSubtle}"/>
 
-                            <!-- Card: AI Tagged -->
-                            <Border Grid.Column="4"
-                                    Background="{StaticResource BgCard}"
-                                    BorderBrush="{StaticResource BorderSubtle}"
-                                    BorderThickness="1"
-                                    CornerRadius="12"
-                                    Padding="20,18">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="8"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="6"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <Ellipse Grid.Row="0" Width="8" Height="8"
-                                             Fill="#10B981" HorizontalAlignment="Left"/>
-                                    <TextBlock x:Name="AiTaggedCountText"
-                                               Grid.Row="2"
-                                               Text="0"
-                                               FontSize="36"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimary}"/>
-                                    <TextBlock Grid.Row="4"
-                                               Text="AI Tagged"
-                                               FontSize="12"
-                                               Foreground="{StaticResource TextMuted}"/>
-                                </Grid>
-                            </Border>
-                        </Grid>
+                                <!-- OCR Ready -->
+                                <StackPanel Grid.Column="2" Margin="20,14" Orientation="Horizontal">
+                                    <Border Width="6" Background="#0EA5E9" CornerRadius="3" Margin="0,0,12,0"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock x:Name="OcrReadyCountText"
+                                                   Text="0"
+                                                   FontSize="22" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimary}"/>
+                                        <TextBlock Text="OCR Ready"
+                                                   FontSize="11"
+                                                   Foreground="{StaticResource TextMuted}"
+                                                   Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Divider -->
+                                <Border Grid.Column="3" Background="{StaticResource BorderSubtle}"/>
+
+                                <!-- AI Tagged -->
+                                <StackPanel Grid.Column="4" Margin="20,14" Orientation="Horizontal">
+                                    <Border Width="6" Background="#10B981" CornerRadius="3" Margin="0,0,12,0"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock x:Name="AiTaggedCountText"
+                                                   Text="0"
+                                                   FontSize="22" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimary}"/>
+                                        <TextBlock Text="AI Tagged"
+                                                   FontSize="11"
+                                                   Foreground="{StaticResource TextMuted}"
+                                                   Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
 
                         <!-- ── SMART COLLECTIONS ── -->
-                        <TextBlock Text="Smart Collections"
-                                   FontSize="14"
-                                   FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimary}"
-                                   Margin="0,0,0,12"/>
-                        <WrapPanel Margin="0,0,0,32">
-                            <Button Content="Invoices"
-                                    Style="{StaticResource PillButton}"
-                                    Height="32"
-                                    Padding="16,0"
-                                    Margin="0,0,8,8"
-                                    Click="Invoices_Click"/>
-                            <Button Content="Errors"
-                                    Style="{StaticResource PillButton}"
-                                    Height="32"
-                                    Padding="16,0"
-                                    Margin="0,0,8,8"
-                                    Click="Errors_Click"/>
-                            <Button Content="Code Snippets"
-                                    Style="{StaticResource PillButton}"
-                                    Height="32"
-                                    Padding="16,0"
-                                    Margin="0,0,8,8"
-                                    Click="CodeSnippets_Click"/>
-                            <Button Content="Conversations"
-                                    Style="{StaticResource PillButton}"
-                                    Height="32"
-                                    Padding="16,0"
-                                    Margin="0,0,8,8"
-                                    Click="Conversations_Click"/>
-                            <Button Content="Favorites"
-                                    Style="{StaticResource PillButton}"
-                                    Height="32"
-                                    Padding="16,0"
-                                    Margin="0,0,8,8"
-                                    Click="Favorites_Click"/>
+                        <TextBlock Text="Collections"
+                                   FontSize="12.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   Margin="0,0,0,10"/>
+                        <WrapPanel Margin="0,0,0,26">
+                            <Button Content="Invoices"     Style="{StaticResource PillButton}" Height="28" Padding="14,0" Margin="0,0,7,7" Click="Invoices_Click"/>
+                            <Button Content="Errors"       Style="{StaticResource PillButton}" Height="28" Padding="14,0" Margin="0,0,7,7" Click="Errors_Click"/>
+                            <Button Content="Code Snippets" Style="{StaticResource PillButton}" Height="28" Padding="14,0" Margin="0,0,7,7" Click="CodeSnippets_Click"/>
+                            <Button Content="Conversations" Style="{StaticResource PillButton}" Height="28" Padding="14,0" Margin="0,0,7,7" Click="Conversations_Click"/>
+                            <Button Content="Favorites"    Style="{StaticResource PillButton}" Height="28" Padding="14,0" Margin="0,0,7,7" Click="Favorites_Click"/>
                         </WrapPanel>
 
                         <!-- ── RECENT SCREENSHOTS ── -->
-                        <Grid Margin="0,0,0,14">
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0"
                                        Text="Recent Screenshots"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimary}"
+                                       FontSize="12.5" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextSecondary}"
                                        VerticalAlignment="Center"/>
                             <Button Grid.Column="1"
                                     Content="View all →"
@@ -646,48 +550,39 @@
                                     Click="Recent_Click"/>
                         </Grid>
 
-                        <ListBox x:Name="RecentScreenshotsList"
-                                 Style="{StaticResource CleanListBox}">
-                            <ListBox.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel/>
-                                </ItemsPanelTemplate>
-                            </ListBox.ItemsPanel>
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Width="210"
-                                            Margin="0,0,14,14"
-                                            Background="{StaticResource BgCard}"
-                                            BorderBrush="{StaticResource BorderSubtle}"
-                                            BorderThickness="1"
-                                            CornerRadius="12"
-                                            Cursor="Hand">
-                                        <StackPanel>
-                                            <Border Height="130"
-                                                    Background="#0F1219"
-                                                    CornerRadius="11,11,0,0">
-                                                <Image Source="{Binding ThumbnailPath}"
-                                                       Stretch="UniformToFill"
-                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
-                                            </Border>
-                                            <StackPanel Margin="12,10,12,12">
-                                                <TextBlock Text="{Binding FileName}"
-                                                           FontSize="12"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource TextSecondary}"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                        <StackPanel x:Name="RecentTodaySection" Margin="0,0,0,8">
+                            <TextBlock Text="Today" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" Margin="0,0,0,6"/>
+                            <ItemsControl x:Name="RecentTodayList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel x:Name="RecentYesterdaySection" Margin="0,0,0,8">
+                            <TextBlock Text="Yesterday" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" Margin="0,0,0,6"/>
+                            <ItemsControl x:Name="RecentYesterdayList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel x:Name="RecentWeekSection" Margin="0,0,0,8">
+                            <TextBlock Text="This Week" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" Margin="0,0,0,6"/>
+                            <ItemsControl x:Name="RecentWeekList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel x:Name="RecentOlderSection">
+                            <TextBlock Text="Older" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" Margin="0,0,0,6"/>
+                            <ItemsControl x:Name="RecentOlderList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
 
                     </StackPanel>
 
-                    <!-- ════════════════════════════════
+                    <!-- ══════════════════════════
                          RESULTS PANEL
-                    ════════════════════════════════ -->
+                    ══════════════════════════ -->
                     <StackPanel x:Name="ResultsPanel" Visibility="Collapsed">
 
                         <Grid Margin="0,0,0,6">
@@ -698,72 +593,181 @@
                             <StackPanel Grid.Column="0">
                                 <TextBlock x:Name="ResultsTitleText"
                                            Text="Results"
-                                           FontSize="24"
-                                           FontWeight="SemiBold"
+                                           FontSize="21" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}"/>
                                 <TextBlock x:Name="ResultsMetaText"
                                            Text="0 result(s)"
-                                           FontSize="13"
+                                           FontSize="12.5"
                                            Foreground="{StaticResource TextSecondary}"
-                                           Margin="0,4,0,0"/>
+                                           Margin="0,3,0,0"/>
                             </StackPanel>
                             <Button Grid.Column="1"
-                                    Content="← Back to Home"
+                                    Content="← Home"
                                     Style="{StaticResource GhostButton}"
-                                    Height="36"
-                                    Padding="14,0"
+                                    Height="34" Padding="14,0"
                                     VerticalAlignment="Top"
                                     Click="Home_Click"/>
                         </Grid>
 
-                        <!-- Thin accent line -->
-                        <Border Height="1"
-                                Background="#6366F1"
-                                Width="40"
-                                HorizontalAlignment="Left"
-                                Margin="0,10,0,20"
-                                Opacity="0.7"/>
+                        <Border Height="2" Width="32" HorizontalAlignment="Left"
+                                Background="#6366F1" CornerRadius="1"
+                                Margin="0,10,0,18" Opacity="0.8"/>
 
-                        <ListBox x:Name="ResultsList"
-                                 Style="{StaticResource CleanListBox}">
-                            <ListBox.ItemsPanel>
+                        <ItemsControl x:Name="ResultsList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
+                            <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <WrapPanel/>
                                 </ItemsPanelTemplate>
-                            </ListBox.ItemsPanel>
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Width="220"
-                                            Margin="0,0,14,14"
-                                            Background="{StaticResource BgCard}"
-                                            BorderBrush="{StaticResource BorderSubtle}"
-                                            BorderThickness="1"
-                                            CornerRadius="12"
-                                            Cursor="Hand">
-                                        <StackPanel>
-                                            <Border Height="140"
-                                                    Background="#0F1219"
-                                                    CornerRadius="11,11,0,0">
-                                                <Image Source="{Binding ThumbnailPath}"
-                                                       Stretch="UniformToFill"
-                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
-                                            </Border>
-                                            <StackPanel Margin="12,10,12,12">
-                                                <TextBlock Text="{Binding FileName}"
-                                                           FontSize="12"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource TextSecondary}"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+
                     </StackPanel>
 
                 </Grid>
             </ScrollViewer>
+
         </DockPanel>
+
+        <!-- ╔══════════════════════════════════╗
+             ║   SIDE PREVIEW PANEL             ║
+             ║   Hidden by default.             ║
+             ║   Shown only on card click.      ║
+             ╚══════════════════════════════════╝ -->
+        <Border x:Name="PreviewPanel"
+                Grid.Column="2"
+                Background="{StaticResource BgSurface}"
+                BorderBrush="{StaticResource BorderSubtle}"
+                BorderThickness="1,0,0,0"
+                Visibility="Collapsed">
+            <DockPanel>
+
+                <!-- Header -->
+                <Border DockPanel.Dock="Top"
+                        Padding="16,13,12,13"
+                        BorderBrush="{StaticResource BorderSubtle}"
+                        BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="Preview"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="1"
+                                Content="✕"
+                                Width="28" Height="28"
+                                Style="{StaticResource GhostButton}"
+                                Padding="0"
+                                Click="PreviewClose_Click"/>
+                    </Grid>
+                </Border>
+
+                <!-- Action row -->
+                <Border DockPanel.Dock="Bottom"
+                        Padding="14,12"
+                        BorderBrush="{StaticResource BorderSubtle}"
+                        BorderThickness="0,1,0,0">
+                    <WrapPanel>
+                        <Button x:Name="PreviewOpenImageButton"
+                                Content="Open"
+                                Style="{StaticResource PrimaryButton}"
+                                Height="32" Padding="14,0"
+                                Margin="0,0,7,0"
+                                Click="PreviewOpenImage_Click"/>
+                        <Button x:Name="PreviewRevealButton"
+                                Content="Reveal"
+                                Style="{StaticResource GhostButton}"
+                                Height="32" Padding="12,0"
+                                Margin="0,0,7,0"
+                                Click="PreviewReveal_Click"/>
+                        <Button Content="Copy Path"
+                                Style="{StaticResource GhostButton}"
+                                Height="32" Padding="12,0"
+                                Click="PreviewCopyPath_Click"/>
+                    </WrapPanel>
+                </Border>
+
+                <!-- Detail scroll -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14,0">
+                    <StackPanel Margin="0,14,0,0">
+
+                        <!-- Image preview area -->
+                        <Border Height="190"
+                                Background="#0F1219"
+                                CornerRadius="9"
+                                Margin="0,0,0,16"
+                                ClipToBounds="True">
+                            <Grid>
+                                <Image x:Name="PreviewImage" Stretch="Uniform"/>
+                                <TextBlock x:Name="PreviewPlaceholderText"
+                                           Text="Loading…"
+                                           Foreground="{StaticResource TextMuted}"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- File Name -->
+                        <TextBlock Text="FILE NAME"
+                                   FontSize="9.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMuted}"
+                                   Margin="0,0,0,3"/>
+                        <TextBlock x:Name="PreviewFileNameText"
+                                   FontSize="12.5"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,14"/>
+
+                        <!-- Created -->
+                        <TextBlock Text="CREATED"
+                                   FontSize="9.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMuted}"
+                                   Margin="0,0,0,3"/>
+                        <TextBlock x:Name="PreviewCreatedAtText"
+                                   FontSize="12.5"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   Margin="0,0,0,14"/>
+
+                        <!-- File Size -->
+                        <TextBlock Text="SIZE"
+                                   FontSize="9.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMuted}"
+                                   Margin="0,0,0,3"/>
+                        <TextBlock x:Name="PreviewFileSizeText"
+                                   FontSize="12.5"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   Margin="0,0,0,14"/>
+
+                        <!-- OCR Status -->
+                        <TextBlock Text="OCR STATUS"
+                                   FontSize="9.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMuted}"
+                                   Margin="0,0,0,3"/>
+                        <TextBlock x:Name="PreviewOcrStatusText"
+                                   FontSize="12.5"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   Margin="0,0,0,14"/>
+
+                        <!-- Path -->
+                        <TextBlock Text="PATH"
+                                   FontSize="9.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMuted}"
+                                   Margin="0,0,0,3"/>
+                        <TextBlock x:Name="PreviewFilePathText"
+                                   FontSize="11"
+                                   Foreground="{StaticResource TextMuted}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,14"/>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+            </DockPanel>
+        </Border>
+
     </Grid>
 </Window>

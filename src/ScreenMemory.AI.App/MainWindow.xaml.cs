@@ -1,5 +1,9 @@
-using System.IO;
+﻿using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media.Imaging;
 using ScreenMemory.AI.App.Services;
 using ScreenMemory.AI.App.Views;
 using ScreenMemory.AI.Core.Data;
@@ -16,13 +20,28 @@ public partial class MainWindow : Window
     private readonly ScreenshotRepository _repository;
     private readonly ThumbnailService _thumbnailService = new();
     private readonly ThumbnailQueueService _thumbnailQueueService;
+    private readonly OcrService _ocrService = new();
+    private readonly OcrQueueService _ocrQueueService;
     private readonly IndexingService _indexingService;
     private readonly FileWatcherService _fileWatcherService;
-    private CancellationTokenSource? _thumbnailQueueCts;
+    private readonly BackgroundProcessingManager _backgroundProcessingManager;
+    private readonly QuickSearchOverlay _quickSearchOverlay;
+    private CancellationTokenSource? _previewLoadCts;
+    private CancellationTokenSource? _searchCts;
+    private ScreenshotRecord? _selectedScreenshot;
+    private readonly Dictionary<string, BitmapSource> _previewCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly LinkedList<string> _previewCacheOrder = [];
+    private const int PreviewCacheLimit = 10;
 
     private const int HomeRecentLimit = 12;
     private const int SearchLimit = 100;
     private const int CollectionLimit = 100;
+    private const int PreviewPanelWidth = 300;
+    private const int HotkeyId = 9001;
+    private const uint ModControl = 0x0002;
+    private const uint ModShift = 0x0004;
+    private const uint VkSpace = 0x20;
+    private const int WmHotkey = 0x0312;
 
     public ViewMode CurrentViewMode { get; private set; } = ViewMode.Home;
     public string CurrentCollection { get; private set; } = string.Empty;
@@ -38,17 +57,37 @@ public partial class MainWindow : Window
         _indexingService = new IndexingService(_repository);
         _thumbnailQueueService = new ThumbnailQueueService(_thumbnailService, _repository);
         _thumbnailQueueService.ProgressChanged += ThumbnailQueueService_ProgressChanged;
+        _ocrQueueService = new OcrQueueService(_ocrService, _repository);
+        _ocrQueueService.ProgressChanged += OcrQueueService_ProgressChanged;
+        _backgroundProcessingManager = new BackgroundProcessingManager(_thumbnailQueueService, _ocrQueueService);
         _fileWatcherService = new FileWatcherService(_settingsService, _indexingService, _thumbnailService, _repository);
         _fileWatcherService.ScreenshotIndexed += FileWatcherService_ScreenshotIndexed;
         _fileWatcherService.Start();
+        _quickSearchOverlay = new QuickSearchOverlay(_repository, OpenImageFromOverlay, RevealInExplorerFromOverlay);
 
         LoadHomeDashboard();
     }
 
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        var source = (HwndSource?)PresentationSource.FromVisual(this);
+        source?.AddHook(WndProc);
+        RegisterHotKey(new WindowInteropHelper(this).Handle, HotkeyId, ModControl | ModShift, VkSpace);
+    }
+
     protected override void OnClosed(EventArgs e)
     {
+        UnregisterHotKey(new WindowInteropHelper(this).Handle, HotkeyId);
         _fileWatcherService.ScreenshotIndexed -= FileWatcherService_ScreenshotIndexed;
+        _ocrQueueService.ProgressChanged -= OcrQueueService_ProgressChanged;
         _fileWatcherService.Dispose();
+        _backgroundProcessingManager.Dispose();
+        _quickSearchOverlay.Close();
+        _previewLoadCts?.Cancel();
+        _previewLoadCts?.Dispose();
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
         base.OnClosed(e);
     }
 
@@ -87,7 +126,6 @@ public partial class MainWindow : Window
                     try
                     {
                         var fileInfo = new FileInfo(path);
-
                         records.Add(new ScreenshotRecord
                         {
                             FilePath = path,
@@ -98,22 +136,19 @@ public partial class MainWindow : Window
                             ThumbnailPath = string.Empty
                         });
                     }
-                    catch
-                    {
-                        // Ignore unreadable file metadata.
-                    }
+                    catch { /* Ignore unreadable file metadata. */ }
                 }
 
                 _repository.InsertManyIfNotExists(records);
             });
 
             LoadHomeDashboard();
+            StartOcrQueueForRecords(_repository.GetPendingOcr(100));
         }
         catch (Exception ex)
         {
             System.Windows.MessageBox.Show(
-                ex.Message,
-                "Indexing Error",
+                ex.Message, "Indexing Error",
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Error);
         }
@@ -126,14 +161,19 @@ public partial class MainWindow : Window
     }
 
     private void Recent_Click(object sender, RoutedEventArgs e)
-    {
-        ShowResults("Recent", _repository.GetRecent(CollectionLimit));
-    }
+        => ShowResults("Recent", _repository.GetRecent(CollectionLimit));
 
-    private void Invoices_Click(object sender, RoutedEventArgs e) => ShowCollection("Invoices", ["invoice", "receipt", "bill", "payment"]);
-    private void Errors_Click(object sender, RoutedEventArgs e) => ShowCollection("Errors", ["error", "bug", "exception", "crash"]);
-    private void CodeSnippets_Click(object sender, RoutedEventArgs e) => ShowCollection("Code Snippets", ["code", "script", "snippet", "terminal"]);
-    private void Conversations_Click(object sender, RoutedEventArgs e) => ShowCollection("Conversations", ["chat", "whatsapp", "discord", "slack"]);
+    private void Invoices_Click(object sender, RoutedEventArgs e)
+        => ShowCollection("Invoices", ["invoice", "receipt", "bill", "payment"]);
+
+    private void Errors_Click(object sender, RoutedEventArgs e)
+        => ShowCollection("Errors", ["error", "bug", "exception", "crash"]);
+
+    private void CodeSnippets_Click(object sender, RoutedEventArgs e)
+        => ShowCollection("Code Snippets", ["code", "script", "snippet", "terminal"]);
+
+    private void Conversations_Click(object sender, RoutedEventArgs e)
+        => ShowCollection("Conversations", ["chat", "whatsapp", "discord", "slack"]);
 
     private void Favorites_Click(object sender, RoutedEventArgs e)
     {
@@ -141,10 +181,23 @@ public partial class MainWindow : Window
         ResultsMetaText.Text = "Favorites coming soon";
     }
 
-    private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    private async void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
         var query = SearchBox.Text.Trim();
         CurrentSearchQuery = query;
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
+
+        try
+        {
+            await Task.Delay(140, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -155,8 +208,23 @@ public partial class MainWindow : Window
         CurrentViewMode = ViewMode.Search;
         CurrentCollection = string.Empty;
 
-        var results = _repository.SearchByFileName(query, SearchLimit);
+        List<ScreenshotRecord> results;
+        try
+        {
+            results = await Task.Run(() => _repository.SearchHybrid(query, SearchLimit), token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (token.IsCancellationRequested || !string.Equals(CurrentSearchQuery, query, StringComparison.Ordinal))
+        {
+            return;
+        }
+
         ShowResults($"Results for '{query}'", results);
+        ResultsMetaText.Text = $"{results.Count} results for '{query}'";
     }
 
     private void LoadHomeDashboard()
@@ -174,10 +242,11 @@ public partial class MainWindow : Window
         AiTaggedCountText.Text = _repository.CountAiTagged().ToString("N0");
 
         var recent = _repository.GetRecent(HomeRecentLimit);
-        RecentScreenshotsList.ItemsSource = recent;
-        StatusText.Text = "Search across all indexed screenshots.";
+        BindRecentBuckets(recent);
+        StatusText.Text = "Ready";
 
         StartThumbnailQueue(recent);
+        StartOcrQueueForRecords(_repository.GetPendingOcr(100));
     }
 
     private void ShowCollection(string name, IEnumerable<string> keywords)
@@ -198,54 +267,31 @@ public partial class MainWindow : Window
         DisplayedScreenshots = results;
         ResultsTitleText.Text = title;
         ResultsMetaText.Text = $"{results.Count} result(s)";
-
         ResultsList.ItemsSource = results;
-        StatusText.Text = $"{results.Count} items loaded";
+        StatusText.Text = $"{results.Count} items";
 
         StartThumbnailQueue(results);
     }
 
     private void StartThumbnailQueue(List<ScreenshotRecord> records)
     {
-        _thumbnailQueueCts?.Cancel();
-        _thumbnailQueueCts?.Dispose();
-        _thumbnailQueueCts = new CancellationTokenSource();
-
-        _ = _thumbnailQueueService.GenerateMissingThumbnailsAsync(records, _thumbnailQueueCts.Token);
+        _backgroundProcessingManager.EnqueueThumbnails(records, JobPriority.High);
     }
 
-    private void StopThumbnailQueue()
+    private void StopThumbnailQueue() { }
+
+    private void StartOcrQueueForRecords(List<ScreenshotRecord> records)
     {
-        _thumbnailQueueCts?.Cancel();
-        _thumbnailQueueCts?.Dispose();
-        _thumbnailQueueCts = null;
+        if (records.Count == 0) return;
+        _backgroundProcessingManager.EnqueueOcr(records, JobPriority.High);
     }
 
     private void ThumbnailQueueService_ProgressChanged(ThumbnailQueueProgress progress)
     {
         Dispatcher.Invoke(() =>
         {
-            if (CurrentViewMode == ViewMode.Home)
-            {
-                if (RecentScreenshotsList.ItemsSource is IEnumerable<ScreenshotRecord> recent)
-                {
-                    RecentScreenshotsList.ItemsSource = null;
-                    RecentScreenshotsList.ItemsSource = recent.ToList();
-                }
-            }
-            else
-            {
-                if (ResultsList.ItemsSource is IEnumerable<ScreenshotRecord> results)
-                {
-                    ResultsList.ItemsSource = null;
-                    ResultsList.ItemsSource = results.ToList();
-                }
-            }
-
             if (progress.Total > 0)
-            {
-                StatusText.Text = $"Generating thumbnails {progress.Processed}/{progress.Total}";
-            }
+                StatusText.Text = $"Thumbnails {progress.Processed}/{progress.Total}";
         });
     }
 
@@ -258,7 +304,7 @@ public partial class MainWindow : Window
             if (CurrentViewMode == ViewMode.Home)
             {
                 var recent = _repository.GetRecent(HomeRecentLimit);
-                RecentScreenshotsList.ItemsSource = recent;
+                BindRecentBuckets(recent);
                 StartThumbnailQueue(recent);
                 StatusText.Text = "New screenshot indexed";
                 return;
@@ -269,21 +315,30 @@ public partial class MainWindow : Window
                 if (!string.IsNullOrWhiteSpace(CurrentSearchQuery) &&
                     e.Record.FileName.Contains(CurrentSearchQuery, StringComparison.OrdinalIgnoreCase))
                 {
-                    var refreshed = _repository.SearchByFileName(CurrentSearchQuery, SearchLimit);
+                    var refreshed = _repository.SearchHybrid(CurrentSearchQuery, SearchLimit);
                     ShowResults($"Results for '{CurrentSearchQuery}'", refreshed);
-                    StatusText.Text = "New screenshot indexed";
+                    ResultsMetaText.Text = $"{refreshed.Count} results for '{CurrentSearchQuery}'";
                 }
                 return;
             }
 
-            if (CurrentViewMode == ViewMode.Collection &&
-                MatchesCurrentCollection(e.Record.FileName))
+            if (CurrentViewMode == ViewMode.Collection && MatchesCurrentCollection(e.Record.FileName))
             {
                 var keywords = GetCollectionKeywords(CurrentCollection);
                 var refreshed = _repository.SearchByKeywords(keywords, CollectionLimit);
                 ShowResults(CurrentCollection, refreshed);
-                StatusText.Text = "New screenshot indexed";
             }
+
+            StartOcrQueueForRecords([e.Record]);
+        });
+    }
+
+    private void OcrQueueService_ProgressChanged(OcrQueueProgress progress)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            StatusText.Text = $"OCR {progress.Processed}/{progress.Total}";
+            OcrReadyCountText.Text = _repository.CountOcrReady().ToString("N0");
         });
     }
 
@@ -293,15 +348,320 @@ public partial class MainWindow : Window
         return keywords.Any(k => fileName.Contains(k, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static List<string> GetCollectionKeywords(string collection)
+    private static List<string> GetCollectionKeywords(string collection) => collection switch
     {
-        return collection switch
+        "Invoices"      => ["invoice", "receipt", "bill", "payment"],
+        "Errors"        => ["error", "bug", "exception", "crash"],
+        "Code Snippets" => ["code", "script", "snippet", "terminal"],
+        "Conversations" => ["chat", "whatsapp", "discord", "slack"],
+        _               => []
+    };
+
+    private void ChildList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        e.Handled = true;
+        var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
         {
-            "Invoices" => ["invoice", "receipt", "bill", "payment"],
-            "Errors" => ["error", "bug", "exception", "crash"],
-            "Code Snippets" => ["code", "script", "snippet", "terminal"],
-            "Conversations" => ["chat", "whatsapp", "discord", "slack"],
-            _ => []
+            RoutedEvent = UIElement.MouseWheelEvent,
+            Source = sender
+        };
+        RaiseEvent(eventArg);
+    }
+
+    private void ScreenshotCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement element || element.DataContext is not ScreenshotRecord record)
+            return;
+
+        SelectScreenshot(record);
+
+        if (e.ClickCount >= 2)
+        {
+            OpenDetailWindow(record);
+        }
+    }
+
+    private void OpenDetailWindow(ScreenshotRecord record)
+    {
+        var detailWindow = new ScreenshotDetailWindow(record) { Owner = this };
+        detailWindow.ShowDialog();
+    }
+
+    private void OpenImageFromOverlay(ScreenshotRecord record)
+    {
+        if (!File.Exists(record.FilePath))
+        {
+            return;
+        }
+
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(record.FilePath)
+        {
+            UseShellExecute = true
+        });
+    }
+
+    private void RevealInExplorerFromOverlay(ScreenshotRecord record)
+    {
+        if (!File.Exists(record.FilePath))
+        {
+            return;
+        }
+
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+            "explorer.exe",
+            $"/select,\"{record.FilePath}\"")
+        {
+            UseShellExecute = true
+        });
+    }
+
+    // -- Show preview panel and load content ------------------------------
+    private void SelectScreenshot(ScreenshotRecord record)
+    {
+        // Deselect previous card.
+        if (_selectedScreenshot is not null)
+            _selectedScreenshot.IsSelected = false;
+
+        _selectedScreenshot = record;
+        _selectedScreenshot.IsSelected = true;
+
+        // Open preview column.
+        PreviewColumn.Width = new GridLength(PreviewPanelWidth);
+        PreviewPanel.Visibility = Visibility.Visible;
+
+        UpdatePreviewMetadata(record);
+        _ = LoadPreviewImageAsync(record);
+    }
+
+    private void UpdatePreviewMetadata(ScreenshotRecord record)
+    {
+        PreviewFileNameText.Text    = record.FileName;
+        PreviewFilePathText.Text    = record.FilePath;
+        PreviewCreatedAtText.Text   = record.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd  HH:mm");
+        PreviewFileSizeText.Text    = FormatFileSize(record.FileSizeBytes);
+        PreviewOcrStatusText.Text   = string.IsNullOrWhiteSpace(record.OcrStatus) ? "pending" : record.OcrStatus;
+
+        // Show placeholder text while image loads.
+        PreviewPlaceholderText.Text       = "Loading…";
+        PreviewPlaceholderText.Visibility = Visibility.Visible;
+        PreviewImage.Source               = null;
+
+        var fileExists = File.Exists(record.FilePath);
+        PreviewOpenImageButton.IsEnabled  = fileExists;
+        PreviewRevealButton.IsEnabled     = fileExists;
+    }
+
+    private async Task LoadPreviewImageAsync(ScreenshotRecord record)
+    {
+        _previewLoadCts?.Cancel();
+        _previewLoadCts?.Dispose();
+        _previewLoadCts = new CancellationTokenSource();
+        var token = _previewLoadCts.Token;
+
+        // Show thumbnail immediately for snappy feel.
+        if (!string.IsNullOrWhiteSpace(record.ThumbnailPath) && File.Exists(record.ThumbnailPath))
+        {
+            try
+            {
+                var thumb = await Task.Run(() => CreateBitmap(record.ThumbnailPath), token);
+                PreviewImage.Source               = thumb;
+                PreviewPlaceholderText.Visibility = Visibility.Collapsed;
+            }
+            catch { /* fall through to full load */ }
+        }
+
+        if (!File.Exists(record.FilePath)) return;
+
+        // Serve from cache if available.
+        if (_previewCache.TryGetValue(record.FilePath, out var cached))
+        {
+            PreviewImage.Source               = cached;
+            PreviewPlaceholderText.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        try
+        {
+            var full = await Task.Run(() => CreateBitmap(record.FilePath), token);
+            token.ThrowIfCancellationRequested();
+
+            if (_selectedScreenshot?.Id != record.Id) return;
+
+            PreviewImage.Source               = full;
+            PreviewPlaceholderText.Visibility = Visibility.Collapsed;
+            AddToPreviewCache(record.FilePath, full);
+        }
+        catch (OperationCanceledException) { /* new selection cancelled this */ }
+        catch
+        {
+            if (_selectedScreenshot?.Id == record.Id)
+            {
+                PreviewImage.Source               = null;
+                PreviewPlaceholderText.Text       = "Preview unavailable";
+                PreviewPlaceholderText.Visibility = Visibility.Visible;
+            }
+        }
+    }
+
+    private static BitmapImage CreateBitmap(string path)
+    {
+        var image = new BitmapImage();
+        image.BeginInit();
+        image.CacheOption    = BitmapCacheOption.OnLoad;
+        image.CreateOptions  = BitmapCreateOptions.IgnoreImageCache;
+        image.UriSource      = new Uri(path, UriKind.Absolute);
+        image.EndInit();
+        image.Freeze();
+        return image;
+    }
+
+    private void AddToPreviewCache(string path, BitmapSource image)
+    {
+        if (_previewCache.ContainsKey(path))
+        {
+            _previewCache[path] = image;
+            _previewCacheOrder.Remove(path);
+            _previewCacheOrder.AddFirst(path);
+            return;
+        }
+
+        _previewCache[path] = image;
+        _previewCacheOrder.AddFirst(path);
+
+        while (_previewCacheOrder.Count > PreviewCacheLimit)
+        {
+            var last = _previewCacheOrder.Last;
+            if (last is null) break;
+            _previewCache.Remove(last.Value);
+            _previewCacheOrder.RemoveLast();
+        }
+    }
+
+    // -- Preview actions ---------------------------------------------------
+    private void PreviewOpenImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedScreenshot is null || !File.Exists(_selectedScreenshot.FilePath)) return;
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_selectedScreenshot.FilePath)
+        {
+            UseShellExecute = true
+        });
+    }
+
+    private void PreviewReveal_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedScreenshot is null || !File.Exists(_selectedScreenshot.FilePath)) return;
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+            "explorer.exe", $"/select,\"{_selectedScreenshot.FilePath}\"")
+        {
+            UseShellExecute = true
+        });
+    }
+
+    private void PreviewCopyPath_Click(object sender, RoutedEventArgs e)
+        => System.Windows.Clipboard.SetText(_selectedScreenshot?.FilePath ?? string.Empty);
+
+    private void PreviewClose_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedScreenshot is not null)
+            _selectedScreenshot.IsSelected = false;
+
+        _selectedScreenshot = null;
+        _previewLoadCts?.Cancel();
+
+        // Collapse the preview column — no empty space remains.
+        PreviewColumn.Width       = new GridLength(0);
+        PreviewPanel.Visibility   = Visibility.Collapsed;
+
+        PreviewImage.Source               = null;
+        PreviewPlaceholderText.Text       = "Loading…";
+        PreviewPlaceholderText.Visibility = Visibility.Visible;
+        PreviewFileNameText.Text          = string.Empty;
+        PreviewFilePathText.Text          = string.Empty;
+        PreviewCreatedAtText.Text         = string.Empty;
+        PreviewFileSizeText.Text          = string.Empty;
+        PreviewOcrStatusText.Text         = string.Empty;
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        const double kb = 1024;
+        const double mb = kb * 1024;
+        const double gb = mb * 1024;
+
+        return bytes switch
+        {
+            >= (long)gb => $"{bytes / gb:0.##} GB",
+            >= (long)mb => $"{bytes / mb:0.##} MB",
+            >= (long)kb => $"{bytes / kb:0.##} KB",
+            _ => $"{bytes} B"
         };
     }
+
+    private void BindRecentBuckets(List<ScreenshotRecord> recent)
+    {
+        var now = DateTime.Now;
+        var today = now.Date;
+        var startOfWeek = today.AddDays(-(int)((7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7));
+
+        var todayItems = new List<ScreenshotRecord>();
+        var yesterdayItems = new List<ScreenshotRecord>();
+        var weekItems = new List<ScreenshotRecord>();
+        var olderItems = new List<ScreenshotRecord>();
+
+        foreach (var item in recent.OrderByDescending(ScreenshotRepository.GetBestTimestamp))
+        {
+            var ts = ScreenshotRepository.GetBestTimestamp(item).ToLocalTime();
+            if (ts.Date == today)
+            {
+                todayItems.Add(item);
+            }
+            else if (ts.Date == today.AddDays(-1))
+            {
+                yesterdayItems.Add(item);
+            }
+            else if (ts.Date >= startOfWeek)
+            {
+                weekItems.Add(item);
+            }
+            else
+            {
+                olderItems.Add(item);
+            }
+        }
+
+        RecentTodayList.ItemsSource = todayItems;
+        RecentYesterdayList.ItemsSource = yesterdayItems;
+        RecentWeekList.ItemsSource = weekItems;
+        RecentOlderList.ItemsSource = olderItems;
+
+        RecentTodaySection.Visibility = todayItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        RecentYesterdaySection.Visibility = yesterdayItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        RecentWeekSection.Visibility = weekItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        RecentOlderSection.Visibility = olderItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (msg == WmHotkey && wParam.ToInt32() == HotkeyId)
+        {
+            if (_quickSearchOverlay.Owner is null)
+            {
+                _quickSearchOverlay.Owner = this;
+            }
+            _quickSearchOverlay.Open();
+            handled = true;
+        }
+
+        return IntPtr.Zero;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 }
+
+
+
+

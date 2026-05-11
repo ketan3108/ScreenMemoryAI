@@ -1,0 +1,92 @@
+<Window x:Class="ScreenMemory.AI.App.Views.ScreenshotDetailWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Screenshot Details"
+        Height="720"
+        Width="980"
+        MinHeight="560"
+        MinWidth="760"
+        WindowStartupLocation="CenterOwner"
+        Background="#0D0F14"
+        FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif">
+
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0"
+                Background="#181C25"
+                BorderBrush="#1F2533"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="10">
+            <Grid>
+                <Image x:Name="PreviewImage" Stretch="Uniform"/>
+                <TextBlock x:Name="FileNotFoundText"
+                           Text="File not found"
+                           Foreground="#FCA5A5"
+                           FontSize="24"
+                           FontWeight="SemiBold"
+                           Visibility="Collapsed"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <Border Grid.Column="2"
+                Background="#13161D"
+                BorderBrush="#1F2533"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="16">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
+                    <WrapPanel>
+                        <Button x:Name="OpenImageButton" Content="Open Image" Width="120" Height="34" Margin="0,0,8,8" Click="OpenImage_Click"/>
+                        <Button x:Name="RevealButton" Content="Reveal in Explorer" Width="140" Height="34" Margin="0,0,8,8" Click="RevealInExplorer_Click"/>
+                        <Button Content="Copy File Path" Width="120" Height="34" Margin="0,0,8,8" Click="CopyFilePath_Click"/>
+                        <Button Content="Copy OCR Text" Width="120" Height="34" Margin="0,0,8,8" Click="CopyOcrText_Click"/>
+                        <Button Content="Close" Width="90" Height="34" Margin="0,0,8,8" Click="Close_Click"/>
+                    </WrapPanel>
+                </StackPanel>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Screenshot Detail" FontSize="22" FontWeight="SemiBold" Foreground="#F0F2F8" Margin="0,0,0,14"/>
+
+                        <TextBlock Text="File Name" Foreground="#8892A4" FontSize="12"/>
+                        <TextBlock x:Name="FileNameText" Foreground="#F0F2F8" FontSize="14" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="File Path" Foreground="#8892A4" FontSize="12"/>
+                        <TextBlock x:Name="FilePathText" Foreground="#F0F2F8" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="Created" Foreground="#8892A4" FontSize="12"/>
+                        <TextBlock x:Name="CreatedAtText" Foreground="#F0F2F8" FontSize="13" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="File Size" Foreground="#8892A4" FontSize="12"/>
+                        <TextBlock x:Name="FileSizeText" Foreground="#F0F2F8" FontSize="13" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="OCR Status" Foreground="#8892A4" FontSize="12"/>
+                        <TextBlock x:Name="OcrStatusText" Foreground="#F0F2F8" FontSize="13" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="OCR Text" Foreground="#8892A4" FontSize="12" Margin="0,0,0,6"/>
+                        <TextBox x:Name="OcrTextBox"
+                                 Height="220"
+                                 IsReadOnly="True"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"
+                                 Background="#181C25"
+                                 Foreground="#F0F2F8"
+                                 BorderBrush="#293044"
+                                 BorderThickness="1"
+                                 Padding="10"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
