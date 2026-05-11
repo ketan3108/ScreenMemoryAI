@@ -1,15 +1,44 @@
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Forms;
+using ScreenMemory.AI.App.Services;
 
 namespace ScreenMemory.AI.App.Views;
 
 public partial class SettingsWindow : Window
 {
+    private readonly AppSettingsService _settingsService = new();
+
     public SettingsWindow()
     {
         InitializeComponent();
-        RefreshEmptyState();
+        LoadFolders();
+        UpdateFolderListState();
+    }
+
+    private void LoadFolders()
+    {
+        var settings = _settingsService.Load();
+
+        FoldersList.Items.Clear();
+
+        foreach (var folder in settings.WatchedFolders)
+        {
+            if (!FoldersList.Items.Contains(folder))
+                FoldersList.Items.Add(folder);
+        }
+    }
+
+    private void SaveFolders()
+    {
+        var settings = new AppSettingsData
+        {
+            WatchedFolders = FoldersList.Items
+                .Cast<string>()
+                .Distinct()
+                .ToList()
+        };
+
+        _settingsService.Save(settings);
     }
 
     private void AddFolder_Click(object sender, RoutedEventArgs e)
@@ -26,7 +55,8 @@ public partial class SettingsWindow : Window
             if (!FoldersList.Items.Contains(dialog.SelectedPath))
             {
                 FoldersList.Items.Add(dialog.SelectedPath);
-                RefreshEmptyState();
+                SaveFolders();
+                UpdateFolderListState();
             }
         }
     }
@@ -36,19 +66,27 @@ public partial class SettingsWindow : Window
         if (FoldersList.SelectedItem != null)
         {
             FoldersList.Items.Remove(FoldersList.SelectedItem);
-            RefreshEmptyState();
+            SaveFolders();
+            UpdateFolderListState();
         }
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)
     {
+        SaveFolders();
         Close();
     }
 
-    private void RefreshEmptyState()
+    private void UpdateFolderListState()
     {
-        bool hasItems = FoldersList.Items.Count > 0;
-        FoldersList.Visibility  = hasItems ? Visibility.Visible   : Visibility.Collapsed;
-        EmptyState.Visibility   = hasItems ? Visibility.Collapsed : Visibility.Visible;
+        var hasFolders = FoldersList.Items.Count > 0;
+
+        FoldersList.Visibility = hasFolders
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        EmptyState.Visibility = hasFolders
+            ? Visibility.Collapsed
+            : Visibility.Visible;
     }
 }
