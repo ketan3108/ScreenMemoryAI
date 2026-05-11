@@ -4,6 +4,8 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using Forms = System.Windows.Forms;
+using Drawing = System.Drawing;
 using ScreenMemory.AI.App.Services;
 using ScreenMemory.AI.App.Views;
 using ScreenMemory.AI.Core.Data;
@@ -26,8 +28,10 @@ public partial class MainWindow : Window
     private readonly FileWatcherService _fileWatcherService;
     private readonly BackgroundProcessingManager _backgroundProcessingManager;
     private readonly QuickSearchOverlay _quickSearchOverlay;
+    private readonly Forms.NotifyIcon _trayIcon;
     private CancellationTokenSource? _previewLoadCts;
     private CancellationTokenSource? _searchCts;
+    private bool _allowClose;
     private ScreenshotRecord? _selectedScreenshot;
     private readonly Dictionary<string, BitmapSource> _previewCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly LinkedList<string> _previewCacheOrder = [];
@@ -64,6 +68,18 @@ public partial class MainWindow : Window
         _fileWatcherService.ScreenshotIndexed += FileWatcherService_ScreenshotIndexed;
         _fileWatcherService.Start();
         _quickSearchOverlay = new QuickSearchOverlay(_repository, OpenImageFromOverlay, RevealInExplorerFromOverlay);
+        _trayIcon = new Forms.NotifyIcon
+        {
+            Text = "ScreenMemory AI",
+            Icon = Drawing.SystemIcons.Application,
+            Visible = true
+        };
+        var trayMenu = new Forms.ContextMenuStrip();
+        trayMenu.Items.Add("Open Dashboard", null, (_, _) => RestoreDashboard());
+        trayMenu.Items.Add("Exit", null, (_, _) => ExitApp());
+        _trayIcon.ContextMenuStrip = trayMenu;
+        _trayIcon.DoubleClick += (_, _) => RestoreDashboard();
+        Loaded += (_, _) => HideToTray();
 
         LoadHomeDashboard();
     }
@@ -84,11 +100,25 @@ public partial class MainWindow : Window
         _fileWatcherService.Dispose();
         _backgroundProcessingManager.Dispose();
         _quickSearchOverlay.Close();
+        _trayIcon.Visible = false;
+        _trayIcon.Dispose();
         _previewLoadCts?.Cancel();
         _previewLoadCts?.Dispose();
         _searchCts?.Cancel();
         _searchCts?.Dispose();
         base.OnClosed(e);
+    }
+
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        if (!_allowClose)
+        {
+            e.Cancel = true;
+            HideToTray();
+            return;
+        }
+
+        base.OnClosing(e);
     }
 
     private void Settings_Click(object sender, RoutedEventArgs e)
@@ -660,6 +690,41 @@ public partial class MainWindow : Window
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+
+    private void HideToTray()
+    {
+        Hide();
+        ShowInTaskbar = false;
+    }
+
+    private void RestoreDashboard()
+    {
+        ShowInTaskbar = true;
+        Show();
+        WindowState = WindowState.Maximized;
+        Activate();
+    }
+
+    private void ExitApp()
+    {
+        _allowClose = true;
+        Close();
+    }
+
+    private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
+    }
+
+    private void WindowMinimize_Click(object sender, RoutedEventArgs e) => HideToTray();
+    private void WindowMaximizeRestore_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+    }
+    private void WindowClose_Click(object sender, RoutedEventArgs e) => HideToTray();
 }
 
 

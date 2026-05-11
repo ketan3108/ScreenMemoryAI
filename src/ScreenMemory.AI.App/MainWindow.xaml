@@ -7,6 +7,8 @@
         MinHeight="600"
         MinWidth="920"
         WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="CanResize"
         FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
         Background="#0D0F14">
 
@@ -403,10 +405,12 @@
                     Background="{StaticResource BgSurface}"
                     BorderBrush="{StaticResource BorderSubtle}"
                     BorderThickness="0,0,0,1"
-                    Padding="20,11">
+                    Padding="20,11"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
@@ -424,6 +428,11 @@
                             Padding="0"
                             Margin="10,0,0,0"
                             Click="IndexNow_Click"/>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <Button Content="—" Width="34" Height="30" Style="{StaticResource GhostButton}" Padding="0" Margin="0,0,6,0" Click="WindowMinimize_Click"/>
+                        <Button Content="▢" Width="34" Height="30" Style="{StaticResource GhostButton}" Padding="0" Margin="0,0,6,0" Click="WindowMaximizeRestore_Click"/>
+                        <Button Content="✕" Width="34" Height="30" Style="{StaticResource GhostButton}" Padding="0" Click="WindowClose_Click"/>
+                    </StackPanel>
                 </Grid>
             </Border>
 
