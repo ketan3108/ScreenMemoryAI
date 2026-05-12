@@ -10,6 +10,7 @@ public class ScreenshotIndexedEventArgs : EventArgs
 {
     public ScreenshotRecord Record { get; init; } = new();
     public bool IsNewInsert { get; init; }
+    public int BatchSize { get; init; } = 1;
 }
 
 public class FileWatcherService : IDisposable
@@ -24,6 +25,9 @@ public class FileWatcherService : IDisposable
     private readonly ConcurrentQueue<string> _queue = new();
     private readonly SemaphoreSlim _queueSignal = new(0);
     private readonly SemaphoreSlim _workerLock = new(1, 1);
+
+    private static readonly TimeSpan QueueSettleDelay = TimeSpan.FromMilliseconds(1200);
+    private const int MaxBatchPerDrain = 512;
 
     private CancellationTokenSource? _cts;
     private Task? _workerTask;
@@ -73,6 +77,7 @@ public class FileWatcherService : IDisposable
                 watcher.Created -= OnCreatedOrChanged;
                 watcher.Changed -= OnCreatedOrChanged;
                 watcher.Renamed -= OnRenamed;
+                watcher.Error -= OnWatcherError;
                 watcher.Dispose();
             }
 
@@ -96,12 +101,14 @@ public class FileWatcherService : IDisposable
                     IncludeSubdirectories = true,
                     NotifyFilter = NotifyFilters.FileName | NotifyFilters.CreationTime | NotifyFilters.LastWrite,
                     Filter = "*.*",
+                    InternalBufferSize = 65536,
                     EnableRaisingEvents = true
                 };
 
                 watcher.Created += OnCreatedOrChanged;
                 watcher.Changed += OnCreatedOrChanged;
                 watcher.Renamed += OnRenamed;
+                watcher.Error += OnWatcherError;
 
                 lock (_watchers)
                 {
@@ -125,6 +132,11 @@ public class FileWatcherService : IDisposable
         EnqueuePath(e.FullPath);
     }
 
+    private void OnWatcherError(object sender, ErrorEventArgs e)
+    {
+        Debug.WriteLine($"[FileWatcherService] Watcher error: {e.GetException()?.Message}");
+    }
+
     private void EnqueuePath(string path)
     {
         if (!IndexingService.IsSupportedImage(path))
@@ -143,7 +155,7 @@ public class FileWatcherService : IDisposable
         _queue.Enqueue(path);
         _queueSignal.Release();
 
-        if (_recentEvents.Count > 2000)
+        if (_recentEvents.Count > 4000)
         {
             var cutoff = DateTime.UtcNow.AddMinutes(-10);
             foreach (var kvp in _recentEvents)
@@ -177,7 +189,44 @@ public class FileWatcherService : IDisposable
             await _workerLock.WaitAsync(token);
             try
             {
-                await ProcessFileAsync(path, token);
+                var batchPaths = new List<string> { path };
+
+                try
+                {
+                    await Task.Delay(QueueSettleDelay, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+
+                while (batchPaths.Count < MaxBatchPerDrain && _queue.TryDequeue(out var next))
+                {
+                    batchPaths.Add(next);
+                }
+
+                var uniqueBatch = batchPaths.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                var processedRecords = new List<(ScreenshotRecord Record, bool IsInserted)>(uniqueBatch.Count);
+
+                foreach (var itemPath in uniqueBatch)
+                {
+                    var processed = await ProcessFileAsync(itemPath, token);
+                    if (processed is not null)
+                    {
+                        processedRecords.Add(processed.Value);
+                    }
+                }
+
+                if (processedRecords.Count > 0)
+                {
+                    var last = processedRecords[^1];
+                    ScreenshotIndexed?.Invoke(this, new ScreenshotIndexedEventArgs
+                    {
+                        IsNewInsert = last.IsInserted,
+                        Record = last.Record,
+                        BatchSize = processedRecords.Count
+                    });
+                }
             }
             catch (OperationCanceledException)
             {
@@ -185,7 +234,7 @@ public class FileWatcherService : IDisposable
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[FileWatcherService] Processing failed for '{path}'. {ex.Message}");
+                Debug.WriteLine($"[FileWatcherService] Processing batch failed. {ex.Message}");
             }
             finally
             {
@@ -194,11 +243,11 @@ public class FileWatcherService : IDisposable
         }
     }
 
-    private async Task ProcessFileAsync(string path, CancellationToken token)
+    private async Task<(ScreenshotRecord Record, bool IsInserted)?> ProcessFileAsync(string path, CancellationToken token)
     {
         if (!await WaitForFileReadyAsync(path, token))
         {
-            return;
+            return null;
         }
 
         var result = await _indexingService.IndexSingleFileAsync(path, token);
@@ -206,7 +255,7 @@ public class FileWatcherService : IDisposable
         var record = result.Record ?? _repository.GetByFilePath(path);
         if (record is null)
         {
-            return;
+            return null;
         }
 
         if (string.IsNullOrWhiteSpace(record.ThumbnailPath))
@@ -225,11 +274,7 @@ public class FileWatcherService : IDisposable
 
         // TODO: enqueue OCR for new screenshot
 
-        ScreenshotIndexed?.Invoke(this, new ScreenshotIndexedEventArgs
-        {
-            IsNewInsert = result.IsInserted,
-            Record = record
-        });
+        return (record, result.IsInserted);
     }
 
     public static async Task<bool> WaitForFileReadyAsync(string path, CancellationToken token)

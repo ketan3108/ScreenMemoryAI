@@ -6,6 +6,7 @@ namespace ScreenMemory.AI.App.Services;
 public class AppSettingsData
 {
     public List<string> WatchedFolders { get; set; } = new();
+    public bool ShowDashboardOnStartup { get; set; } = false;
 }
 
 public class AppSettingsService

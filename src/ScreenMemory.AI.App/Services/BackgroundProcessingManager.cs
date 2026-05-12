@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Threading.Channels;
 using ScreenMemory.AI.Core.Models;
 
 namespace ScreenMemory.AI.App.Services;
@@ -14,19 +15,19 @@ public class BackgroundProcessingManager : IDisposable
     private readonly ThumbnailQueueService _thumbnailQueueService;
     private readonly OcrQueueService _ocrQueueService;
 
-    private readonly ConcurrentQueue<ScreenshotRecord> _thumbHigh = new();
-    private readonly ConcurrentQueue<ScreenshotRecord> _thumbLow = new();
-    private readonly ConcurrentQueue<ScreenshotRecord> _ocrHigh = new();
-    private readonly ConcurrentQueue<ScreenshotRecord> _ocrLow = new();
+    private readonly Channel<ScreenshotRecord> _thumbHigh;
+    private readonly Channel<ScreenshotRecord> _thumbLow;
+    private readonly Channel<ScreenshotRecord> _ocrHigh;
+    private readonly Channel<ScreenshotRecord> _ocrLow;
 
     private readonly ConcurrentDictionary<string, byte> _thumbDedup = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, byte> _ocrDedup = new(StringComparer.OrdinalIgnoreCase);
 
-    private readonly SemaphoreSlim _thumbSignal = new(0);
-    private readonly SemaphoreSlim _ocrSignal = new(0);
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _thumbWorker;
     private readonly Task _ocrWorker;
+
+    private const int ChannelCapacity = 256;
 
     public BackgroundProcessingManager(
         ThumbnailQueueService thumbnailQueueService,
@@ -34,51 +35,65 @@ public class BackgroundProcessingManager : IDisposable
     {
         _thumbnailQueueService = thumbnailQueueService;
         _ocrQueueService = ocrQueueService;
+
+        var thumbOptions = new BoundedChannelOptions(ChannelCapacity)
+        {
+            SingleReader = true,
+            SingleWriter = false,
+            FullMode = BoundedChannelFullMode.Wait
+        };
+
+        var ocrOptions = new BoundedChannelOptions(ChannelCapacity)
+        {
+            SingleReader = true,
+            SingleWriter = false,
+            FullMode = BoundedChannelFullMode.Wait
+        };
+
+        _thumbHigh = Channel.CreateBounded<ScreenshotRecord>(thumbOptions);
+        _thumbLow = Channel.CreateBounded<ScreenshotRecord>(thumbOptions);
+        _ocrHigh = Channel.CreateBounded<ScreenshotRecord>(ocrOptions);
+        _ocrLow = Channel.CreateBounded<ScreenshotRecord>(ocrOptions);
+
         _thumbWorker = Task.Run(() => RunThumbnailWorkerAsync(_cts.Token));
         _ocrWorker = Task.Run(() => RunOcrWorkerAsync(_cts.Token));
     }
 
     public void EnqueueThumbnails(IEnumerable<ScreenshotRecord> records, JobPriority priority)
     {
-        foreach (var record in records)
-        {
-            if (!_thumbDedup.TryAdd(record.Id, 0))
-            {
-                continue;
-            }
-
-            if (priority == JobPriority.High)
-            {
-                _thumbHigh.Enqueue(record);
-            }
-            else
-            {
-                _thumbLow.Enqueue(record);
-            }
-
-            _thumbSignal.Release();
-        }
+        _ = Task.Run(() => EnqueueInternalAsync(records, priority, _thumbHigh, _thumbLow, _thumbDedup, _cts.Token));
     }
 
     public void EnqueueOcr(IEnumerable<ScreenshotRecord> records, JobPriority priority)
     {
+        _ = Task.Run(() => EnqueueInternalAsync(records, priority, _ocrHigh, _ocrLow, _ocrDedup, _cts.Token));
+    }
+
+    private static async Task EnqueueInternalAsync(
+        IEnumerable<ScreenshotRecord> records,
+        JobPriority priority,
+        Channel<ScreenshotRecord> high,
+        Channel<ScreenshotRecord> low,
+        ConcurrentDictionary<string, byte> dedup,
+        CancellationToken token)
+    {
         foreach (var record in records)
         {
-            if (!_ocrDedup.TryAdd(record.Id, 0))
+            if (!dedup.TryAdd(record.Id, 0))
             {
                 continue;
             }
 
-            if (priority == JobPriority.High)
+            var writer = priority == JobPriority.High ? high.Writer : low.Writer;
+            try
             {
-                _ocrHigh.Enqueue(record);
+                await writer.WriteAsync(record, token);
             }
-            else
+            catch
             {
-                _ocrLow.Enqueue(record);
+                dedup.TryRemove(record.Id, out _);
+                throw;
             }
-
-            _ocrSignal.Release();
         }
     }
 
@@ -86,9 +101,7 @@ public class BackgroundProcessingManager : IDisposable
     {
         while (!token.IsCancellationRequested)
         {
-            await _thumbSignal.WaitAsync(token);
-
-            var batch = DrainQueue(_thumbHigh, _thumbLow, maxBatch: 20);
+            var batch = await DrainBatchAsync(_thumbHigh.Reader, _thumbLow.Reader, maxBatch: 20, token);
             if (batch.Count == 0)
             {
                 continue;
@@ -116,9 +129,7 @@ public class BackgroundProcessingManager : IDisposable
     {
         while (!token.IsCancellationRequested)
         {
-            await _ocrSignal.WaitAsync(token);
-
-            var batch = DrainQueue(_ocrHigh, _ocrLow, maxBatch: 10);
+            var batch = await DrainBatchAsync(_ocrHigh.Reader, _ocrLow.Reader, maxBatch: 10, token);
             if (batch.Count == 0)
             {
                 continue;
@@ -142,42 +153,95 @@ public class BackgroundProcessingManager : IDisposable
         }
     }
 
-    private static List<ScreenshotRecord> DrainQueue(
-        ConcurrentQueue<ScreenshotRecord> high,
-        ConcurrentQueue<ScreenshotRecord> low,
-        int maxBatch)
+    private static async Task<List<ScreenshotRecord>> DrainBatchAsync(
+        ChannelReader<ScreenshotRecord> high,
+        ChannelReader<ScreenshotRecord> low,
+        int maxBatch,
+        CancellationToken token)
     {
         var result = new List<ScreenshotRecord>(maxBatch);
-        while (result.Count < maxBatch && high.TryDequeue(out var nextHigh))
+
+        var first = await ReadOneAsync(high, low, token);
+        if (first is null)
         {
-            result.Add(nextHigh);
+            return result;
         }
 
-        while (result.Count < maxBatch && low.TryDequeue(out var nextLow))
+        result.Add(first);
+
+        while (result.Count < maxBatch)
         {
-            result.Add(nextLow);
+            if (high.TryRead(out var h))
+            {
+                result.Add(h);
+                continue;
+            }
+
+            if (low.TryRead(out var l))
+            {
+                result.Add(l);
+                continue;
+            }
+
+            break;
         }
 
         return result;
     }
 
+    private static async Task<ScreenshotRecord?> ReadOneAsync(
+        ChannelReader<ScreenshotRecord> high,
+        ChannelReader<ScreenshotRecord> low,
+        CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            if (high.TryRead(out var h))
+            {
+                return h;
+            }
+
+            if (low.TryRead(out var l))
+            {
+                return l;
+            }
+
+            var highWait = high.WaitToReadAsync(token).AsTask();
+            var lowWait = low.WaitToReadAsync(token).AsTask();
+            var completed = await Task.WhenAny(highWait, lowWait);
+
+            if (completed == highWait && await highWait)
+            {
+                continue;
+            }
+
+            if (completed == lowWait && await lowWait)
+            {
+                continue;
+            }
+        }
+
+        return null;
+    }
+
     public void Dispose()
     {
         _cts.Cancel();
-        _thumbSignal.Release();
-        _ocrSignal.Release();
+
+        _thumbHigh.Writer.TryComplete();
+        _thumbLow.Writer.TryComplete();
+        _ocrHigh.Writer.TryComplete();
+        _ocrLow.Writer.TryComplete();
+
         try
         {
-            Task.WaitAll([_thumbWorker, _ocrWorker], TimeSpan.FromSeconds(2));
+            Task.WaitAll([_thumbWorker, _ocrWorker], TimeSpan.FromSeconds(3));
         }
         catch
         {
             // Ignore shutdown issues.
         }
 
-        _thumbSignal.Dispose();
-        _ocrSignal.Dispose();
         _cts.Dispose();
     }
 }
-

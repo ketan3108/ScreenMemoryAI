@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     private CancellationTokenSource? _previewLoadCts;
     private CancellationTokenSource? _searchCts;
     private bool _allowClose;
+    private bool _trayDisposed;
     private ScreenshotRecord? _selectedScreenshot;
     private readonly Dictionary<string, BitmapSource> _previewCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly LinkedList<string> _previewCacheOrder = [];
@@ -47,11 +48,14 @@ public partial class MainWindow : Window
     private const uint ModShift = 0x0004;
     private const uint VkSpace = 0x20;
     private const int WmHotkey = 0x0312;
+    private bool _hotkeyRegistered;
+    private bool _wndProcAttached;
 
     public ViewMode CurrentViewMode { get; private set; } = ViewMode.Home;
     public string CurrentCollection { get; private set; } = string.Empty;
     public string CurrentSearchQuery { get; private set; } = string.Empty;
     public List<ScreenshotRecord> DisplayedScreenshots { get; private set; } = [];
+    public AppSettingsData Settings => _settingsService.Load();
 
     public MainWindow()
     {
@@ -72,15 +76,30 @@ public partial class MainWindow : Window
         _trayIcon = new Forms.NotifyIcon
         {
             Text = "ScreenMemory AI",
-            Icon = Drawing.SystemIcons.Application,
             Visible = true
         };
+        try
+        {
+            var iconStream = System.Windows.Application.GetResourceStream(
+                new Uri("pack://application:,,,/Assets/AppIcon.ico"))?.Stream;
+            if (iconStream is not null)
+            {
+                _trayIcon.Icon = new Drawing.Icon(iconStream);
+            }
+            else
+            {
+                _trayIcon.Icon = Drawing.SystemIcons.Application;
+            }
+        }
+        catch
+        {
+            _trayIcon.Icon = Drawing.SystemIcons.Application;
+        }
         var trayMenu = new Forms.ContextMenuStrip();
         trayMenu.Items.Add("Open Dashboard", null, (_, _) => RestoreDashboard());
         trayMenu.Items.Add("Exit", null, (_, _) => ExitApp());
         _trayIcon.ContextMenuStrip = trayMenu;
         _trayIcon.DoubleClick += (_, _) => RestoreDashboard();
-        Loaded += (_, _) => HideToTray();
 
         LoadHomeDashboard();
     }
@@ -88,21 +107,22 @@ public partial class MainWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        var source = (HwndSource?)PresentationSource.FromVisual(this);
-        source?.AddHook(WndProc);
-        RegisterHotKey(new WindowInteropHelper(this).Handle, HotkeyId, ModControl | ModShift, VkSpace);
+        EnsureHotkeyRegistration();
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        UnregisterHotKey(new WindowInteropHelper(this).Handle, HotkeyId);
+        if (_hotkeyRegistered)
+        {
+            UnregisterHotKey(new WindowInteropHelper(this).Handle, HotkeyId);
+            _hotkeyRegistered = false;
+        }
         _fileWatcherService.ScreenshotIndexed -= FileWatcherService_ScreenshotIndexed;
         _ocrQueueService.ProgressChanged -= OcrQueueService_ProgressChanged;
         _fileWatcherService.Dispose();
         _backgroundProcessingManager.Dispose();
         _quickSearchOverlay.Close();
-        _trayIcon.Visible = false;
-        _trayIcon.Dispose();
+        DisposeTrayIcon();
         _previewLoadCts?.Cancel();
         _previewLoadCts?.Dispose();
         _searchCts?.Cancel();
@@ -716,6 +736,28 @@ public partial class MainWindow : Window
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
+    public void EnsureHotkeyRegistration()
+    {
+        var helper = new WindowInteropHelper(this);
+        var handle = helper.Handle;
+        if (handle == IntPtr.Zero)
+        {
+            return;
+        }
+
+        if (!_wndProcAttached)
+        {
+            var source = HwndSource.FromHwnd(handle);
+            source?.AddHook(WndProc);
+            _wndProcAttached = true;
+        }
+
+        if (!_hotkeyRegistered)
+        {
+            _hotkeyRegistered = RegisterHotKey(handle, HotkeyId, ModControl | ModShift, VkSpace);
+        }
+    }
+
     private void HideToTray()
     {
         Hide();
@@ -733,7 +775,20 @@ public partial class MainWindow : Window
     private void ExitApp()
     {
         _allowClose = true;
-        Close();
+        DisposeTrayIcon();
+        System.Windows.Application.Current.Shutdown();
+    }
+
+    private void DisposeTrayIcon()
+    {
+        if (_trayDisposed)
+        {
+            return;
+        }
+
+        _trayIcon.Visible = false;
+        _trayIcon.Dispose();
+        _trayDisposed = true;
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -751,7 +806,6 @@ public partial class MainWindow : Window
     }
     private void WindowClose_Click(object sender, RoutedEventArgs e) => HideToTray();
 }
-
 
 
 
