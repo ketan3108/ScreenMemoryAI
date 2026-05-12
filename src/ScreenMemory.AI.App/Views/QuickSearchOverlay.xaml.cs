@@ -1,5 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Controls;
 using ScreenMemory.AI.Core.Data;
 using ScreenMemory.AI.Core.Models;
 
@@ -7,14 +18,43 @@ namespace ScreenMemory.AI.App.Views;
 
 public partial class QuickSearchOverlay : Window
 {
+    private sealed class OverlayResultItem : INotifyPropertyChanged
+    {
+        public ScreenshotRecord Record { get; init; } = new();
+        public string FileName => Record.FileName;
+        public string CreatedAtLabel => Record.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+
+        private ImageSource? _thumbnailImage;
+        public ImageSource? ThumbnailImage
+        {
+            get => _thumbnailImage;
+            set
+            {
+                if (!ReferenceEquals(_thumbnailImage, value))
+                {
+                    _thumbnailImage = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string? name = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
     private readonly ScreenshotRepository _repository;
-    private CancellationTokenSource? _searchCts;
     private readonly Action<ScreenshotRecord> _openRecord;
     private readonly Action<ScreenshotRecord> _revealRecord;
-    private const double BaseHeight = 170;
-    private const double RowHeight = 76;
-    private const double MinOverlayHeight = 220;
-    private const double MaxOverlayHeight = 640;
+    
+    // Atomic lock for search debounce
+    private int _searchVersion;
+
+    private const double CompactHeight = 100;
+    private const double BaseHeight = 110;
+    private const double RowHeight = 68;
+    private const double MinOverlayHeight = 100;
+    private const double MaxOverlayHeight = 620;
 
     public QuickSearchOverlay(
         ScreenshotRepository repository,
@@ -25,118 +65,156 @@ public partial class QuickSearchOverlay : Window
         _repository = repository;
         _openRecord = openRecord;
         _revealRecord = revealRecord;
+
+        // FIX 1: Strip out the aggressive recycling mode that causes blank rows on resize
+        VirtualizingPanel.SetVirtualizationMode(ResultsList, VirtualizationMode.Standard);
     }
 
     public void Open()
     {
         var workArea = SystemParameters.WorkArea;
         MaxHeight = Math.Max(MinOverlayHeight, workArea.Height - 40);
-        Height = Math.Min(Height, MaxHeight);
         Left = workArea.Left + ((workArea.Width - Width) / 2);
-        Top = workArea.Top + 20;
+        Top = workArea.Top + (workArea.Height * 0.2);
 
         Show();
         Activate();
         SearchBox.Focus();
-        SearchBox.SelectAll();
+        SearchBox.Text = string.Empty; 
     }
 
-    private async void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    public void InvalidateSearchCache()
+    {
+        // No-op: cache intentionally removed
+    }
+
+    private async void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         var query = SearchBox.Text.Trim();
-        _searchCts?.Cancel();
-        _searchCts?.Dispose();
-        _searchCts = new CancellationTokenSource();
-        var token = _searchCts.Token;
+        var currentVersion = Interlocked.Increment(ref _searchVersion);
 
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            SetCompactState();
+            return;
+        }
+
+        await RunSearchAsync(query, currentVersion);
+    }
+
+    private async Task RunSearchAsync(string query, int version)
+    {
+            await Task.Delay(40);
+        
+        // If user typed something else while we were waiting, die instantly
+        if (Volatile.Read(ref _searchVersion) != version) return;
+
+        List<OverlayResultItem> results;
         try
         {
-            await Task.Delay(120, token);
+            results = await Task.Run(() =>
+            {
+                var records = _repository.SearchHybrid(query, 10);
+                return records.Select(r => new OverlayResultItem
+                {
+                    Record = r,
+                    ThumbnailImage = LoadThumbnail(r.ThumbnailPath)
+                }).ToList();
+            });
         }
-        catch (OperationCanceledException)
+        catch
         {
             return;
         }
 
-        List<ScreenshotRecord> results;
-        try
-        {
-            results = string.IsNullOrWhiteSpace(query)
-                ? _repository.GetRecent(10)
-                : await Task.Run(() => _repository.SearchHybrid(query, 10), token);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-
-        if (token.IsCancellationRequested)
-        {
-            return;
-        }
+        // Final check before hitting UI thread
+        if (Volatile.Read(ref _searchVersion) != version) return;
 
         ResultsList.ItemsSource = results;
+
         if (results.Count > 0)
         {
+            // FIX 2: ListBox stays Visible. We only toggle the visual divider.
+            ResultsList.Visibility = Visibility.Visible; 
+            Divider.Visibility = Visibility.Visible;
+            
             ResultsList.SelectedIndex = 0;
+            UpdateOverlaySize(results.Count);
+            
+            // FIX 3: Force WPF layout engine to instantly render the children
+            ResultsList.UpdateLayout();
+        }
+        else
+        {
+            SetCompactState();
+        }
+    }
+
+    private void SetCompactState()
+    {
+        ResultsList.ItemsSource = null;
+        Divider.Visibility = Visibility.Collapsed;
+        
+        // DO NOT set ResultsList to Collapsed. Let the empty ItemsSource handle the 0-height.
+        Height = CompactHeight;
+    }
+
+    private void UpdateOverlaySize(int count)
+    {
+        if (count <= 0)
+        {
+            Height = CompactHeight;
+            return;
         }
 
-        UpdateOverlaySize(results.Count);
+        var target = BaseHeight + (Math.Min(count, 7) * RowHeight);
+        var maxAllowed = Math.Min(MaxOverlayHeight, MaxHeight);
+        Height = Math.Max(MinOverlayHeight, Math.Min(maxAllowed, target));
     }
 
     private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key == Key.Escape)
+        switch (e.Key)
         {
-            Hide();
-            e.Handled = true;
-            return;
-        }
-
-        if (e.Key == Key.Enter)
-        {
-            OpenSelected();
-            e.Handled = true;
-            return;
-        }
-
-        if (e.Key == Key.Down)
-        {
-            if (ResultsList.Items.Count == 0) return;
-            ResultsList.SelectedIndex = Math.Min(ResultsList.SelectedIndex + 1, ResultsList.Items.Count - 1);
-            ResultsList.ScrollIntoView(ResultsList.SelectedItem);
-            e.Handled = true;
-            return;
-        }
-
-        if (e.Key == Key.Up)
-        {
-            if (ResultsList.Items.Count == 0) return;
-            ResultsList.SelectedIndex = Math.Max(ResultsList.SelectedIndex - 1, 0);
-            ResultsList.ScrollIntoView(ResultsList.SelectedItem);
-            e.Handled = true;
+            case Key.Escape:
+                Hide();
+                e.Handled = true;
+                break;
+            case Key.Enter:
+                OpenSelected();
+                e.Handled = true;
+                break;
+            case Key.Down when ResultsList.Items.Count > 0:
+                ResultsList.SelectedIndex = Math.Min(ResultsList.SelectedIndex + 1, ResultsList.Items.Count - 1);
+                ResultsList.ScrollIntoView(ResultsList.SelectedItem);
+                e.Handled = true;
+                break;
+            case Key.Up when ResultsList.Items.Count > 0:
+                ResultsList.SelectedIndex = Math.Max(ResultsList.SelectedIndex - 1, 0);
+                ResultsList.ScrollIntoView(ResultsList.SelectedItem);
+                e.Handled = true;
+                break;
         }
     }
 
-    private void ResultsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-    {
-        OpenSelected();
-    }
+    private void ResultsList_MouseDoubleClick(object sender, MouseButtonEventArgs e) => OpenSelected();
 
-    private void OpenSelected()
+    private void OpenButton_Click(object sender, RoutedEventArgs e)
     {
-        if (ResultsList.SelectedItem is ScreenshotRecord record)
+        if (sender is FrameworkElement { DataContext: OverlayResultItem item })
         {
-            _openRecord(record);
+            _openRecord(item.Record);
             Hide();
         }
     }
 
-    private void UpdateOverlaySize(int resultCount)
+    private void RevealButton_Click(object sender, RoutedEventArgs e)
     {
-        var target = BaseHeight + (Math.Min(resultCount, 10) * RowHeight);
-        var maxAllowed = Math.Min(MaxOverlayHeight, MaxHeight);
-        Height = Math.Max(MinOverlayHeight, Math.Min(maxAllowed, target));
+        if (sender is FrameworkElement { DataContext: OverlayResultItem item })
+        {
+            _revealRecord(item.Record);
+            Hide();
+        }
     }
 
     private void Shell_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -147,20 +225,11 @@ public partial class QuickSearchOverlay : Window
         }
     }
 
-    private void OpenButton_Click(object sender, RoutedEventArgs e)
+    private void OpenSelected()
     {
-        if (sender is FrameworkElement element && element.DataContext is ScreenshotRecord record)
+        if (ResultsList.SelectedItem is OverlayResultItem item)
         {
-            _openRecord(record);
-            Hide();
-        }
-    }
-
-    private void RevealButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement element && element.DataContext is ScreenshotRecord record)
-        {
-            _revealRecord(record);
+            _openRecord(item.Record);
             Hide();
         }
     }
@@ -169,5 +238,30 @@ public partial class QuickSearchOverlay : Window
     {
         base.OnDeactivated(e);
         Hide();
+    }
+
+    private static BitmapImage? LoadThumbnail(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            return null;
+        }
+
+        try
+        {
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+            bmp.DecodePixelWidth = 160;
+            bmp.UriSource = new Uri(path, UriKind.Absolute);
+            bmp.EndInit();
+            bmp.Freeze();
+            return bmp;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

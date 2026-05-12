@@ -28,6 +28,20 @@ public class DatabaseService
 
         connection.Open();
 
+        const string pragmaSql =
+        """
+        PRAGMA journal_mode = WAL;
+        PRAGMA synchronous = NORMAL;
+        PRAGMA cache_size = -20000;
+        PRAGMA temp_store = MEMORY;
+        """;
+
+        using (var pragmaCommand = connection.CreateCommand())
+        {
+            pragmaCommand.CommandText = pragmaSql;
+            pragmaCommand.ExecuteNonQuery();
+        }
+
         var command = connection.CreateCommand();
 
         command.CommandText =

@@ -261,7 +261,7 @@
         </Style>
 
         <DataTemplate x:Key="ScreenshotCardTemplate">
-            <Border Width="192" Margin="0,0,12,12"
+            <Border Width="168" Margin="0,0,10,10"
                     CornerRadius="10" Cursor="Hand"
                     MouseLeftButtonDown="ScreenshotCard_MouseLeftButtonDown">
                 <Border.Style>
@@ -279,14 +279,14 @@
                     </Style>
                 </Border.Style>
                 <StackPanel>
-                    <Border Height="118" Background="#0F1219" CornerRadius="9,9,0,0" ClipToBounds="True">
+                    <Border Height="102" Background="#0F1219" CornerRadius="9,9,0,0" ClipToBounds="True">
                         <Image Source="{Binding ThumbnailPath}"
                                Stretch="UniformToFill"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                               RenderOptions.BitmapScalingMode="LowQuality"/>
                     </Border>
-                    <StackPanel Margin="10,8,10,10">
+                    <StackPanel Margin="9,7,9,9">
                         <TextBlock Text="{Binding FileName}"
-                                   FontSize="11.5" FontWeight="SemiBold"
+                                   FontSize="11" FontWeight="SemiBold"
                                    Foreground="{StaticResource TextSecondary}"
                                    TextTrimming="CharacterEllipsis"/>
                     </StackPanel>

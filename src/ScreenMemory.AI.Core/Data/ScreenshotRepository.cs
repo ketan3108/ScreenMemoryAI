@@ -358,19 +358,6 @@ public class ScreenshotRepository
             return GetRecent(limit);
         }
 
-        var terms = trimmed
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (trimmed.Length < 3)
-        {
-            return SearchByTextLike(trimmed, limit);
-        }
-
-        if (terms.Length <= 1)
-        {
-            return SearchByTextLike(trimmed, limit);
-        }
-
         var likeResults = SearchByTextLike(trimmed, limit);
         var ftsResults = SearchFullText(trimmed, limit);
 
@@ -394,11 +381,9 @@ public class ScreenshotRepository
         }
 
         // Priority order for UX:
-        // 1) exact filename
-        // 2) partial filename / OCR from LIKE
-        // 3) ranked FTS matches (bm25)
-        append(likeResults.Where(r => string.Equals(r.FileName, trimmed, StringComparison.OrdinalIgnoreCase)));
-        append(likeResults.Where(r => !string.Equals(r.FileName, trimmed, StringComparison.OrdinalIgnoreCase)));
+        // 1) filename matches (exact and partial)
+        // 2) ranked OCR/FTS matches (bm25)
+        append(likeResults);
         append(ftsResults);
 
         return merged;
@@ -634,7 +619,6 @@ public class ScreenshotRepository
             imported_at AS ImportedAt
         FROM screenshots
         WHERE file_name LIKE @Query
-           OR ocr_text LIKE @Query
         ORDER BY imported_at DESC
         LIMIT @Limit;
         """;
@@ -659,9 +643,13 @@ public class ScreenshotRepository
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        return words.Count == 0
-            ? string.Empty
-            : string.Join(" AND ", words);
+        if (words.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var prefixWords = words.Select(w => $"{w}*");
+        return string.Join(" AND ", prefixWords);
     }
 
     public static DateTime GetBestTimestamp(ScreenshotRecord record)

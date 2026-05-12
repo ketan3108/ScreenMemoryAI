@@ -38,6 +38,7 @@ public partial class MainWindow : Window
     private const int PreviewCacheLimit = 10;
 
     private const int HomeRecentLimit = 12;
+    private const int RecentPageLimit = 60;
     private const int SearchLimit = 100;
     private const int CollectionLimit = 100;
     private const int PreviewPanelWidth = 300;
@@ -172,6 +173,7 @@ public partial class MainWindow : Window
                 _repository.InsertManyIfNotExists(records);
             });
 
+            _quickSearchOverlay.InvalidateSearchCache();
             LoadHomeDashboard();
             StartOcrQueueForRecords(_repository.GetPendingOcr(100));
         }
@@ -191,7 +193,12 @@ public partial class MainWindow : Window
     }
 
     private void Recent_Click(object sender, RoutedEventArgs e)
-        => ShowResults("Recent", _repository.GetRecent(CollectionLimit));
+    {
+        CurrentViewMode = ViewMode.Collection;
+        CurrentCollection = "Recent";
+        CurrentSearchQuery = string.Empty;
+        ShowResults("Recent", _repository.GetRecent(RecentPageLimit));
+    }
 
     private void Invoices_Click(object sender, RoutedEventArgs e)
         => ShowCollection("Invoices", ["invoice", "receipt", "bill", "payment"]);
@@ -222,7 +229,7 @@ public partial class MainWindow : Window
 
         try
         {
-            await Task.Delay(140, token);
+            await Task.Delay(40, token);
         }
         catch (OperationCanceledException)
         {
@@ -305,7 +312,15 @@ public partial class MainWindow : Window
 
     private void StartThumbnailQueue(List<ScreenshotRecord> records)
     {
-        _backgroundProcessingManager.EnqueueThumbnails(records, JobPriority.High);
+        var pending = records
+            .Where(r => string.IsNullOrWhiteSpace(r.ThumbnailPath) || !File.Exists(r.ThumbnailPath))
+            .ToList();
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        _backgroundProcessingManager.EnqueueThumbnails(pending, JobPriority.High);
     }
 
     private void StopThumbnailQueue() { }
@@ -329,6 +344,7 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
+            _quickSearchOverlay.InvalidateSearchCache();
             ImportedCountText.Text = _repository.Count().ToString("N0");
 
             if (CurrentViewMode == ViewMode.Home)
@@ -357,6 +373,14 @@ public partial class MainWindow : Window
                 var keywords = GetCollectionKeywords(CurrentCollection);
                 var refreshed = _repository.SearchByKeywords(keywords, CollectionLimit);
                 ShowResults(CurrentCollection, refreshed);
+                return;
+            }
+
+            if (CurrentViewMode == ViewMode.Collection &&
+                string.Equals(CurrentCollection, "Recent", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowResults("Recent", _repository.GetRecent(RecentPageLimit));
+                return;
             }
 
             StartOcrQueueForRecords([e.Record]);
@@ -493,7 +517,7 @@ public partial class MainWindow : Window
         {
             try
             {
-                var thumb = await Task.Run(() => CreateBitmap(record.ThumbnailPath), token);
+                var thumb = await Task.Run(() => CreateBitmap(record.ThumbnailPath, 160), token);
                 PreviewImage.Source               = thumb;
                 PreviewPlaceholderText.Visibility = Visibility.Collapsed;
             }
@@ -512,7 +536,7 @@ public partial class MainWindow : Window
 
         try
         {
-            var full = await Task.Run(() => CreateBitmap(record.FilePath), token);
+            var full = await Task.Run(() => CreateBitmap(record.FilePath, 900), token);
             token.ThrowIfCancellationRequested();
 
             if (_selectedScreenshot?.Id != record.Id) return;
@@ -533,12 +557,13 @@ public partial class MainWindow : Window
         }
     }
 
-    private static BitmapImage CreateBitmap(string path)
+    private static BitmapImage CreateBitmap(string path, int decodePixelWidth)
     {
         var image = new BitmapImage();
         image.BeginInit();
         image.CacheOption    = BitmapCacheOption.OnLoad;
         image.CreateOptions  = BitmapCreateOptions.IgnoreImageCache;
+        image.DecodePixelWidth = decodePixelWidth;
         image.UriSource      = new Uri(path, UriKind.Absolute);
         image.EndInit();
         image.Freeze();
