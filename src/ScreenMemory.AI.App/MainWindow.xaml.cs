@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Forms = System.Windows.Forms;
 using Drawing = System.Drawing;
 using ScreenMemory.AI.App.Services;
@@ -36,12 +37,15 @@ public partial class MainWindow : Window
     private ScreenshotRecord? _selectedScreenshot;
     private readonly Dictionary<string, BitmapSource> _previewCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly LinkedList<string> _previewCacheOrder = [];
+    private readonly DispatcherTimer _ocrEtaTimer;
+    private readonly System.Diagnostics.Stopwatch _ocrRunStopwatch = new();
     private const int PreviewCacheLimit = 10;
 
     private const int HomeRecentLimit = 12;
-    private const int RecentPageLimit = 60;
+    private const int RecentPageLimit = 100;
     private const int SearchLimit = 100;
     private const int CollectionLimit = 100;
+    private const int OcrBackfillBatchSize = 1000;
     private const int PreviewPanelWidth = 300;
     private const int HotkeyId = 9001;
     private const uint ModControl = 0x0002;
@@ -50,6 +54,8 @@ public partial class MainWindow : Window
     private const int WmHotkey = 0x0312;
     private bool _hotkeyRegistered;
     private bool _wndProcAttached;
+    private bool _ocrTrackingActive;
+    private int _ocrRunTotal;
 
     public ViewMode CurrentViewMode { get; private set; } = ViewMode.Home;
     public string CurrentCollection { get; private set; } = string.Empty;
@@ -100,8 +106,14 @@ public partial class MainWindow : Window
         trayMenu.Items.Add("Exit", null, (_, _) => ExitApp());
         _trayIcon.ContextMenuStrip = trayMenu;
         _trayIcon.DoubleClick += (_, _) => RestoreDashboard();
+        _ocrEtaTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1)
+        };
+        _ocrEtaTimer.Tick += OcrEtaTimer_Tick;
 
         LoadHomeDashboard();
+        QueueOcrBackfill();
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -121,12 +133,15 @@ public partial class MainWindow : Window
         _ocrQueueService.ProgressChanged -= OcrQueueService_ProgressChanged;
         _fileWatcherService.Dispose();
         _backgroundProcessingManager.Dispose();
+        _ocrService.Dispose();
         _quickSearchOverlay.Close();
         DisposeTrayIcon();
         _previewLoadCts?.Cancel();
         _previewLoadCts?.Dispose();
         _searchCts?.Cancel();
         _searchCts?.Dispose();
+        _ocrEtaTimer.Stop();
+        _ocrEtaTimer.Tick -= OcrEtaTimer_Tick;
         base.OnClosed(e);
     }
 
@@ -195,7 +210,7 @@ public partial class MainWindow : Window
 
             _quickSearchOverlay.InvalidateSearchCache();
             LoadHomeDashboard();
-            StartOcrQueueForRecords(_repository.GetPendingOcr(100));
+            QueueOcrBackfill(limit: 10000);
         }
         catch (Exception ex)
         {
@@ -303,7 +318,7 @@ public partial class MainWindow : Window
         StatusText.Text = "Ready";
 
         StartThumbnailQueue(recent);
-        StartOcrQueueForRecords(_repository.GetPendingOcr(100));
+        QueueOcrBackfill();
     }
 
     private void ShowCollection(string name, IEnumerable<string> keywords)
@@ -349,12 +364,30 @@ public partial class MainWindow : Window
     {
         if (records.Count == 0) return;
         _backgroundProcessingManager.EnqueueOcr(records, JobPriority.High);
+        StartOrRefreshOcrTracking();
+    }
+
+    private void QueueOcrBackfill(int limit = OcrBackfillBatchSize)
+    {
+        var pending = _repository.GetPendingOcr(limit);
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        _backgroundProcessingManager.EnqueueOcr(pending, JobPriority.Low);
+        StartOrRefreshOcrTracking();
     }
 
     private void ThumbnailQueueService_ProgressChanged(ThumbnailQueueProgress progress)
     {
         Dispatcher.Invoke(() =>
         {
+            if (_ocrTrackingActive)
+            {
+                return;
+            }
+
             if (progress.Total > 0)
                 StatusText.Text = $"Thumbnails {progress.Processed}/{progress.Total}";
         });
@@ -366,6 +399,7 @@ public partial class MainWindow : Window
         {
             _quickSearchOverlay.InvalidateSearchCache();
             ImportedCountText.Text = _repository.Count().ToString("N0");
+            StartOcrQueueForRecords([e.Record]);
 
             if (CurrentViewMode == ViewMode.Home)
             {
@@ -402,8 +436,6 @@ public partial class MainWindow : Window
                 ShowResults("Recent", _repository.GetRecent(RecentPageLimit));
                 return;
             }
-
-            StartOcrQueueForRecords([e.Record]);
         });
     }
 
@@ -411,9 +443,96 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            StatusText.Text = $"OCR {progress.Processed}/{progress.Total}";
+            StartOrRefreshOcrTracking();
+            UpdateOcrTrackingStatus();
             OcrReadyCountText.Text = _repository.CountOcrReady().ToString("N0");
+
+            if (progress.Processed >= progress.Total)
+            {
+                QueueOcrBackfill();
+            }
         });
+    }
+
+    private void OcrEtaTimer_Tick(object? sender, EventArgs e)
+    {
+        UpdateOcrTrackingStatus();
+    }
+
+    private void StartOrRefreshOcrTracking()
+    {
+        var pendingNow = _repository.CountPendingOcr();
+        if (pendingNow <= 0)
+        {
+            StopOcrTracking("Ready");
+            return;
+        }
+
+        if (!_ocrTrackingActive)
+        {
+            _ocrTrackingActive = true;
+            _ocrRunTotal = pendingNow;
+            _ocrRunStopwatch.Restart();
+            _ocrEtaTimer.Start();
+        }
+        else if (pendingNow > _ocrRunTotal)
+        {
+            _ocrRunTotal = pendingNow;
+        }
+    }
+
+    private void StopOcrTracking(string statusText)
+    {
+        _ocrTrackingActive = false;
+        _ocrEtaTimer.Stop();
+        _ocrRunStopwatch.Reset();
+        _ocrRunTotal = 0;
+        StatusText.Text = statusText;
+    }
+
+    private void UpdateOcrTrackingStatus()
+    {
+        if (!_ocrTrackingActive)
+        {
+            return;
+        }
+
+        var pendingNow = _repository.CountPendingOcr();
+        if (pendingNow <= 0)
+        {
+            OcrReadyCountText.Text = _repository.CountOcrReady().ToString("N0");
+            var failedCount = _repository.CountFailedOcr();
+            StopOcrTracking(failedCount > 0
+                ? $"OCR complete · failed {failedCount}"
+                : "OCR complete");
+            return;
+        }
+
+        if (pendingNow > _ocrRunTotal)
+        {
+            _ocrRunTotal = pendingNow;
+        }
+
+        var completed = Math.Max(0, _ocrRunTotal - pendingNow);
+        var elapsed = _ocrRunStopwatch.Elapsed;
+        var etaText = "--:--";
+
+        if (completed > 0 && elapsed.TotalSeconds > 0)
+        {
+            var ratePerSecond = completed / elapsed.TotalSeconds;
+            if (ratePerSecond > 0.01)
+            {
+                var eta = TimeSpan.FromSeconds(pendingNow / ratePerSecond);
+                etaText = eta.TotalHours >= 1
+                    ? eta.ToString(@"hh\:mm\:ss")
+                    : eta.ToString(@"mm\:ss");
+            }
+        }
+
+        var failed = _repository.CountFailedOcr();
+        StatusText.Text = failed > 0
+            ? $"OCR {completed}/{_ocrRunTotal} · {pendingNow} left · failed {failed} · ETA {etaText}"
+            : $"OCR {completed}/{_ocrRunTotal} · {pendingNow} left · ETA {etaText}";
     }
 
     private bool MatchesCurrentCollection(string fileName)
@@ -448,17 +567,6 @@ public partial class MainWindow : Window
             return;
 
         SelectScreenshot(record);
-
-        if (e.ClickCount >= 2)
-        {
-            OpenDetailWindow(record);
-        }
-    }
-
-    private void OpenDetailWindow(ScreenshotRecord record)
-    {
-        var detailWindow = new ScreenshotDetailWindow(record) { Owner = this };
-        detailWindow.ShowDialog();
     }
 
     private void OpenImageFromOverlay(ScreenshotRecord record)

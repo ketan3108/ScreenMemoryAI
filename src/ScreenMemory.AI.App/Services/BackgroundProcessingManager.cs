@@ -129,7 +129,7 @@ public class BackgroundProcessingManager : IDisposable
     {
         while (!token.IsCancellationRequested)
         {
-            var batch = await DrainBatchAsync(_ocrHigh.Reader, _ocrLow.Reader, maxBatch: 10, token);
+            var batch = await DrainBatchAsync(_ocrHigh.Reader, _ocrLow.Reader, maxBatch: 4, token);
             if (batch.Count == 0)
             {
                 continue;

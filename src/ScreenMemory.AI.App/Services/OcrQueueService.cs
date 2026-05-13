@@ -16,6 +16,7 @@ public class OcrQueueService
     private readonly OcrService _ocrService;
     private readonly ScreenshotRepository _repository;
     private readonly int _maxConcurrency;
+    private const int OcrUpdateBatchSize = 25;
 
     public event Action<OcrQueueProgress>? ProgressChanged;
 
@@ -26,7 +27,7 @@ public class OcrQueueService
     {
         _ocrService = ocrService;
         _repository = repository;
-        _maxConcurrency = maxConcurrency ?? (Environment.ProcessorCount > 8 ? 2 : 1);
+        _maxConcurrency = maxConcurrency ?? Math.Max(2, Math.Min(Environment.ProcessorCount - 1, 6));
     }
 
     public async Task ProcessAsync(IEnumerable<ScreenshotRecord> records, CancellationToken token = default)
@@ -43,7 +44,7 @@ public class OcrQueueService
 
         var processed = 0;
         var sync = new object();
-        var updates = new List<(string Id, string OcrText, string Status)>();
+        var stagedUpdates = new List<(string Id, string OcrText, string Status)>(OcrUpdateBatchSize);
 
         await Parallel.ForEachAsync(
             pending,
@@ -73,15 +74,16 @@ public class OcrQueueService
                 }
 
                 OcrQueueProgress progress;
+                List<(string Id, string OcrText, string Status)>? flushBatch = null;
                 lock (sync)
                 {
-                    updates.Add((record.Id, text, status));
+                    stagedUpdates.Add((record.Id, text, status));
                     processed++;
 
-                    if (updates.Count >= 10 || processed == pending.Count)
+                    if (stagedUpdates.Count >= OcrUpdateBatchSize)
                     {
-                        _repository.UpdateOcrBatch(updates);
-                        updates.Clear();
+                        flushBatch = stagedUpdates.ToList();
+                        stagedUpdates.Clear();
                     }
 
                     progress = new OcrQueueProgress
@@ -92,7 +94,24 @@ public class OcrQueueService
                     };
                 }
 
+                if (flushBatch is not null)
+                {
+                    _repository.UpdateOcrBatch(flushBatch);
+                }
+
                 ProgressChanged?.Invoke(progress);
             });
+
+        List<(string Id, string OcrText, string Status)> remaining;
+        lock (sync)
+        {
+            remaining = stagedUpdates.ToList();
+            stagedUpdates.Clear();
+        }
+
+        if (remaining.Count > 0)
+        {
+            _repository.UpdateOcrBatch(remaining);
+        }
     }
 }

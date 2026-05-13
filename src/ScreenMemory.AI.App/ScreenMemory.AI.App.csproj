@@ -25,4 +25,11 @@
     <Resource Include="Assets\AppIcon.ico" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="tessdata\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

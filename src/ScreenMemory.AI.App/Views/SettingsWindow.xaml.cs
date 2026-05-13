@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Forms;
 using ScreenMemory.AI.App.Services;
 
@@ -75,6 +76,14 @@ public partial class SettingsWindow : Window
     {
         SaveFolders();
         Close();
+    }
+
+    private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
     }
 
     private void UpdateFolderListState()

@@ -498,6 +498,30 @@ public class ScreenshotRepository
             "SELECT COUNT(*) FROM screenshots WHERE ocr_status = 'completed';");
     }
 
+    public int CountPendingOcr()
+    {
+        using var connection = _databaseService.CreateConnection();
+        connection.Open();
+
+        return connection.ExecuteScalar<int>(
+            """
+            SELECT COUNT(*)
+            FROM screenshots
+            WHERE ocr_status IS NULL
+               OR ocr_status = ''
+               OR ocr_status = 'pending';
+            """);
+    }
+
+    public int CountFailedOcr()
+    {
+        using var connection = _databaseService.CreateConnection();
+        connection.Open();
+
+        return connection.ExecuteScalar<int>(
+            "SELECT COUNT(*) FROM screenshots WHERE ocr_status = 'failed';");
+    }
+
     public int CountAiTagged()
     {
         return 0;

@@ -118,7 +118,7 @@ public partial class QuickSearchOverlay : Window
                 return records.Select(r => new OverlayResultItem
                 {
                     Record = r,
-                    ThumbnailImage = LoadThumbnail(r.ThumbnailPath)
+                    ThumbnailImage = LoadThumbnail(r.ThumbnailPath, r.FilePath)
                 }).ToList();
             });
         }
@@ -240,9 +240,16 @@ public partial class QuickSearchOverlay : Window
         Hide();
     }
 
-    private static BitmapImage? LoadThumbnail(string path)
+    private static BitmapImage? LoadThumbnail(string thumbnailPath, string sourceImagePath)
     {
-        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        var pathToLoad = thumbnailPath;
+
+        if (string.IsNullOrWhiteSpace(pathToLoad) || !File.Exists(pathToLoad))
+        {
+            pathToLoad = sourceImagePath;
+        }
+
+        if (string.IsNullOrWhiteSpace(pathToLoad) || !File.Exists(pathToLoad))
         {
             return null;
         }
@@ -254,7 +261,7 @@ public partial class QuickSearchOverlay : Window
             bmp.CacheOption = BitmapCacheOption.OnLoad;
             bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
             bmp.DecodePixelWidth = 160;
-            bmp.UriSource = new Uri(path, UriKind.Absolute);
+            bmp.UriSource = new Uri(pathToLoad, UriKind.Absolute);
             bmp.EndInit();
             bmp.Freeze();
             return bmp;

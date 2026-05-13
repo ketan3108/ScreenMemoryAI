@@ -322,19 +322,14 @@
                         BorderBrush="{StaticResource BorderSubtle}"
                         BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Horizontal">
-                        <Border Width="30" Height="30" Background="#6366F1" CornerRadius="8">
-                            <TextBlock Text="S" FontSize="15" FontWeight="Bold"
-                                       Foreground="White"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="30" Height="30" CornerRadius="8" ClipToBounds="True">
+                            <Image Source="pack://application:,,,/Assets/AppIcon.ico"
+                                   Stretch="UniformToFill"/>
                         </Border>
                         <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="ScreenMemory"
                                        FontSize="13" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextPrimary}"/>
-                            <TextBlock Text="AI  ·  v1.0"
-                                       FontSize="9.5"
-                                       Foreground="{StaticResource AccentGlow}"
-                                       Margin="0,-1,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>

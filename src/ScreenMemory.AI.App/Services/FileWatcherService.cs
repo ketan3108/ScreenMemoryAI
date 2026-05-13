@@ -26,7 +26,8 @@ public class FileWatcherService : IDisposable
     private readonly SemaphoreSlim _queueSignal = new(0);
     private readonly SemaphoreSlim _workerLock = new(1, 1);
 
-    private static readonly TimeSpan QueueSettleDelay = TimeSpan.FromMilliseconds(1200);
+    private static readonly TimeSpan QueueSettleDelayFast = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan QueueSettleDelayBulk = TimeSpan.FromMilliseconds(1200);
     private const int MaxBatchPerDrain = 512;
 
     private CancellationTokenSource? _cts;
@@ -191,9 +192,11 @@ public class FileWatcherService : IDisposable
             {
                 var batchPaths = new List<string> { path };
 
+                // Keep single/new screenshot flow snappy, but still coalesce bursty bulk drops.
+                var settleDelay = _queue.Count <= 4 ? QueueSettleDelayFast : QueueSettleDelayBulk;
                 try
                 {
-                    await Task.Delay(QueueSettleDelay, token);
+                    await Task.Delay(settleDelay, token);
                 }
                 catch (OperationCanceledException)
                 {
@@ -206,26 +209,18 @@ public class FileWatcherService : IDisposable
                 }
 
                 var uniqueBatch = batchPaths.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-                var processedRecords = new List<(ScreenshotRecord Record, bool IsInserted)>(uniqueBatch.Count);
-
                 foreach (var itemPath in uniqueBatch)
                 {
                     var processed = await ProcessFileAsync(itemPath, token);
                     if (processed is not null)
                     {
-                        processedRecords.Add(processed.Value);
+                        ScreenshotIndexed?.Invoke(this, new ScreenshotIndexedEventArgs
+                        {
+                            IsNewInsert = processed.Value.IsInserted,
+                            Record = processed.Value.Record,
+                            BatchSize = 1
+                        });
                     }
-                }
-
-                if (processedRecords.Count > 0)
-                {
-                    var last = processedRecords[^1];
-                    ScreenshotIndexed?.Invoke(this, new ScreenshotIndexedEventArgs
-                    {
-                        IsNewInsert = last.IsInserted,
-                        Record = last.Record,
-                        BatchSize = processedRecords.Count
-                    });
                 }
             }
             catch (OperationCanceledException)
