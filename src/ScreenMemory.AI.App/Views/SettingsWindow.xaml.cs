@@ -72,6 +72,21 @@ public partial class SettingsWindow : Window
         }
     }
 
+    private void RemoveFolderItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button btn && btn.Tag is string folderPath)
+        {
+            FoldersList.Items.Remove(folderPath);
+            SaveFolders();
+            UpdateFolderListState();
+        }
+    }
+
+    private void FoldersList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        // Selection handling if needed
+    }
+
     private void Close_Click(object sender, RoutedEventArgs e)
     {
         SaveFolders();

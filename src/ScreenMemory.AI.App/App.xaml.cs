@@ -16,9 +16,8 @@ public partial class App : System.Windows.Application
         helper.EnsureHandle();
         mainWindow.EnsureHotkeyRegistration();
 
-        if (mainWindow.Settings.ShowDashboardOnStartup)
-        {
-            mainWindow.Show();
-        }
+        // Always show the dashboard when the app starts so command-line runs
+        // have visible feedback instead of appearing to "do nothing".
+        mainWindow.Show();
     }
 }
