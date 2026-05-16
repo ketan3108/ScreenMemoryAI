@@ -64,8 +64,117 @@ public class ScreenshotRepository
         using var connection = _databaseService.CreateConnection();
         connection.Open();
 
-        const string sql = "SELECT COUNT(1) FROM screenshots WHERE file_path = @Path;";
+        const string sql = "SELECT COUNT(1) FROM screenshots WHERE file_path = @Path COLLATE NOCASE;";
         return connection.ExecuteScalar<int>(sql, new { Path = path }) > 0;
+    }
+
+    public ScreenshotRecord? DeleteByFilePath(string path)
+    {
+        using var connection = _databaseService.CreateConnection();
+        connection.Open();
+
+        const string lookupSql =
+        """
+        SELECT
+            id AS Id,
+            file_path AS FilePath,
+            file_name AS FileName,
+            file_size_bytes AS FileSizeBytes,
+            created_at AS CreatedAt,
+            modified_at AS ModifiedAt,
+            thumbnail_path AS ThumbnailPath,
+            ocr_text AS OcrText,
+            ocr_status AS OcrStatus,
+            imported_at AS ImportedAt,
+            ocr_processed_at AS OcrProcessedAt,
+            active_window AS ActiveWindow,
+            process_name AS ProcessName,
+            application_name AS ApplicationName,
+            ai_category AS AiCategory,
+            ai_tags AS AiTags,
+            ai_summary AS AiSummary,
+            ai_confidence AS AiConfidence,
+            ai_status AS AiStatus,
+            ai_error AS AiError,
+            ai_analyzed_at AS AiAnalyzedAt,
+            embedding_vector AS EmbeddingVector,
+            updated_at AS UpdatedAt
+        FROM screenshots
+        WHERE file_path = @Path COLLATE NOCASE
+        LIMIT 1;
+        """;
+
+        var record = connection.QueryFirstOrDefault<ScreenshotRecord>(lookupSql, new { Path = path });
+        if (record is null)
+        {
+            return null;
+        }
+
+        using var transaction = connection.BeginTransaction();
+        DeleteScreenshotRows(connection, transaction, record.Id);
+        transaction.Commit();
+
+        DeleteThumbnailFile(record.ThumbnailPath);
+        return record;
+    }
+
+    public List<ScreenshotRecord> DeleteMissingFiles()
+    {
+        using var connection = _databaseService.CreateConnection();
+        connection.Open();
+
+        const string lookupSql =
+        """
+        SELECT
+            id AS Id,
+            file_path AS FilePath,
+            file_name AS FileName,
+            file_size_bytes AS FileSizeBytes,
+            created_at AS CreatedAt,
+            modified_at AS ModifiedAt,
+            thumbnail_path AS ThumbnailPath,
+            ocr_text AS OcrText,
+            ocr_status AS OcrStatus,
+            imported_at AS ImportedAt,
+            ocr_processed_at AS OcrProcessedAt,
+            active_window AS ActiveWindow,
+            process_name AS ProcessName,
+            application_name AS ApplicationName,
+            ai_category AS AiCategory,
+            ai_tags AS AiTags,
+            ai_summary AS AiSummary,
+            ai_confidence AS AiConfidence,
+            ai_status AS AiStatus,
+            ai_error AS AiError,
+            ai_analyzed_at AS AiAnalyzedAt,
+            embedding_vector AS EmbeddingVector,
+            updated_at AS UpdatedAt
+        FROM screenshots;
+        """;
+
+        var missingRecords = connection.Query<ScreenshotRecord>(lookupSql)
+            .Where(record => !File.Exists(record.FilePath))
+            .ToList();
+
+        if (missingRecords.Count == 0)
+        {
+            return [];
+        }
+
+        using var transaction = connection.BeginTransaction();
+        foreach (var record in missingRecords)
+        {
+            DeleteScreenshotRows(connection, transaction, record.Id);
+        }
+
+        transaction.Commit();
+
+        foreach (var record in missingRecords)
+        {
+            DeleteThumbnailFile(record.ThumbnailPath);
+        }
+
+        return missingRecords;
     }
 
     public int Count()
@@ -1036,7 +1145,7 @@ public class ScreenshotRepository
             embedding_vector AS EmbeddingVector,
             updated_at AS UpdatedAt
         FROM screenshots
-        WHERE file_path = @Path
+        WHERE file_path = @Path COLLATE NOCASE
         LIMIT 1;
         """;
 
@@ -1128,6 +1237,39 @@ public class ScreenshotRepository
                 AiTags = row.AiTags ?? string.Empty,
                 AiSummary = row.AiSummary ?? string.Empty
             }, transaction);
+        }
+    }
+
+    private static void DeleteScreenshotRows(
+        System.Data.IDbConnection connection,
+        System.Data.IDbTransaction transaction,
+        string screenshotId)
+    {
+        connection.Execute(
+            "DELETE FROM screenshot_fts WHERE screenshot_id = @ScreenshotId;",
+            new { ScreenshotId = screenshotId },
+            transaction);
+
+        connection.Execute(
+            "DELETE FROM screenshots WHERE id = @ScreenshotId;",
+            new { ScreenshotId = screenshotId },
+            transaction);
+    }
+
+    private static void DeleteThumbnailFile(string? thumbnailPath)
+    {
+        if (string.IsNullOrWhiteSpace(thumbnailPath) || !File.Exists(thumbnailPath))
+        {
+            return;
+        }
+
+        try
+        {
+            File.Delete(thumbnailPath);
+        }
+        catch
+        {
+            // Thumbnail cleanup is best-effort; the database row is already removed.
         }
     }
 

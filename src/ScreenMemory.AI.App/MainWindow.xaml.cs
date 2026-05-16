@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private readonly ScreenshotScannerService _scannerService = new();
     private readonly DatabaseService _databaseService = new();
     private readonly ScreenshotRepository _repository;
+    private readonly LicenseService _licenseService = new();
     private readonly ThumbnailService _thumbnailService = new();
     private readonly ThumbnailQueueService _thumbnailQueueService;
     private readonly OcrService _ocrService = new();
@@ -77,7 +78,8 @@ public partial class MainWindow : Window
 
         _databaseService.Initialize();
         _repository = new ScreenshotRepository(_databaseService);
-        _indexingService = new IndexingService(_repository, _activeWindowService);
+        _repository.DeleteMissingFiles();
+        _indexingService = new IndexingService(_repository, _activeWindowService, _licenseService);
         _thumbnailQueueService = new ThumbnailQueueService(_thumbnailService, _repository);
         _thumbnailQueueService.ProgressChanged += ThumbnailQueueService_ProgressChanged;
         _ocrQueueService = new OcrQueueService(_ocrService, _repository);
@@ -88,6 +90,8 @@ public partial class MainWindow : Window
         _backgroundProcessingManager = new BackgroundProcessingManager(_thumbnailQueueService, _ocrQueueService);
         _fileWatcherService = new FileWatcherService(_settingsService, _indexingService, _thumbnailService, _repository);
         _fileWatcherService.ScreenshotIndexed += FileWatcherService_ScreenshotIndexed;
+        _fileWatcherService.ScreenshotDeleted += FileWatcherService_ScreenshotDeleted;
+        _fileWatcherService.LicenseLimitReached += FileWatcherService_LicenseLimitReached;
         _fileWatcherService.Start();
         _quickSearchOverlay = new QuickSearchOverlay(
             _repository,
@@ -148,6 +152,8 @@ public partial class MainWindow : Window
             _hotkeyRegistered = false;
         }
         _fileWatcherService.ScreenshotIndexed -= FileWatcherService_ScreenshotIndexed;
+        _fileWatcherService.ScreenshotDeleted -= FileWatcherService_ScreenshotDeleted;
+        _fileWatcherService.LicenseLimitReached -= FileWatcherService_LicenseLimitReached;
         _ocrQueueService.ProgressChanged -= OcrQueueService_ProgressChanged;
         _aiMetadataQueueService.ProgressChanged -= AiMetadataQueueService_ProgressChanged;
         _fileWatcherService.Dispose();
@@ -186,9 +192,26 @@ public partial class MainWindow : Window
         HomeDashboardPanel.Visibility = Visibility.Collapsed;
         ResultsPanel.Visibility = Visibility.Collapsed;
         SettingsPanel.Visibility = Visibility.Visible;
+        LicensePanel.Visibility = Visibility.Collapsed;
 
         LoadSettingsFolders();
         StatusText.Text = "Settings";
+    }
+
+    private void License_Click(object sender, RoutedEventArgs e)
+    {
+        CurrentViewMode = ViewMode.License;
+        CurrentCollection = string.Empty;
+        CurrentSearchQuery = string.Empty;
+        SearchBox.Text = string.Empty;
+
+        HomeDashboardPanel.Visibility = Visibility.Collapsed;
+        ResultsPanel.Visibility = Visibility.Collapsed;
+        SettingsPanel.Visibility = Visibility.Collapsed;
+        LicensePanel.Visibility = Visibility.Visible;
+
+        UpdateLicenseUi();
+        StatusText.Text = "License";
     }
 
     private async void IndexNow_Click(object sender, RoutedEventArgs e)
@@ -211,13 +234,27 @@ public partial class MainWindow : Window
         {
             await Task.Run(() =>
             {
+                _repository.DeleteMissingFiles();
                 var screenshots = _scannerService.FindScreenshots(settings.WatchedFolders);
                 var records = new List<ScreenshotRecord>();
+                var remainingFreeSlots = _licenseService.IsPro
+                    ? int.MaxValue
+                    : Math.Max(0, LicenseService.FreeScreenshotLimit - _repository.Count());
 
                 foreach (var path in screenshots)
                 {
                     try
                     {
+                        if (!_repository.ExistsByFilePath(path))
+                        {
+                            if (remainingFreeSlots <= 0)
+                            {
+                                break;
+                            }
+
+                            remainingFreeSlots--;
+                        }
+
                         var fileInfo = new FileInfo(path);
                         records.Add(new ScreenshotRecord
                         {
@@ -238,6 +275,11 @@ public partial class MainWindow : Window
             _quickSearchOverlay.InvalidateSearchCache();
             LoadHomeDashboard();
             QueueOcrBackfill(limit: 10000);
+            UpdateLicenseUi();
+            if (!_licenseService.IsPro && _repository.Count() >= LicenseService.FreeScreenshotLimit)
+            {
+                StatusText.Text = "Memory full. Upgrade to Pro for unlimited screenshots.";
+            }
         }
         catch (Exception ex)
         {
@@ -314,7 +356,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (CurrentViewMode == ViewMode.Settings)
+        if (CurrentViewMode == ViewMode.Settings || CurrentViewMode == ViewMode.License)
         {
             return;
         }
@@ -437,6 +479,7 @@ public partial class MainWindow : Window
         HomeDashboardPanel.Visibility = Visibility.Visible;
         ResultsPanel.Visibility = Visibility.Collapsed;
         SettingsPanel.Visibility = Visibility.Collapsed;
+        LicensePanel.Visibility = Visibility.Collapsed;
 
         ImportedCountText.Text = _repository.Count().ToString("N0");
         OcrReadyCountText.Text = _repository.CountOcrReady().ToString("N0");
@@ -445,6 +488,7 @@ public partial class MainWindow : Window
         var recent = _repository.GetRecent(HomeRecentLimit);
         BindRecentBuckets(recent);
         StatusText.Text = "Ready";
+        UpdateLicenseUi();
 
         StartThumbnailQueue(recent);
         QueueOcrBackfill();
@@ -476,6 +520,7 @@ public partial class MainWindow : Window
         HomeDashboardPanel.Visibility = Visibility.Collapsed;
         ResultsPanel.Visibility = Visibility.Visible;
         SettingsPanel.Visibility = Visibility.Collapsed;
+        LicensePanel.Visibility = Visibility.Collapsed;
 
         DisplayedScreenshots = results;
         ResultsTitleText.Text = title;
@@ -503,6 +548,7 @@ public partial class MainWindow : Window
         SettingsAiPendingText.Text = _repository.CountPendingAi().ToString("N0");
         SettingsAiModeText.Text = _aiSemanticService.AvailabilityState;
         SettingsFolderCountText.Text = SettingsFoldersList.Items.Count.ToString("N0");
+        UpdateLicenseUi();
 
         UpdateSettingsFolderListState();
     }
@@ -573,6 +619,71 @@ public partial class MainWindow : Window
         StatusText.Text = "AI backfill queued";
     }
 
+    private async void ActivateLicense_Click(object sender, RoutedEventArgs e)
+    {
+        SettingsLicenseStatusText.Text = "Activating license...";
+        var result = await _licenseService.ActivateAsync(SettingsLicenseKeyBox.Text);
+        SettingsLicenseStatusText.Text = result.Message;
+        if (result.Success)
+        {
+            SettingsLicenseKeyBox.Text = string.Empty;
+        }
+
+        UpdateLicenseUi();
+        LoadHomeDashboard();
+    }
+
+    private async void DeactivateLicense_Click(object sender, RoutedEventArgs e)
+    {
+        SettingsLicenseStatusText.Text = "Deactivating license...";
+        var result = await _licenseService.DeactivateAsync();
+        SettingsLicenseStatusText.Text = result.Message;
+        UpdateLicenseUi();
+        LoadHomeDashboard();
+    }
+
+    private void UpgradeLicense_Click(object sender, RoutedEventArgs e)
+    {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_licenseService.UpgradeUrl)
+        {
+            UseShellExecute = true
+        });
+    }
+
+    private void UpdateLicenseUi()
+    {
+        var state = _licenseService.GetState();
+        var count = _repository.Count();
+        var usage = _licenseService.GetUsageLabel(count);
+
+        StatusText.Text = state.IsPro ? "Pro active" : usage;
+
+        if (HeaderLicensePlanText is not null)
+        {
+            HeaderLicensePlanText.Text = state.PlanName;
+            HeaderLicenseUsageText.Text = state.IsPro
+                ? $"{count:N0} indexed"
+                : $"{Math.Min(count, LicenseService.FreeScreenshotLimit):N0}/{LicenseService.FreeScreenshotLimit:N0}";
+            HeaderUpgradeLicenseButton.Visibility = state.IsPro ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        if (SettingsLicensePlanText is null)
+        {
+            return;
+        }
+
+        SettingsLicensePlanText.Text = state.PlanName;
+        SettingsLicenseUsageText.Text = usage;
+        SettingsLicenseStatusText.Text = state.IsPro
+            ? $"Pro active{(string.IsNullOrWhiteSpace(state.CustomerEmail) ? string.Empty : $" for {state.CustomerEmail}")}."
+            : $"Free plan includes {LicenseService.FreeScreenshotLimit:N0} fully searchable screenshots.";
+        DeactivateLicenseButton.IsEnabled = state.IsPro;
+        LicensePageUpgradeButton.Visibility = state.IsPro ? Visibility.Collapsed : Visibility.Visible;
+        LicenseUsageBar.Width = state.IsPro
+            ? 360
+            : Math.Clamp(count / (double)LicenseService.FreeScreenshotLimit, 0, 1) * 360;
+    }
+
     private void UpdateSettingsFolderListState()
     {
         var hasFolders = SettingsFoldersList.Items.Count > 0;
@@ -640,6 +751,7 @@ public partial class MainWindow : Window
         {
             _quickSearchOverlay.InvalidateSearchCache();
             ImportedCountText.Text = _repository.Count().ToString("N0");
+            UpdateLicenseUi();
             StartOcrQueueForRecords([e.Record]);
 
             if (CurrentViewMode == ViewMode.Home)
@@ -680,6 +792,116 @@ public partial class MainWindow : Window
         });
     }
 
+    private void FileWatcherService_ScreenshotDeleted(object? sender, ScreenshotDeletedEventArgs e)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            _quickSearchOverlay.InvalidateSearchCache();
+            RemovePreviewCacheEntry(e.Record.FilePath);
+
+            if (_selectedScreenshot is not null &&
+                string.Equals(_selectedScreenshot.Id, e.Record.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                ClosePreviewPanel();
+            }
+
+            ImportedCountText.Text = _repository.Count().ToString("N0");
+            OcrReadyCountText.Text = _repository.CountOcrReady().ToString("N0");
+            AiTaggedCountText.Text = _repository.CountAiTagged().ToString("N0");
+            UpdateLicenseUi();
+            RefreshCurrentViewFromRepository();
+            StatusText.Text = $"Removed {e.Record.FileName}";
+        });
+    }
+
+    private void RefreshCurrentViewFromRepository()
+    {
+        switch (CurrentViewMode)
+        {
+            case ViewMode.Home:
+                {
+                    var recent = _repository.GetRecent(HomeRecentLimit);
+                    BindRecentBuckets(recent);
+                    StartThumbnailQueue(recent);
+                    break;
+                }
+            case ViewMode.Search:
+                _ = RefreshSearchResultsAsync();
+                break;
+            case ViewMode.Collection:
+                RefreshCurrentCollection();
+                break;
+            case ViewMode.Settings:
+                LoadSettingsFolders();
+                break;
+            case ViewMode.License:
+                UpdateLicenseUi();
+                break;
+        }
+    }
+
+    private async Task RefreshSearchResultsAsync()
+    {
+        var query = CurrentSearchQuery;
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return;
+        }
+
+        var results = await SearchRecordsAsync(query, CancellationToken.None);
+        if (CurrentViewMode != ViewMode.Search ||
+            !string.Equals(CurrentSearchQuery, query, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        ShowResults($"Results for '{query}'", results);
+        ResultsMetaText.Text = _searchMode == SearchMode.Ai
+            ? $"{results.Count} AI results for '{query}'"
+            : $"{results.Count} results for '{query}'";
+    }
+
+    private void RefreshCurrentCollection()
+    {
+        switch (CurrentCollection)
+        {
+            case "Recent":
+                ShowResults("Recent", _repository.GetRecent(RecentPageLimit));
+                break;
+            case "Invoices":
+                ShowSmartCollection(
+                    "Invoices",
+                    ["Financial Data"],
+                    ["#financial"],
+                    ["invoice", "receipt", "bill", "payment", "amount", "total"]);
+                break;
+            case "Errors":
+                ShowSmartCollection(
+                    "Errors",
+                    ["Error Log"],
+                    ["#error"],
+                    ["error", "bug", "exception", "crash", "failed", "stack trace"]);
+                break;
+            case "Code Snippets":
+                ShowSmartCollection(
+                    "Code Snippets",
+                    ["Code Snippet", "Configuration"],
+                    ["#code", "#configuration", "#filepath"],
+                    ["code", "script", "snippet", "terminal", "class", "function", "async"]);
+                break;
+            case "Conversations":
+                ShowSmartCollection(
+                    "Conversations",
+                    ["Communication"],
+                    ["#communication"],
+                    ["chat", "whatsapp", "discord", "slack", "teams", "email", "message"]);
+                break;
+            default:
+                ShowResults(CurrentCollection, []);
+                break;
+        }
+    }
+
     private void OcrQueueService_ProgressChanged(OcrQueueProgress progress)
     {
         var isComplete = progress.Processed >= progress.Total;
@@ -698,6 +920,20 @@ public partial class MainWindow : Window
             if (isComplete)
             {
                 QueueOcrBackfill();
+            }
+        });
+    }
+
+    private void FileWatcherService_LicenseLimitReached(object? sender, EventArgs e)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            var usage = _licenseService.GetUsageLabel(_repository.Count());
+            StatusText.Text = $"Memory full: {usage}";
+            if (CurrentViewMode == ViewMode.Settings || CurrentViewMode == ViewMode.License)
+            {
+                UpdateLicenseUi();
+                SettingsLicenseStatusText.Text = "Memory full. Upgrade to Pro for unlimited screenshots.";
             }
         });
     }
@@ -1133,6 +1369,12 @@ public partial class MainWindow : Window
         }
     }
 
+    private void RemovePreviewCacheEntry(string path)
+    {
+        _previewCache.Remove(path);
+        _previewCacheOrder.Remove(path);
+    }
+
     // -- Preview actions ---------------------------------------------------
     private void PreviewOpenImage_Click(object sender, RoutedEventArgs e)
     {
@@ -1157,6 +1399,9 @@ public partial class MainWindow : Window
         => System.Windows.Clipboard.SetText(_selectedScreenshot?.FilePath ?? string.Empty);
 
     private void PreviewClose_Click(object sender, RoutedEventArgs e)
+        => ClosePreviewPanel();
+
+    private void ClosePreviewPanel()
     {
         if (_selectedScreenshot is not null)
             _selectedScreenshot.IsSelected = false;

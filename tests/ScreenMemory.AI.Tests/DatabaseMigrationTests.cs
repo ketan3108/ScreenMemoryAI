@@ -132,6 +132,41 @@ public sealed class DatabaseMigrationTests : IDisposable
         results.Should().ContainSingle(x => x.Id == record.Id);
     }
 
+    [Fact]
+    public void DeleteMissingFilesRemovesScreenshotAndSearchIndexRows()
+    {
+        var database = new DatabaseService(_databasePath);
+        database.Initialize();
+        var repository = new ScreenshotRepository(database);
+
+        var imagePath = Path.Combine(Path.GetTempPath(), $"screenmemory-delete-{Guid.NewGuid():N}.png");
+        var thumbnailPath = Path.Combine(Path.GetTempPath(), $"screenmemory-delete-thumb-{Guid.NewGuid():N}.jpg");
+        File.WriteAllBytes(imagePath, [0x89, 0x50, 0x4E, 0x47]);
+        File.WriteAllBytes(thumbnailPath, [0xFF, 0xD8, 0xFF]);
+
+        var record = new ScreenshotRecord
+        {
+            Id = Guid.NewGuid().ToString(),
+            FilePath = imagePath,
+            FileName = Path.GetFileName(imagePath),
+            ThumbnailPath = thumbnailPath,
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow,
+            ImportedAt = DateTime.UtcNow
+        };
+
+        repository.InsertIfNotExists(record);
+        repository.UpdateOcrBatch([(record.Id, "unique deleted receipt text", "completed")]);
+        File.Delete(imagePath);
+
+        var deleted = repository.DeleteMissingFiles();
+
+        deleted.Should().ContainSingle(x => x.Id == record.Id);
+        repository.Count().Should().Be(0);
+        repository.SearchHybrid("unique deleted receipt", 10).Should().BeEmpty();
+        File.Exists(thumbnailPath).Should().BeFalse();
+    }
+
     private sealed class UnavailableSemanticService : IAiSemanticService
     {
         public bool IsInitialized => false;

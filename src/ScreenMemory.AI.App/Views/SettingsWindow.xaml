@@ -7,8 +7,8 @@
         MinWidth="720"
         MinHeight="560"
         WindowStartupLocation="CenterOwner"
-        FontFamily="Segoe UI Variable Display, Segoe UI Variable, Segoe UI, sans-serif"
-        Background="#0B0B0D"
+        FontFamily="Inter, Segoe UI Variable Display, Segoe UI Variable, Segoe UI, sans-serif"
+        Background="#0B0C0E"
         ResizeMode="NoResize"
         WindowStyle="None">
 
@@ -19,35 +19,37 @@
         ═══════════════════════════════════════════════════════ -->
         
         <!-- Core Backgrounds -->
-        <SolidColorBrush x:Key="BackgroundDeep"       Color="#070708"/>
-        <SolidColorBrush x:Key="BackgroundPrimary"    Color="#0B0B0D"/>
-        <SolidColorBrush x:Key="BackgroundSecondary"  Color="#111217"/>
-        <SolidColorBrush x:Key="BackgroundTertiary"   Color="#18191F"/>
-        <SolidColorBrush x:Key="BackgroundElevated"   Color="#1F2129"/>
-        <SolidColorBrush x:Key="BackgroundHover"      Color="#252833"/>
+        <SolidColorBrush x:Key="BackgroundDeep"       Color="#0B0C0E"/>
+        <SolidColorBrush x:Key="BackgroundPrimary"    Color="#0E0E10"/>
+        <SolidColorBrush x:Key="BackgroundSecondary"  Color="#121317"/>
+        <SolidColorBrush x:Key="BackgroundTertiary"   Color="#1A1B1F"/>
+        <SolidColorBrush x:Key="BackgroundElevated"   Color="#1E1F24"/>
+        <SolidColorBrush x:Key="BackgroundHover"      Color="#292A2E"/>
+        <SolidColorBrush x:Key="SurfaceGlass"         Color="#B216171B"/>
         
         <!-- Glass Effect -->
-        <SolidColorBrush x:Key="GlassBackground"     Color="#12131A"/>
-        <SolidColorBrush x:Key="GlassBorder"         Color="#2A2D3A"/>
+        <SolidColorBrush x:Key="GlassBackground"     Color="#B216171B"/>
+        <SolidColorBrush x:Key="GlassBorder"         Color="#14FFFFFF"/>
         
         <!-- Borders -->
-        <SolidColorBrush x:Key="BorderSubtle"        Color="#1A1C25"/>
-        <SolidColorBrush x:Key="BorderDefault"       Color="#252A38"/>
-        <SolidColorBrush x:Key="BorderEmphasis"       Color="#3D4459"/>
+        <SolidColorBrush x:Key="BorderSubtle"        Color="#14FFFFFF"/>
+        <SolidColorBrush x:Key="BorderDefault"       Color="#26FFFFFF"/>
+        <SolidColorBrush x:Key="BorderEmphasis"       Color="#494454"/>
         
         <!-- Neon Purple Accent System -->
         <SolidColorBrush x:Key="AccentPrimary"        Color="#8B5CF6"/>
         <SolidColorBrush x:Key="AccentHover"          Color="#A78BFA"/>
-        <SolidColorBrush x:Key="AccentPressed"        Color="#7C3AED"/>
-        <SolidColorBrush x:Key="AccentSubtle"         Color="#1E1832"/>
+        <SolidColorBrush x:Key="AccentPressed"        Color="#6D3BD7"/>
+        <SolidColorBrush x:Key="AccentSubtle"         Color="#1A8B5CF6"/>
         <SolidColorBrush x:Key="AccentMuted"          Color="#5B4A8C"/>
-        <SolidColorBrush x:Key="AccentGlow"           Color="#C4B5FD"/>
-        <SolidColorBrush x:Key="AccentGlowIntense"    Color="#DDD6FE"/>
+        <SolidColorBrush x:Key="AccentGlow"           Color="#D0BCFF"/>
+        <SolidColorBrush x:Key="AccentGlowIntense"    Color="#E9DDFF"/>
+        <SolidColorBrush x:Key="AccentSecondary"      Color="#3B82F6"/>
         
         <!-- Gradient for Glow Effects -->
         <LinearGradientBrush x:Key="AccentGlowGradient" StartPoint="0,0" EndPoint="1,0">
             <GradientStop Color="#8B5CF6" Offset="0"/>
-            <GradientStop Color="#A78BFA" Offset="1"/>
+            <GradientStop Color="#3B82F6" Offset="1"/>
         </LinearGradientBrush>
         
         <LinearGradientBrush x:Key="AccentVerticalGlow" StartPoint="0,0" EndPoint="0,1">
@@ -65,10 +67,10 @@
         <SolidColorBrush x:Key="StatusInfo"           Color="#3B82F6"/>
         
         <!-- Text Colors -->
-        <SolidColorBrush x:Key="TextPrimary"          Color="#FAFAFA"/>
-        <SolidColorBrush x:Key="TextSecondary"        Color="#A1A7B3"/>
-        <SolidColorBrush x:Key="TextTertiary"        Color="#6B7280"/>
-        <SolidColorBrush x:Key="TextMuted"            Color="#4B5563"/>
+        <SolidColorBrush x:Key="TextPrimary"          Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="TextSecondary"        Color="#CBC3D7"/>
+        <SolidColorBrush x:Key="TextTertiary"        Color="#A1A1AA"/>
+        <SolidColorBrush x:Key="TextMuted"            Color="#6F687A"/>
 
         <!-- ═══════════════════════════════════════════════════════
              DROP SHADOW EFFECTS
@@ -105,28 +107,28 @@
         <Style x:Key="TypographyTitleLarge" TargetType="TextBlock">
             <Setter Property="FontSize" Value="22"/>
             <Setter Property="FontWeight" Value="600"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
         </Style>
         
         <Style x:Key="TypographyTitleMedium" TargetType="TextBlock">
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="600"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
         </Style>
         
         <Style x:Key="TypographyTitleSmall" TargetType="TextBlock">
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="600"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
         </Style>
         
         <Style x:Key="TypographyBodyLarge" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="400"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
             <Setter Property="LineHeight" Value="20"/>
         </Style>
@@ -134,21 +136,21 @@
         <Style x:Key="TypographyBodyDefault" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="400"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
         </Style>
         
         <Style x:Key="TypographyBodySmall" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="400"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Foreground" Value="{StaticResource TextTertiary}"/>
         </Style>
         
         <Style x:Key="TypographyLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="FontWeight" Value="600"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
         </Style>
 
@@ -169,7 +171,7 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="600"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="16,10"/>
             <Setter Property="Template">
@@ -225,7 +227,7 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="500"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="14,9"/>
             <Setter Property="Template">
@@ -260,7 +262,7 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="500"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="12,8"/>
             <Setter Property="Template">
@@ -617,8 +619,8 @@
                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid>
                         <StackPanel>
-                            <TextBlock Text="Indexing" Style="{StaticResource TypographyTitleLarge}"/>
-                            <TextBlock Text="Choose where screenshots are watched and processed."
+                            <TextBlock Text="Settings" Style="{StaticResource TypographyTitleLarge}" FontSize="24"/>
+                            <TextBlock Text="Manage screenshot folders, OCR, and local processing."
                                        Style="{StaticResource TypographyBodyDefault}"
                                        Margin="0,4,0,0"/>
                         </StackPanel>
@@ -630,16 +632,22 @@
                     </Grid>
                 </Border>
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="26,22">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,14">
+                <Grid Grid.Row="1" Margin="26,18">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="Watched Folders" Style="{StaticResource TypographyTitleSmall}"/>
-                                <TextBlock Text="Local directories scanned for screenshots."
+                                <TextBlock Text="Watched Folders" Style="{StaticResource TypographyTitleSmall}" FontSize="16"/>
+                                <TextBlock Text="Manage local directories for screenshot indexing."
                                            Style="{StaticResource TypographyBodyDefault}"
                                            Margin="0,4,0,0"/>
                             </StackPanel>
@@ -657,37 +665,64 @@
                             </Button>
                         </Grid>
 
-                        <Border x:Name="EmptyState"
-                                Background="{StaticResource BackgroundTertiary}"
+                        <Border Grid.Row="1"
+                                x:Name="EmptyState"
+                                Background="{StaticResource SurfaceGlass}"
                                 BorderBrush="{StaticResource BorderSubtle}"
                                 BorderThickness="1"
-                                CornerRadius="10"
-                                Padding="28,22"
-                                Margin="0,0,0,20">
-                            <StackPanel HorizontalAlignment="Center">
-                                <TextBlock Text="No folders added yet"
-                                          FontSize="13"
-                                          FontWeight="600"
-                                          Foreground="{StaticResource TextSecondary}"
-                                          HorizontalAlignment="Center"/>
-                                <TextBlock Text="Add a screenshot folder to begin indexing."
-                                           Style="{StaticResource TypographyBodySmall}"
-                                           HorizontalAlignment="Center"
-                                           Margin="0,6,0,0"/>
-                            </StackPanel>
+                                CornerRadius="14"
+                                Padding="0"
+                                Margin="0,0,0,12">
+                            <Button Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="0"
+                                    Cursor="Hand"
+                                    Click="AddFolder_Click">
+                                <Grid Height="118">
+                                    <Rectangle Margin="10"
+                                               RadiusX="14"
+                                               RadiusY="14"
+                                               Fill="#4D1A1B1F"
+                                               Stroke="{StaticResource AccentPrimary}"
+                                               StrokeThickness="1.4"
+                                               StrokeDashArray="4 4">
+                                        <Rectangle.Effect>
+                                            <DropShadowEffect Color="#8B5CF6" BlurRadius="20" ShadowDepth="0" Opacity="0.35"/>
+                                        </Rectangle.Effect>
+                                    </Rectangle>
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Viewbox Width="34" Height="34" HorizontalAlignment="Center">
+                                            <Path Data="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"
+                                                  Fill="{StaticResource AccentGlow}"
+                                                  Stretch="Uniform"/>
+                                        </Viewbox>
+                                        <TextBlock Text="Drag and drop folders here"
+                                                   Foreground="{StaticResource TextPrimary}"
+                                                   FontSize="13"
+                                                   FontWeight="700"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,8,0,0"/>
+                                        <TextBlock Text="or click to browse"
+                                                   Style="{StaticResource TypographyBodySmall}"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
                         </Border>
 
-                        <ListBox x:Name="FoldersList"
+                        <ListBox Grid.Row="2"
+                                 x:Name="FoldersList"
                                  Background="Transparent"
                                  BorderThickness="0"
                                  ItemContainerStyle="{StaticResource FolderListItem}"
-                                 MinHeight="70"
-                                 MaxHeight="190"
+                                 MinHeight="78"
+                                 MaxHeight="160"
                                  Visibility="Collapsed"
-                                 Margin="0,0,0,20"
+                                 Margin="0,0,0,12"
                                  SelectionChanged="FoldersList_SelectionChanged"/>
 
-                        <Border BorderBrush="{StaticResource BorderSubtle}" BorderThickness="0,1,0,0" Padding="0,20">
+                        <Border Grid.Row="3" BorderBrush="{StaticResource BorderSubtle}" BorderThickness="0,1,0,0" Padding="0,14">
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="Automatic OCR" Style="{StaticResource TypographyTitleSmall}"/>
@@ -707,12 +742,13 @@
                             </Grid>
                         </Border>
 
-                        <Border Background="{StaticResource AccentSubtle}"
+                        <Border Grid.Row="4"
+                                Background="{StaticResource SurfaceGlass}"
                                 BorderBrush="{StaticResource AccentPrimary}"
                                 BorderThickness="1"
-                                CornerRadius="10"
-                                Padding="16,13"
-                                Margin="0,2,0,0">
+                                CornerRadius="14"
+                                Padding="14,11"
+                                Margin="0">
                             <StackPanel Orientation="Horizontal">
                                 <Border Width="34" Height="34" CornerRadius="9"
                                         Background="{StaticResource BackgroundTertiary}"
@@ -727,8 +763,7 @@
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                    </StackPanel>
-                </ScrollViewer>
+                </Grid>
 
                 <Border Grid.Row="2"
                         Background="{StaticResource BackgroundSecondary}"

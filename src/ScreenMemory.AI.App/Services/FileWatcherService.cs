@@ -13,6 +13,11 @@ public class ScreenshotIndexedEventArgs : EventArgs
     public int BatchSize { get; init; } = 1;
 }
 
+public class ScreenshotDeletedEventArgs : EventArgs
+{
+    public ScreenshotRecord Record { get; init; } = new();
+}
+
 public class FileWatcherService : IDisposable
 {
     private readonly AppSettingsService _settingsService;
@@ -34,6 +39,8 @@ public class FileWatcherService : IDisposable
     private Task? _workerTask;
 
     public event EventHandler<ScreenshotIndexedEventArgs>? ScreenshotIndexed;
+    public event EventHandler<ScreenshotDeletedEventArgs>? ScreenshotDeleted;
+    public event EventHandler? LicenseLimitReached;
 
     public FileWatcherService(
         AppSettingsService settingsService,
@@ -77,6 +84,7 @@ public class FileWatcherService : IDisposable
                 watcher.EnableRaisingEvents = false;
                 watcher.Created -= OnCreatedOrChanged;
                 watcher.Changed -= OnCreatedOrChanged;
+                watcher.Deleted -= OnDeleted;
                 watcher.Renamed -= OnRenamed;
                 watcher.Error -= OnWatcherError;
                 watcher.Dispose();
@@ -108,6 +116,7 @@ public class FileWatcherService : IDisposable
 
                 watcher.Created += OnCreatedOrChanged;
                 watcher.Changed += OnCreatedOrChanged;
+                watcher.Deleted += OnDeleted;
                 watcher.Renamed += OnRenamed;
                 watcher.Error += OnWatcherError;
 
@@ -130,7 +139,13 @@ public class FileWatcherService : IDisposable
 
     private void OnRenamed(object sender, RenamedEventArgs e)
     {
+        DeleteIndexedPath(e.OldFullPath);
         EnqueuePath(e.FullPath);
+    }
+
+    private void OnDeleted(object sender, FileSystemEventArgs e)
+    {
+        DeleteIndexedPath(e.FullPath);
     }
 
     private void OnWatcherError(object sender, ErrorEventArgs e)
@@ -166,6 +181,28 @@ public class FileWatcherService : IDisposable
                     _recentEvents.TryRemove(kvp.Key, out _);
                 }
             }
+        }
+    }
+
+    private void DeleteIndexedPath(string path)
+    {
+        if (!IndexingService.IsSupportedImage(path))
+        {
+            return;
+        }
+
+        try
+        {
+            var deleted = _repository.DeleteByFilePath(path);
+            if (deleted is not null)
+            {
+                _recentEvents.TryRemove(path, out _);
+                ScreenshotDeleted?.Invoke(this, new ScreenshotDeletedEventArgs { Record = deleted });
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[FileWatcherService] Failed to remove deleted screenshot '{path}'. {ex.Message}");
         }
     }
 
@@ -246,6 +283,11 @@ public class FileWatcherService : IDisposable
         }
 
         var result = await _indexingService.IndexSingleFileAsync(path, token);
+        if (result.LicenseLimitReached)
+        {
+            LicenseLimitReached?.Invoke(this, EventArgs.Empty);
+            return null;
+        }
 
         var record = result.Record ?? _repository.GetByFilePath(path);
         if (record is null)

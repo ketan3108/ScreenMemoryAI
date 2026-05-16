@@ -5,5 +5,6 @@ public enum ViewMode
     Home,
     Search,
     Collection,
-    Settings
+    Settings,
+    License
 }

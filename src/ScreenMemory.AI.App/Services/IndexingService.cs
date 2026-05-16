@@ -9,6 +9,7 @@ public class IndexSingleFileResult
 {
     public bool IsInserted { get; init; }
     public ScreenshotRecord? Record { get; init; }
+    public bool LicenseLimitReached { get; init; }
 }
 
 public class IndexingService
@@ -20,11 +21,16 @@ public class IndexingService
 
     private readonly ScreenshotRepository _repository;
     private readonly IActiveWindowService? _activeWindowService;
+    private readonly LicenseService? _licenseService;
 
-    public IndexingService(ScreenshotRepository repository, IActiveWindowService? activeWindowService = null)
+    public IndexingService(
+        ScreenshotRepository repository,
+        IActiveWindowService? activeWindowService = null,
+        LicenseService? licenseService = null)
     {
         _repository = repository;
         _activeWindowService = activeWindowService;
+        _licenseService = licenseService;
     }
 
     public static bool IsSupportedImage(string path)
@@ -49,6 +55,15 @@ public class IndexingService
             {
                 IsInserted = false,
                 Record = _repository.GetByFilePath(path)
+            };
+        }
+
+        if (_licenseService is not null && !_licenseService.CanIndexNewScreenshot(_repository.Count()))
+        {
+            return new IndexSingleFileResult
+            {
+                IsInserted = false,
+                LicenseLimitReached = true
             };
         }
 

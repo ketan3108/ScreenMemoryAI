@@ -13,26 +13,26 @@
         Background="Transparent"
         ShowInTaskbar="False"
         Topmost="True"
-        FontFamily="Segoe UI Variable Display, Segoe UI Variable, Segoe UI, sans-serif"
+        FontFamily="Inter, Segoe UI Variable Display, Segoe UI Variable, Segoe UI, sans-serif"
         KeyDown="Window_KeyDown">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="BackgroundDeep" Color="#070708"/>
-        <SolidColorBrush x:Key="BackgroundPrimary" Color="#0B0B0D"/>
-        <SolidColorBrush x:Key="BackgroundSecondary" Color="#111217"/>
-        <SolidColorBrush x:Key="BackgroundTertiary" Color="#18191F"/>
-        <SolidColorBrush x:Key="BackgroundElevated" Color="#1F2129"/>
-        <SolidColorBrush x:Key="BackgroundHover" Color="#252833"/>
-        <SolidColorBrush x:Key="BorderSubtle" Color="#1A1C25"/>
-        <SolidColorBrush x:Key="BorderDefault" Color="#252A38"/>
+        <SolidColorBrush x:Key="BackgroundDeep" Color="#0B0C0E"/>
+        <SolidColorBrush x:Key="BackgroundPrimary" Color="#0E0E10"/>
+        <SolidColorBrush x:Key="BackgroundSecondary" Color="#121317"/>
+        <SolidColorBrush x:Key="BackgroundTertiary" Color="#1A1B1F"/>
+        <SolidColorBrush x:Key="BackgroundElevated" Color="#1E1F24"/>
+        <SolidColorBrush x:Key="BackgroundHover" Color="#292A2E"/>
+        <SolidColorBrush x:Key="BorderSubtle" Color="#14FFFFFF"/>
+        <SolidColorBrush x:Key="BorderDefault" Color="#26FFFFFF"/>
         <SolidColorBrush x:Key="BorderEmphasis" Color="#3D4459"/>
         <SolidColorBrush x:Key="AccentPrimary" Color="#8B5CF6"/>
-        <SolidColorBrush x:Key="AccentGlow" Color="#C4B5FD"/>
-        <SolidColorBrush x:Key="AccentSubtle" Color="#1E1832"/>
-        <SolidColorBrush x:Key="TextPrimary" Color="#FAFAFA"/>
-        <SolidColorBrush x:Key="TextSecondary" Color="#A1A7B3"/>
-        <SolidColorBrush x:Key="TextTertiary" Color="#6B7280"/>
-        <SolidColorBrush x:Key="TextMuted" Color="#4B5563"/>
+        <SolidColorBrush x:Key="AccentGlow" Color="#D0BCFF"/>
+        <SolidColorBrush x:Key="AccentSubtle" Color="#1A8B5CF6"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#CBC3D7"/>
+        <SolidColorBrush x:Key="TextTertiary" Color="#A1A1AA"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#6F687A"/>
 
         <DropShadowEffect x:Key="OverlayShadow"
                           Color="#000000"
@@ -167,7 +167,7 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="#F00B0B0D"
+    <Border Background="#F00B0C0E"
             BorderBrush="{StaticResource BorderDefault}"
             BorderThickness="1"
             CornerRadius="16"
@@ -227,7 +227,7 @@
                                                                Foreground="{StaticResource TextMuted}"
                                                                FontSize="16"
                                                                FontWeight="500"
-                                                               FontFamily="Segoe UI Variable Display, Segoe UI Variable, Segoe UI, sans-serif"
+                                                               FontFamily="Inter, Segoe UI Variable Display, Segoe UI Variable, Segoe UI, sans-serif"
                                                                Margin="2,0,0,0"/>
                                                 </VisualBrush.Visual>
                                             </VisualBrush>
