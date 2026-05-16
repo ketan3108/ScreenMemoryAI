@@ -98,6 +98,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         WHERE file_path = @Path COLLATE NOCASE
@@ -148,6 +149,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots;
         """;
@@ -218,6 +220,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         ORDER BY COALESCE(NULLIF(created_at, ''), NULLIF(modified_at, ''), imported_at) DESC
@@ -228,6 +231,76 @@ public class ScreenshotRepository
             .OrderByDescending(GetBestTimestamp)
             .Take(limit)
             .ToList();
+    }
+
+    public List<ScreenshotRecord> GetFavorites(int limit = 100)
+    {
+        using var connection = _databaseService.CreateConnection();
+        connection.Open();
+
+        const string sql =
+        """
+        SELECT
+            id AS Id,
+            file_path AS FilePath,
+            file_name AS FileName,
+            file_size_bytes AS FileSizeBytes,
+            created_at AS CreatedAt,
+            modified_at AS ModifiedAt,
+            thumbnail_path AS ThumbnailPath,
+            ocr_text AS OcrText,
+            ocr_status AS OcrStatus,
+            imported_at AS ImportedAt,
+            ocr_processed_at AS OcrProcessedAt,
+            active_window AS ActiveWindow,
+            process_name AS ProcessName,
+            application_name AS ApplicationName,
+            ai_category AS AiCategory,
+            ai_tags AS AiTags,
+            ai_summary AS AiSummary,
+            ai_confidence AS AiConfidence,
+            ai_status AS AiStatus,
+            ai_error AS AiError,
+            ai_analyzed_at AS AiAnalyzedAt,
+            embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
+            updated_at AS UpdatedAt
+        FROM screenshots
+        WHERE is_favorite = 1
+        ORDER BY COALESCE(NULLIF(updated_at, ''), imported_at) DESC
+        LIMIT @Limit;
+        """;
+
+        return connection.Query<ScreenshotRecord>(sql, new { Limit = limit }).ToList();
+    }
+
+    public void SetFavorite(string id, bool isFavorite)
+        => UpdateFlag(id, "is_favorite", isFavorite);
+
+    private void UpdateFlag(string id, string columnName, bool value)
+    {
+        if (columnName is not "is_favorite")
+        {
+            throw new ArgumentOutOfRangeException(nameof(columnName));
+        }
+
+        using var connection = _databaseService.CreateConnection();
+        connection.Open();
+
+        var sql =
+        $"""
+        UPDATE screenshots
+        SET {columnName} = @Value,
+            updated_at = @UpdatedAt
+        WHERE id = @Id;
+        """;
+
+        connection.Execute(sql, new
+        {
+            Id = id,
+            Value = value ? 1 : 0,
+            UpdatedAt = DateTime.UtcNow
+        });
     }
 
     public List<ScreenshotRecord> GetRecentPaged(int skip, int take)
@@ -341,6 +414,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         WHERE file_name LIKE @Query
@@ -540,6 +614,7 @@ public class ScreenshotRepository
             s.ai_error AS AiError,
             s.ai_analyzed_at AS AiAnalyzedAt,
             s.embedding_vector AS EmbeddingVector,
+            s.is_favorite AS IsFavorite,
             s.updated_at AS UpdatedAt
         FROM screenshot_fts f
         JOIN screenshots s ON s.id = f.screenshot_id
@@ -717,6 +792,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         WHERE {whereClause}
@@ -800,6 +876,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         WHERE {string.Join(" OR ", conditions)}
@@ -866,6 +943,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         WHERE embedding_vector IS NOT NULL
@@ -987,6 +1065,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         WHERE ocr_status = 'completed'
@@ -1101,6 +1180,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         WHERE ocr_status IS NULL
@@ -1143,6 +1223,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         WHERE file_path = @Path COLLATE NOCASE
@@ -1342,6 +1423,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         WHERE file_name LIKE @Query
@@ -1391,6 +1473,7 @@ public class ScreenshotRepository
             ai_error AS AiError,
             ai_analyzed_at AS AiAnalyzedAt,
             embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
             updated_at AS UpdatedAt
         FROM screenshots
         WHERE ocr_text LIKE @Query
@@ -1488,3 +1571,7 @@ public class ScreenshotRepository
         return dot / (Math.Sqrt(leftMagnitude) * Math.Sqrt(rightMagnitude));
     }
 }
+
+
+
+

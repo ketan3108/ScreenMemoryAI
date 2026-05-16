@@ -5,7 +5,7 @@ namespace ScreenMemory.AI.Core.Data;
 public class DatabaseService
 {
     private readonly string _databasePath;
-    private const int CurrentSchemaVersion = 3;
+    private const int CurrentSchemaVersion = 4;
 
     public DatabaseService(string? databasePath = null)
     {
@@ -77,6 +77,7 @@ public class DatabaseService
 
         EnsureColumnExists(connection, "screenshots", "ocr_text", "TEXT");
         EnsureColumnExists(connection, "screenshots", "ocr_status", "TEXT DEFAULT 'pending'");
+        EnsureColumnExists(connection, "screenshots", "is_favorite", "INTEGER NOT NULL DEFAULT 0");
 
         using var ftsCommand = connection.CreateCommand();
         ftsCommand.CommandText =
@@ -149,6 +150,9 @@ public class DatabaseService
                 break;
             case 3:
                 CreatePerformanceIndexes(connection, transaction);
+                break;
+            case 4:
+                AddFavoriteColumn(connection, transaction);
                 break;
             default:
                 throw new InvalidOperationException($"Unknown database migration version {version}.");
@@ -230,6 +234,18 @@ public class DatabaseService
             CREATE INDEX IF NOT EXISTS idx_screenshots_imported_at ON screenshots(imported_at);
             CREATE INDEX IF NOT EXISTS idx_screenshots_created_at ON screenshots(created_at);
             CREATE INDEX IF NOT EXISTS idx_screenshots_updated_at ON screenshots(updated_at);
+            """);
+    }
+
+    private static void AddFavoriteColumn(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        EnsureColumnExists(connection, transaction, "screenshots", "is_favorite", "INTEGER NOT NULL DEFAULT 0");
+
+        ExecuteNonQuery(
+            connection,
+            transaction,
+            """
+            CREATE INDEX IF NOT EXISTS idx_screenshots_is_favorite ON screenshots(is_favorite);
             """);
     }
 

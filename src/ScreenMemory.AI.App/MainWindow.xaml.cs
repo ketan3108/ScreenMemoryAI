@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Forms = System.Windows.Forms;
@@ -299,9 +300,9 @@ public partial class MainWindow : Window
     private void Recent_Click(object sender, RoutedEventArgs e)
     {
         CurrentViewMode = ViewMode.Collection;
-        CurrentCollection = "Recent";
+        CurrentCollection = "Recents";
         CurrentSearchQuery = string.Empty;
-        ShowResults("Recent", _repository.GetRecent(RecentPageLimit));
+        ShowResults("Recents", _repository.GetRecent(RecentPageLimit));
     }
 
     private void Invoices_Click(object sender, RoutedEventArgs e)
@@ -334,8 +335,10 @@ public partial class MainWindow : Window
 
     private void Favorites_Click(object sender, RoutedEventArgs e)
     {
-        ShowResults("Favorites", []);
-        ResultsMetaText.Text = "Favorites coming soon";
+        CurrentViewMode = ViewMode.Collection;
+        CurrentCollection = "Favourites";
+        CurrentSearchQuery = string.Empty;
+        ShowResults("Favourites", _repository.GetFavorites(CollectionLimit));
     }
 
     private async void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
@@ -678,7 +681,7 @@ public partial class MainWindow : Window
             ? $"Pro active{(string.IsNullOrWhiteSpace(state.CustomerEmail) ? string.Empty : $" for {state.CustomerEmail}")}."
             : $"Free plan includes {LicenseService.FreeScreenshotLimit:N0} fully searchable screenshots.";
         DeactivateLicenseButton.IsEnabled = state.IsPro;
-        LicensePageUpgradeButton.Visibility = state.IsPro ? Visibility.Collapsed : Visibility.Visible;
+        LicensePageUpgradeButton.Visibility = Visibility.Collapsed;
         LicenseUsageBar.Width = state.IsPro
             ? 360
             : Math.Clamp(count / (double)LicenseService.FreeScreenshotLimit, 0, 1) * 360;
@@ -784,9 +787,9 @@ public partial class MainWindow : Window
             }
 
             if (CurrentViewMode == ViewMode.Collection &&
-                string.Equals(CurrentCollection, "Recent", StringComparison.OrdinalIgnoreCase))
+                string.Equals(CurrentCollection, "Recents", StringComparison.OrdinalIgnoreCase))
             {
-                ShowResults("Recent", _repository.GetRecent(RecentPageLimit));
+                ShowResults("Recents", _repository.GetRecent(RecentPageLimit));
                 return;
             }
         });
@@ -865,8 +868,11 @@ public partial class MainWindow : Window
     {
         switch (CurrentCollection)
         {
-            case "Recent":
-                ShowResults("Recent", _repository.GetRecent(RecentPageLimit));
+            case "Recents":
+                ShowResults("Recents", _repository.GetRecent(RecentPageLimit));
+                break;
+            case "Favourites":
+                ShowResults("Favourites", _repository.GetFavorites(CollectionLimit));
                 break;
             case "Invoices":
                 ShowSmartCollection(
@@ -1210,6 +1216,15 @@ public partial class MainWindow : Window
         SelectScreenshot(record);
     }
 
+    private void FavoriteScreenshot_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: ScreenshotRecord record })
+        {
+            ToggleFavorite(record);
+            e.Handled = true;
+        }
+    }
+
     private void OpenImageFromOverlay(ScreenshotRecord record)
     {
         if (!File.Exists(record.FilePath))
@@ -1280,6 +1295,73 @@ public partial class MainWindow : Window
         var fileExists = File.Exists(record.FilePath);
         PreviewOpenImageButton.IsEnabled  = fileExists;
         PreviewRevealButton.IsEnabled     = fileExists;
+        UpdatePreviewFavoriteButton(record);
+    }
+
+    private void UpdatePreviewFavoriteButton(ScreenshotRecord record)
+    {
+        PreviewFavoriteButton.ToolTip = record.IsFavorite ? "Remove from favourites" : "Add to favourites";
+        PreviewFavoriteButton.Foreground = GetBrush(record.IsFavorite ? "AccentGlow" : "TextSecondary");
+    }
+
+    private System.Windows.Media.Brush GetBrush(string resourceKey)
+        => TryFindResource(resourceKey) as System.Windows.Media.Brush ?? System.Windows.SystemColors.ControlTextBrush;
+
+    private void PreviewFavorite_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedScreenshot is not null)
+        {
+            ToggleFavorite(_selectedScreenshot);
+        }
+    }
+
+    private void ToggleFavorite(ScreenshotRecord record)
+    {
+        var next = !record.IsFavorite;
+        _repository.SetFavorite(record.Id, next);
+        ApplyFavoriteState(record.Id, next);
+        StatusText.Text = next ? "Added to favourites" : "Removed from favourites";
+
+        if (CurrentViewMode == ViewMode.Collection &&
+            string.Equals(CurrentCollection, "Favourites", StringComparison.OrdinalIgnoreCase) &&
+            !next)
+        {
+            RefreshCurrentCollection();
+        }
+    }
+
+    private void ApplyFavoriteState(string id, bool isFavorite)
+    {
+        foreach (var record in EnumerateVisibleRecords().Where(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase)))
+        {
+            record.IsFavorite = isFavorite;
+        }
+
+        if (_selectedScreenshot is not null &&
+            string.Equals(_selectedScreenshot.Id, id, StringComparison.OrdinalIgnoreCase))
+        {
+            _selectedScreenshot.IsFavorite = isFavorite;
+            UpdatePreviewFavoriteButton(_selectedScreenshot);
+        }
+
+        ResultsList.Items.Refresh();
+        RecentTodayList.Items.Refresh();
+        RecentYesterdayList.Items.Refresh();
+        RecentWeekList.Items.Refresh();
+        RecentOlderList.Items.Refresh();
+    }
+
+    private IEnumerable<ScreenshotRecord> EnumerateVisibleRecords()
+    {
+        foreach (var record in DisplayedScreenshots)
+        {
+            yield return record;
+        }
+
+        foreach (var record in EnumerateRecentBucketRecords())
+        {
+            yield return record;
+        }
     }
 
     private async Task LoadPreviewImageAsync(ScreenshotRecord record)

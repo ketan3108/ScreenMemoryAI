@@ -10,7 +10,9 @@
         FontFamily="Inter, Segoe UI Variable Display, Segoe UI Variable, Segoe UI, sans-serif"
         Background="#0B0C0E"
         ResizeMode="NoResize"
-        WindowStyle="None">
+        WindowStyle="None"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True">
 
     <Window.Resources>
 
@@ -84,9 +86,9 @@
         
         <DropShadowEffect x:Key="CardShadow"
                           Color="#000000"
-                          BlurRadius="24"
-                          ShadowDepth="4"
-                          Opacity="0.5"/>
+                          BlurRadius="26"
+                          ShadowDepth="0"
+                          Opacity="0.36"/>
         
         <DropShadowEffect x:Key="ModalShadow"
                           Color="#000000"
@@ -96,16 +98,16 @@
         
         <DropShadowEffect x:Key="SubtleShadow"
                           Color="#000000"
-                          BlurRadius="12"
-                          ShadowDepth="2"
-                          Opacity="0.3"/>
+                          BlurRadius="18"
+                          ShadowDepth="0"
+                          Opacity="0.26"/>
 
         <!-- ═══════════════════════════════════════════════════════
              TYPOGRAPHY
         ═══════════════════════════════════════════════════════ -->
         
         <Style x:Key="TypographyTitleLarge" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontSize" Value="24"/>
             <Setter Property="FontWeight" Value="600"/>
             <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
@@ -163,7 +165,7 @@
                 <Setter.Value>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#8B5CF6" Offset="0"/>
-                        <GradientStop Color="#7C3AED" Offset="1"/>
+                        <GradientStop Color="#3B82F6" Offset="1"/>
                     </LinearGradientBrush>
                 </Setter.Value>
             </Setter>
@@ -179,10 +181,16 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="border"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="8"
+                                CornerRadius="12"
                                 Padding="{TemplateBinding Padding}"
                                 Effect="{StaticResource NeonGlowShadow}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Grid>
+                                <Border Height="1"
+                                        VerticalAlignment="Top"
+                                        CornerRadius="12,12,0,0"
+                                        Background="#45FFFFFF"/>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -190,7 +198,7 @@
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                             <GradientStop Color="#A78BFA" Offset="0"/>
-                                            <GradientStop Color="#8B5CF6" Offset="1"/>
+                                            <GradientStop Color="#3B82F6" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Setter.Value>
                                 </Setter>
@@ -205,7 +213,7 @@
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                             <GradientStop Color="#7C3AED" Offset="0"/>
-                                            <GradientStop Color="#6D28D9" Offset="1"/>
+                                            <GradientStop Color="#3B82F6" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Setter.Value>
                                 </Setter>
@@ -237,7 +245,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
+                                CornerRadius="12"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -564,7 +572,7 @@
                                 <Image Source="pack://application:,,,/Assets/AppIcon.ico" Stretch="UniformToFill" Margin="8"/>
                             </Border>
                             <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Settings" Style="{StaticResource TypographyTitleLarge}"/>
+                                <TextBlock Text="Settings" Style="{StaticResource TypographyTitleSmall}"/>
                                 <TextBlock Text="Workspace controls" Style="{StaticResource TypographyBodySmall}" Margin="0,2,0,0"/>
                             </StackPanel>
                         </StackPanel>
@@ -619,7 +627,7 @@
                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid>
                         <StackPanel>
-                            <TextBlock Text="Settings" Style="{StaticResource TypographyTitleLarge}" FontSize="24"/>
+                            <TextBlock Text="Settings" Style="{StaticResource TypographyTitleLarge}"/>
                             <TextBlock Text="Manage screenshot folders, OCR, and local processing."
                                        Style="{StaticResource TypographyBodyDefault}"
                                        Margin="0,4,0,0"/>
@@ -636,7 +644,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -678,7 +686,7 @@
                                     Padding="0"
                                     Cursor="Hand"
                                     Click="AddFolder_Click">
-                                <Grid Height="118">
+                                <Grid Height="104">
                                     <Rectangle Margin="10"
                                                RadiusX="14"
                                                RadiusY="14"
@@ -716,8 +724,8 @@
                                  Background="Transparent"
                                  BorderThickness="0"
                                  ItemContainerStyle="{StaticResource FolderListItem}"
-                                 MinHeight="78"
-                                 MaxHeight="160"
+                                 MinHeight="70"
+                                 MaxHeight="150"
                                  Visibility="Collapsed"
                                  Margin="0,0,0,12"
                                  SelectionChanged="FoldersList_SelectionChanged"/>

@@ -309,8 +309,6 @@ public class FileWatcherService : IDisposable
             }
         }
 
-        // TODO: enqueue OCR for new screenshot
-
         return (record, result.IsInserted);
     }
 

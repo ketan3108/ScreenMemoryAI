@@ -7,6 +7,7 @@ public class ScreenshotRecord : INotifyPropertyChanged
 {
     private string _thumbnailPath = string.Empty;
     private bool _isSelected;
+    private bool _isFavorite;
 
     public string Id { get; set; } = Guid.NewGuid().ToString();
 
@@ -66,6 +67,21 @@ public class ScreenshotRecord : INotifyPropertyChanged
     public byte[]? EmbeddingVector { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public bool IsFavorite
+    {
+        get => _isFavorite;
+        set
+        {
+            if (_isFavorite == value)
+            {
+                return;
+            }
+
+            _isFavorite = value;
+            OnPropertyChanged();
+        }
+    }
 
     public bool IsSelected
     {

@@ -39,7 +39,8 @@ public sealed class DatabaseMigrationTests : IDisposable
             "ai_analyzed_at",
             "embedding_vector",
             "ocr_processed_at",
-            "updated_at"
+            "updated_at",
+            "is_favorite"
         ]);
 
         var ftsColumns = connection.Query<string>("SELECT name FROM pragma_table_info('screenshot_fts');").ToList();
@@ -54,7 +55,7 @@ public sealed class DatabaseMigrationTests : IDisposable
 
         connection.ExecuteScalar<int>("SELECT MAX(id) FROM schema_migrations;")
             .Should()
-            .Be(3);
+            .Be(4);
     }
 
     [Fact]
@@ -130,6 +131,30 @@ public sealed class DatabaseMigrationTests : IDisposable
             SearchMode.Ai);
 
         results.Should().ContainSingle(x => x.Id == record.Id);
+    }
+
+    [Fact]
+    public void RepositoryPersistsFavorites()
+    {
+        var database = new DatabaseService(_databasePath);
+        database.Initialize();
+        var repository = new ScreenshotRepository(database);
+
+        var record = new ScreenshotRecord
+        {
+            Id = Guid.NewGuid().ToString(),
+            FilePath = Path.Combine(Path.GetTempPath(), "screenmemory-favorite-test.png"),
+            FileName = "screenmemory-favorite-test.png",
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow,
+            ImportedAt = DateTime.UtcNow
+        };
+
+        repository.InsertIfNotExists(record);
+        repository.SetFavorite(record.Id, true);
+
+        var favorite = repository.GetFavorites(10).Should().ContainSingle(x => x.Id == record.Id).Subject;
+        favorite.IsFavorite.Should().BeTrue();
     }
 
     [Fact]

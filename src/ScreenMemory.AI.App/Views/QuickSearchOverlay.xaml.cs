@@ -30,7 +30,7 @@ public partial class QuickSearchOverlay : Window
             get
             {
                 var category = string.IsNullOrWhiteSpace(Record.AiCategory) ? "unknown" : Record.AiCategory;
-                var app = string.IsNullOrWhiteSpace(Record.ApplicationName) ? string.Empty : $" Â· {Record.ApplicationName}";
+                var app = string.IsNullOrWhiteSpace(Record.ApplicationName) ? string.Empty : $" · {Record.ApplicationName}";
                 return $"{category}{app}";
             }
         }
@@ -65,10 +65,10 @@ public partial class QuickSearchOverlay : Window
     // Atomic lock for search debounce
     private int _searchVersion;
 
-    private const double CompactHeight = 100;
-    private const double BaseHeight = 110;
-    private const double RowHeight = 68;
-    private const double MinOverlayHeight = 100;
+    private const double CompactHeight = 108;
+    private const double BaseHeight = 118;
+    private const double RowHeight = 76;
+    private const double MinOverlayHeight = 108;
     private const double MaxOverlayHeight = 620;
 
     public QuickSearchOverlay(
@@ -398,3 +398,4 @@ public partial class QuickSearchOverlay : Window
         }
     }
 }
+
