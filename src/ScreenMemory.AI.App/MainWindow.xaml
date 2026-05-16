@@ -511,7 +511,8 @@
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="40,0,14,0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="Height" Value="40"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -522,12 +523,31 @@
                                 BorderThickness="1"
                                 CornerRadius="10">
                             <Grid>
-                                <Viewbox Width="16" Height="16" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="14,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="48"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Viewbox Grid.Column="0"
+                                         Width="16"
+                                         Height="16"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center">
                                     <Path Data="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" 
                                           Fill="{StaticResource TextMuted}" Stretch="Uniform"/>
                                 </Viewbox>
+                                <TextBlock x:Name="SearchPlaceholder"
+                                           Grid.Column="1"
+                                           Text="Search screenshots..."
+                                           Foreground="{StaticResource TextMuted}"
+                                           FontSize="13"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,14,0"
+                                           IsHitTestVisible="False"
+                                           Visibility="Collapsed"/>
                                 <ScrollViewer x:Name="PART_ContentHost"
-                                              Margin="{TemplateBinding Padding}"
+                                              Grid.Column="1"
+                                              Margin="0,0,14,0"
+                                              HorizontalAlignment="Stretch"
                                               VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
@@ -543,6 +563,9 @@
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource BorderDefault}"/>
+                            </Trigger>
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="SearchPlaceholder" Property="Visibility" Value="Visible"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -589,7 +612,9 @@
         ═══════════════════════════════════════════════════════ -->
         
         <DataTemplate x:Key="ScreenshotCardTemplate">
-            <Border Width="165" Margin="0,0,12,12"
+            <Border Width="176"
+                    Height="154"
+                    Margin="0,0,14,16"
                     CornerRadius="12"
                     Cursor="Hand"
                     Effect="{StaticResource SubtleShadow}"
@@ -600,47 +625,84 @@
                         <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
                         <Setter Property="BorderThickness" Value="1"/>
                         <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource BorderDefault}"/>
+                                <Setter Property="Background" Value="{StaticResource BackgroundElevated}"/>
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" BlurRadius="18" ShadowDepth="4" Opacity="0.45"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
                             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                 <Setter Property="BorderBrush" Value="{StaticResource AccentPrimary}"/>
                                 <Setter Property="BorderThickness" Value="1.5"/>
                                 <Setter Property="Background" Value="{StaticResource AccentSubtle}"/>
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="14" ShadowDepth="0" Opacity="0.28"/>
+                                    </Setter.Value>
+                                </Setter>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
                 <Grid>
-                    <!-- Thumbnail Container -->
-                    <Border Height="110" 
-                            Background="{StaticResource BackgroundPrimary}" 
-                            CornerRadius="11,11,0,0" 
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="104"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            Background="{StaticResource BackgroundPrimary}"
+                            CornerRadius="11,11,0,0"
                             ClipToBounds="True"
-                            Margin="6,6,6,0">
+                            Margin="5,5,5,0">
                         <Image Source="{Binding ThumbnailPath}"
                                Stretch="UniformToFill"
                                RenderOptions.BitmapScalingMode="HighQuality"
                                VerticalAlignment="Center"/>
                     </Border>
-                    
-                    <!-- Metadata Footer -->
-                    <StackPanel VerticalAlignment="Bottom" 
-                                Margin="10,0,10,10">
+
+                    <Border Grid.Row="0"
+                            Height="28"
+                            VerticalAlignment="Bottom"
+                            Margin="5,0,5,0"
+                            IsHitTestVisible="False">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#00111217" Offset="0"/>
+                                <GradientStop Color="#D9111217" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+
+                    <StackPanel Grid.Row="1"
+                                Margin="10,8,10,8">
                         <TextBlock Text="{Binding FileName}"
-                                   FontSize="11" 
-                                   FontWeight="500"
-                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="11.5"
+                                   FontWeight="600"
+                                   Foreground="{StaticResource TextPrimary}"
                                    TextTrimming="CharacterEllipsis"
                                    ToolTip="{Binding FileName}"/>
-                        <TextBlock Text="{Binding AiCategory}"
-                                   FontSize="10"
-                                   FontWeight="600"
-                                   Foreground="{StaticResource AccentGlow}"
-                                   TextTrimming="CharacterEllipsis"
-                                   Margin="0,3,0,0"/>
-                        <TextBlock Text="{Binding ApplicationName}"
-                                   FontSize="10"
-                                   Foreground="{StaticResource TextMuted}"
-                                   TextTrimming="CharacterEllipsis"
-                                   Margin="0,2,0,0"/>
+                        <Grid Margin="0,5,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding AiCategory}"
+                                       FontSize="10.5"
+                                       FontWeight="600"
+                                       Foreground="{StaticResource AccentGlow}"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding ApplicationName}"
+                                       FontSize="10"
+                                       Foreground="{StaticResource TextMuted}"
+                                       TextTrimming="CharacterEllipsis"
+                                       MaxWidth="54"
+                                       Margin="8,0,0,0"/>
+                        </Grid>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -706,11 +768,16 @@
                         Padding="12,12"
                         BorderBrush="{StaticResource BorderSubtle}"
                         BorderThickness="0,1,0,0">
-                    <Border Background="{StaticResource StatusSuccessSubtle}"
-                            BorderBrush="#1A3D2E"
+                    <Border BorderBrush="#1A3D2E"
                             BorderThickness="1"
-                            CornerRadius="8"
+                            CornerRadius="10"
                             Padding="10,8">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#0D2E22" Offset="0"/>
+                                <GradientStop Color="#0A1F1A" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
                         <StackPanel Orientation="Horizontal">
                             <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center">
                                 <Ellipse.Fill>
@@ -807,6 +874,8 @@
                               Margin="0,0,12,0"
                               Style="{StaticResource InputSearch}"
                               TextChanged="SearchBox_TextChanged"
+                              GotKeyboardFocus="SearchBox_GotKeyboardFocus"
+                              PreviewMouseLeftButtonDown="SearchBox_PreviewMouseLeftButtonDown"
                               ToolTip="Search screenshots... (e.g., invoice, error, code)"/>
 
                     <Border Grid.Column="1"
@@ -872,13 +941,18 @@
                         </Grid>
 
                         <!-- STATS STRIP with Neon Accents -->
-                        <Border Background="{StaticResource BackgroundTertiary}"
-                                BorderBrush="{StaticResource BorderSubtle}"
+                        <Border BorderBrush="{StaticResource BorderSubtle}"
                                 BorderThickness="1"
                                 CornerRadius="14"
                                 Margin="0,0,0,24"
                                 Padding="0"
                                 Effect="{StaticResource SubtleShadow}">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#18191F" Offset="0"/>
+                                    <GradientStop Color="#14151B" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>

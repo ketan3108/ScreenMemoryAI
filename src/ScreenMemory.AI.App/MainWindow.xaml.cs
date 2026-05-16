@@ -61,6 +61,9 @@ public partial class MainWindow : Window
     private int _ocrRunTotal;
     private bool _aiBackfillQueued;
     private SearchMode _searchMode = SearchMode.Keyword;
+    private long _lastOcrProgressUiTicks;
+    private long _lastAiProgressUiTicks;
+    private const long ProgressUiIntervalMs = 250;
 
     public ViewMode CurrentViewMode { get; private set; } = ViewMode.Home;
     public string CurrentCollection { get; private set; } = string.Empty;
@@ -344,6 +347,30 @@ public partial class MainWindow : Window
         ResultsMetaText.Text = _searchMode == SearchMode.Ai
             ? $"{results.Count} AI results for '{query}'"
             : $"{results.Count} results for '{query}'";
+    }
+
+    private void SearchBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.TextBox textBox && string.IsNullOrEmpty(textBox.Text))
+        {
+            textBox.CaretIndex = 0;
+        }
+    }
+
+    private void SearchBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox || !string.IsNullOrEmpty(textBox.Text))
+        {
+            return;
+        }
+
+        e.Handled = true;
+        if (!textBox.IsKeyboardFocusWithin)
+        {
+            textBox.Focus();
+        }
+
+        textBox.CaretIndex = 0;
     }
 
     private async Task<List<ScreenshotRecord>> SearchRecordsAsync(string query, CancellationToken token)
@@ -655,28 +682,42 @@ public partial class MainWindow : Window
 
     private void OcrQueueService_ProgressChanged(OcrQueueProgress progress)
     {
-        Dispatcher.Invoke(() =>
+        var isComplete = progress.Processed >= progress.Total;
+        if (!ShouldDispatchProgress(ref _lastOcrProgressUiTicks, isComplete))
+        {
+            return;
+        }
+
+        Dispatcher.BeginInvoke(() =>
         {
             StartOrRefreshOcrTracking();
             UpdateOcrTrackingStatus();
             OcrReadyCountText.Text = _repository.CountOcrReady().ToString("N0");
+            RefreshSelectedScreenshotMetadata();
 
-            if (progress.Processed >= progress.Total)
+            if (isComplete)
             {
                 QueueOcrBackfill();
-                QueueAiBackfill();
             }
         });
     }
 
     private void AiMetadataQueueService_ProgressChanged(AiMetadataQueueProgress progress)
     {
-        Dispatcher.Invoke(() =>
+        var isComplete = progress.Processed >= progress.Total;
+        if (!ShouldDispatchProgress(ref _lastAiProgressUiTicks, isComplete))
         {
-            AiTaggedCountText.Text = _repository.CountAiTagged().ToString("N0");
+            return;
+        }
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            var taggedCount = _repository.CountAiTagged();
+            AiTaggedCountText.Text = taggedCount.ToString("N0");
+            RefreshSelectedScreenshotMetadata();
             if (CurrentViewMode == ViewMode.Settings)
             {
-                SettingsAiTaggedText.Text = _repository.CountAiTagged().ToString("N0");
+                SettingsAiTaggedText.Text = taggedCount.ToString("N0");
                 SettingsAiPendingText.Text = _repository.CountPendingAi().ToString("N0");
             }
 
@@ -685,11 +726,111 @@ public partial class MainWindow : Window
                 StatusText.Text = $"AI tagging {progress.Processed}/{progress.Total}";
             }
 
-            if (progress.Processed >= progress.Total && !_ocrTrackingActive)
+            if (isComplete && !_ocrTrackingActive)
             {
                 StatusText.Text = "Ready";
             }
         });
+    }
+
+    private static bool ShouldDispatchProgress(ref long lastDispatchTicks, bool isComplete)
+    {
+        if (isComplete)
+        {
+            Interlocked.Exchange(ref lastDispatchTicks, Environment.TickCount64);
+            return true;
+        }
+
+        var now = Environment.TickCount64;
+        var last = Volatile.Read(ref lastDispatchTicks);
+        if (now - last < ProgressUiIntervalMs)
+        {
+            return false;
+        }
+
+        Interlocked.Exchange(ref lastDispatchTicks, now);
+        return true;
+    }
+
+    private void RefreshSelectedScreenshotMetadata()
+    {
+        if (_selectedScreenshot is null)
+        {
+            return;
+        }
+
+        var refreshed = _repository.GetByFilePath(_selectedScreenshot.FilePath);
+        if (refreshed is null)
+        {
+            return;
+        }
+
+        ApplyRecordMetadata(_selectedScreenshot, refreshed);
+
+        var displayed = DisplayedScreenshots.FirstOrDefault(record =>
+            string.Equals(record.Id, refreshed.Id, StringComparison.OrdinalIgnoreCase));
+        if (displayed is not null && !ReferenceEquals(displayed, _selectedScreenshot))
+        {
+            ApplyRecordMetadata(displayed, refreshed);
+        }
+
+        UpdatePreviewMetadata(_selectedScreenshot, resetPreviewImage: false);
+        ResultsList.Items.Refresh();
+        RefreshRecentBucketsIfVisible(refreshed);
+    }
+
+    private void RefreshRecentBucketsIfVisible(ScreenshotRecord refreshed)
+    {
+        if (CurrentViewMode != ViewMode.Home)
+        {
+            return;
+        }
+
+        foreach (var record in EnumerateRecentBucketRecords())
+        {
+            if (string.Equals(record.Id, refreshed.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                ApplyRecordMetadata(record, refreshed);
+            }
+        }
+
+        RecentTodayList.Items.Refresh();
+        RecentYesterdayList.Items.Refresh();
+        RecentWeekList.Items.Refresh();
+        RecentOlderList.Items.Refresh();
+    }
+
+    private IEnumerable<ScreenshotRecord> EnumerateRecentBucketRecords()
+    {
+        foreach (var list in new[] { RecentTodayList, RecentYesterdayList, RecentWeekList, RecentOlderList })
+        {
+            foreach (var item in list.Items)
+            {
+                if (item is ScreenshotRecord record)
+                {
+                    yield return record;
+                }
+            }
+        }
+    }
+
+    private static void ApplyRecordMetadata(ScreenshotRecord target, ScreenshotRecord source)
+    {
+        target.ThumbnailPath = source.ThumbnailPath;
+        target.OcrText = source.OcrText;
+        target.OcrStatus = source.OcrStatus;
+        target.OcrProcessedAt = source.OcrProcessedAt;
+        target.ActiveWindow = source.ActiveWindow;
+        target.ProcessName = source.ProcessName;
+        target.ApplicationName = source.ApplicationName;
+        target.AiCategory = source.AiCategory;
+        target.AiTags = source.AiTags;
+        target.AiSummary = source.AiSummary;
+        target.AiConfidence = source.AiConfidence;
+        target.AiStatus = source.AiStatus;
+        target.AiError = source.AiError;
+        target.AiAnalyzedAt = source.AiAnalyzedAt;
+        target.UpdatedAt = source.UpdatedAt;
     }
 
     private void QueueAiBackfill(int limit = 500)
@@ -879,7 +1020,7 @@ public partial class MainWindow : Window
         _ = LoadPreviewImageAsync(record);
     }
 
-    private void UpdatePreviewMetadata(ScreenshotRecord record)
+    private void UpdatePreviewMetadata(ScreenshotRecord record, bool resetPreviewImage = true)
     {
         PreviewFileNameText.Text    = record.FileName;
         PreviewFilePathText.Text    = record.FilePath;
@@ -893,10 +1034,12 @@ public partial class MainWindow : Window
         PreviewWindowText.Text      = string.IsNullOrWhiteSpace(record.ActiveWindow) ? "Unavailable" : record.ActiveWindow;
         PreviewAiSummaryText.Text   = string.IsNullOrWhiteSpace(record.AiSummary) ? "No summary yet" : record.AiSummary;
 
-        // Show placeholder text while image loads.
-        PreviewPlaceholderText.Text       = "Loading…";
-        PreviewPlaceholderText.Visibility = Visibility.Visible;
-        PreviewImage.Source               = null;
+        if (resetPreviewImage)
+        {
+            PreviewPlaceholderText.Text       = "Loading…";
+            PreviewPlaceholderText.Visibility = Visibility.Visible;
+            PreviewImage.Source               = null;
+        }
 
         var fileExists = File.Exists(record.FilePath);
         PreviewOpenImageButton.IsEnabled  = fileExists;

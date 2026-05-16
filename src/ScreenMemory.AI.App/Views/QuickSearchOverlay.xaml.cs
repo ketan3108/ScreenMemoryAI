@@ -159,6 +159,30 @@ public partial class QuickSearchOverlay : Window
         await RunSearchAsync(query, currentVersion, token);
     }
 
+    private void SearchBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.TextBox textBox && string.IsNullOrEmpty(textBox.Text))
+        {
+            textBox.CaretIndex = 0;
+        }
+    }
+
+    private void SearchBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox || !string.IsNullOrEmpty(textBox.Text))
+        {
+            return;
+        }
+
+        e.Handled = true;
+        if (!textBox.IsKeyboardFocusWithin)
+        {
+            textBox.Focus();
+        }
+
+        textBox.CaretIndex = 0;
+    }
+
     private async Task RunSearchAsync(string query, int version, CancellationToken token)
     {
         try

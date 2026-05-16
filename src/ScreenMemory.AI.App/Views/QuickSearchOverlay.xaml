@@ -212,6 +212,8 @@
                          Grid.Column="1"
                          Style="{StaticResource SearchBoxStyle}"
                          Height="38"
+                         GotKeyboardFocus="SearchBox_GotKeyboardFocus"
+                         PreviewMouseLeftButtonDown="SearchBox_PreviewMouseLeftButtonDown"
                          TextChanged="SearchBox_TextChanged">
                     <TextBox.Resources>
                         <Style TargetType="TextBox">

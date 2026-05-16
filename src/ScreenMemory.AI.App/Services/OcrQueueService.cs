@@ -109,7 +109,10 @@ public class OcrQueueService
                     _repository.UpdateOcrBatch(flushBatch);
                 }
 
-                ProgressChanged?.Invoke(progress);
+                if (progress.Processed < progress.Total)
+                {
+                    ProgressChanged?.Invoke(progress);
+                }
             });
 
         List<(string Id, string OcrText, string Status)> remaining;
@@ -123,6 +126,13 @@ public class OcrQueueService
         {
             _repository.UpdateOcrBatch(remaining);
         }
+
+        ProgressChanged?.Invoke(new OcrQueueProgress
+        {
+            Processed = pending.Count,
+            Total = pending.Count,
+            CurrentFile = pending[^1].FileName
+        });
 
         if (_aiMetadataQueueService is not null)
         {

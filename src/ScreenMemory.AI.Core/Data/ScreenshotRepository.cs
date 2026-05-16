@@ -1,5 +1,6 @@
 using Dapper;
 using ScreenMemory.AI.Core.Models;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace ScreenMemory.AI.Core.Data;
@@ -768,13 +769,17 @@ public class ScreenshotRepository
             .Select(record => new
             {
                 Record = record,
-                Score = CosineSimilarity(queryEmbedding, DeserializeEmbedding(record.EmbeddingVector))
+                Score = CosineSimilarity(queryEmbedding, record.EmbeddingVector)
             })
             .Where(item => item.Score > 0)
             .OrderByDescending(item => item.Score)
             .ThenByDescending(item => GetBestTimestamp(item.Record))
             .Take(limit)
-            .Select(item => item.Record)
+            .Select(item =>
+            {
+                item.Record.EmbeddingVector = null;
+                return item.Record;
+            })
             .ToList();
     }
 
@@ -1309,21 +1314,15 @@ public class ScreenshotRepository
         public string AiSummary { get; set; } = string.Empty;
     }
 
-    private static float[] DeserializeEmbedding(byte[]? bytes)
+    private static double CosineSimilarity(float[] left, byte[]? rightBytes)
     {
-        if (bytes is null || bytes.Length == 0 || bytes.Length % sizeof(float) != 0)
+        if (rightBytes is null || rightBytes.Length == 0 || rightBytes.Length % sizeof(float) != 0)
         {
-            return [];
+            return 0;
         }
 
-        var floats = new float[bytes.Length / sizeof(float)];
-        Buffer.BlockCopy(bytes, 0, floats, 0, bytes.Length);
-        return floats;
-    }
-
-    private static double CosineSimilarity(float[] left, float[] right)
-    {
-        if (left.Length == 0 || right.Length == 0 || left.Length != right.Length)
+        var right = MemoryMarshal.Cast<byte, float>(rightBytes.AsSpan());
+        if (left.Length == 0 || left.Length != right.Length)
         {
             return 0;
         }

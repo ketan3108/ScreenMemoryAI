@@ -94,7 +94,10 @@ public sealed class AiMetadataQueueService
                     _repository.UpdateAiMetadataBatch(flushBatch);
                 }
 
-                ProgressChanged?.Invoke(progress);
+                if (progress.Processed < progress.Total)
+                {
+                    ProgressChanged?.Invoke(progress);
+                }
             });
 
         List<AiMetadataUpdate> remaining;
@@ -108,6 +111,13 @@ public sealed class AiMetadataQueueService
         {
             _repository.UpdateAiMetadataBatch(remaining);
         }
+
+        ProgressChanged?.Invoke(new AiMetadataQueueProgress
+        {
+            Processed = pending.Count,
+            Total = pending.Count,
+            CurrentFile = pending[^1].FileName
+        });
     }
 
     private async Task<AiMetadataUpdate> CreateMetadataUpdateAsync(ScreenshotRecord record, CancellationToken token)
