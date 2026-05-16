@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Quick Search"
         Icon="pack://application:,,,/Assets/AppIcon.ico"
-        Width="680"
-        Height="100"
-        MinHeight="100"
+        Width="720"
+        Height="104"
+        MinHeight="104"
         MaxHeight="620"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -13,47 +13,70 @@
         Background="Transparent"
         ShowInTaskbar="False"
         Topmost="True"
+        FontFamily="Segoe UI Variable Display, Segoe UI Variable, Segoe UI, sans-serif"
         KeyDown="Window_KeyDown">
 
     <Window.Resources>
+        <SolidColorBrush x:Key="BackgroundDeep" Color="#070708"/>
+        <SolidColorBrush x:Key="BackgroundPrimary" Color="#0B0B0D"/>
+        <SolidColorBrush x:Key="BackgroundSecondary" Color="#111217"/>
+        <SolidColorBrush x:Key="BackgroundTertiary" Color="#18191F"/>
+        <SolidColorBrush x:Key="BackgroundElevated" Color="#1F2129"/>
+        <SolidColorBrush x:Key="BackgroundHover" Color="#252833"/>
+        <SolidColorBrush x:Key="BorderSubtle" Color="#1A1C25"/>
+        <SolidColorBrush x:Key="BorderDefault" Color="#252A38"/>
+        <SolidColorBrush x:Key="BorderEmphasis" Color="#3D4459"/>
+        <SolidColorBrush x:Key="AccentPrimary" Color="#8B5CF6"/>
+        <SolidColorBrush x:Key="AccentGlow" Color="#C4B5FD"/>
+        <SolidColorBrush x:Key="AccentSubtle" Color="#1E1832"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#FAFAFA"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#A1A7B3"/>
+        <SolidColorBrush x:Key="TextTertiary" Color="#6B7280"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#4B5563"/>
 
-        <!-- Subtle scrollbar -->
-        <Style x:Key="ThinScrollBar" TargetType="ScrollBar">
-            <Setter Property="Width" Value="4"/>
+        <DropShadowEffect x:Key="OverlayShadow"
+                          Color="#000000"
+                          BlurRadius="42"
+                          ShadowDepth="10"
+                          Opacity="0.65"/>
+
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width" Value="5"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ScrollBar">
-                        <Track x:Name="PART_Track" IsDirectionReversed="True">
-                            <Track.Thumb>
-                                <Thumb>
-                                    <Thumb.Template>
-                                        <ControlTemplate TargetType="Thumb">
-                                            <Border Background="#3A4255" CornerRadius="2"/>
-                                        </ControlTemplate>
-                                    </Thumb.Template>
-                                </Thumb>
-                            </Track.Thumb>
-                        </Track>
+                        <Grid>
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Opacity="0" Height="0"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="{StaticResource BorderEmphasis}" CornerRadius="3" Margin="1"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Opacity="0" Height="0"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <Style x:Key="ThinScrollViewer" TargetType="ScrollViewer">
-            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
-        </Style>
-
-        <!-- Action buttons -->
         <Style x:Key="ActionBtn" TargetType="Button">
-            <Setter Property="Foreground" Value="#8892A4"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="#252D3D"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="Background" Value="{StaticResource BackgroundTertiary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderDefault}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="11"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="FontWeight" Value="600"/>
             <Setter Property="Padding" Value="10,0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -63,17 +86,18 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="6">
+                                CornerRadius="7"
+                                Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#1E2535"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3D4E6B"/>
-                                <Setter Property="Foreground" Value="#C8D0E0"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSubtle}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentPrimary}"/>
+                                <Setter Property="Foreground" Value="{StaticResource AccentGlow}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#161C28"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource BackgroundElevated}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -81,14 +105,13 @@
             </Setter>
         </Style>
 
-        <!-- Search TextBox style -->
         <Style x:Key="SearchBoxStyle" TargetType="TextBox">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#E8EDF5"/>
-            <Setter Property="CaretBrush" Value="#6366F1"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource AccentPrimary}"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="15"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="500"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -98,56 +121,54 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
     </Window.Resources>
 
-    <!--
-        Outer shell: dark frosted glass look.
-        SizeToContent is NOT used — we control Height manually in code-behind
-        to avoid WPF auto-layout adding blank space.
-    -->
-    <Border Background="#F0101520"
-            BorderBrush="#222836"
+    <Border Background="#F00B0B0D"
+            BorderBrush="{StaticResource BorderDefault}"
             BorderThickness="1"
-            CornerRadius="14"
+            CornerRadius="16"
             MouseLeftButtonDown="Shell_MouseLeftButtonDown"
-            SnapsToDevicePixels="True">
-
-        <Border.Effect>
-            <DropShadowEffect Color="#000000" BlurRadius="32" ShadowDepth="8" Opacity="0.55"/>
-        </Border.Effect>
-
+            SnapsToDevicePixels="True"
+            Effect="{StaticResource OverlayShadow}">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>  <!-- search row -->
-                <RowDefinition Height="Auto"/>  <!-- divider (only when results exist) -->
-                <RowDefinition Height="Auto"/>  <!-- results list -->
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- ── Search row ──────────────────────────────────────────────── -->
-            <Grid Grid.Row="0" Margin="14,10,14,10">
+            <Grid Grid.Row="0" Margin="16,12,16,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Search icon -->
-                <Path Grid.Column="0"
-                      Data="M11 3a8 8 0 1 0 0 16A8 8 0 0 0 11 3zm-9 8a9 9 0 1 1 15.32 6.41l4.14 4.13a1 1 0 0 1-1.42 1.42l-4.13-4.14A9 9 0 0 1 2 11z"
-                      Fill="#4B5675"
-                      Width="16" Height="16"
-                      Stretch="Uniform"
-                      VerticalAlignment="Center"
-                      Margin="0,0,10,0"/>
+                <Border Grid.Column="0"
+                        Width="36"
+                        Height="36"
+                        CornerRadius="10"
+                        Background="{StaticResource AccentSubtle}"
+                        BorderBrush="{StaticResource AccentPrimary}"
+                        BorderThickness="1"
+                        Margin="0,0,12,0">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#8B5CF6" BlurRadius="12" ShadowDepth="0" Opacity="0.35"/>
+                    </Border.Effect>
+                    <Viewbox Width="17" Height="17">
+                        <Path Data="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 13.73 14l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"
+                              Fill="{StaticResource AccentGlow}"
+                              Stretch="Uniform"/>
+                    </Viewbox>
+                </Border>
 
                 <TextBox x:Name="SearchBox"
                          Grid.Column="1"
                          Style="{StaticResource SearchBoxStyle}"
-                         Height="36"
+                         Height="38"
                          TextChanged="SearchBox_TextChanged">
                     <TextBox.Resources>
-                        <!-- placeholder text -->
                         <Style TargetType="TextBox">
                             <Style.Triggers>
                                 <Trigger Property="Text" Value="">
@@ -155,10 +176,11 @@
                                         <Setter.Value>
                                             <VisualBrush AlignmentX="Left" AlignmentY="Center" Stretch="None">
                                                 <VisualBrush.Visual>
-                                                    <TextBlock Text="Search screenshots…"
-                                                               Foreground="#3D4760"
-                                                               FontSize="15"
-                                                               FontFamily="Segoe UI"
+                                                    <TextBlock Text="Search screenshots..."
+                                                               Foreground="{StaticResource TextMuted}"
+                                                               FontSize="16"
+                                                               FontWeight="500"
+                                                               FontFamily="Segoe UI Variable Display, Segoe UI Variable, Segoe UI, sans-serif"
                                                                Margin="2,0,0,0"/>
                                                 </VisualBrush.Visual>
                                             </VisualBrush>
@@ -170,42 +192,70 @@
                     </TextBox.Resources>
                 </TextBox>
 
-                <!-- Esc hint -->
                 <Border Grid.Column="2"
-                        Background="#161C28"
-                        BorderBrush="#252D3D"
+                        Height="26"
+                        CornerRadius="7"
+                        Background="{StaticResource BackgroundTertiary}"
+                        BorderBrush="{StaticResource BorderDefault}"
                         BorderThickness="1"
-                        CornerRadius="5"
-                        Padding="7,3"
+                        Padding="9,0"
                         VerticalAlignment="Center"
-                        Margin="10,0,0,0">
+                        Margin="12,0,0,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Ctrl"
+                                   Foreground="{StaticResource TextTertiary}"
+                                   FontSize="10"
+                                   FontWeight="700"/>
+                        <TextBlock Text="+"
+                                   Foreground="{StaticResource TextMuted}"
+                                   FontSize="10"
+                                   FontWeight="700"
+                                   Margin="4,0"/>
+                        <TextBlock Text="Shift"
+                                   Foreground="{StaticResource TextTertiary}"
+                                   FontSize="10"
+                                   FontWeight="700"/>
+                        <TextBlock Text="+"
+                                   Foreground="{StaticResource TextMuted}"
+                                   FontSize="10"
+                                   FontWeight="700"
+                                   Margin="4,0"/>
+                        <TextBlock Text="Space"
+                                   Foreground="{StaticResource AccentGlow}"
+                                   FontSize="10"
+                                   FontWeight="700"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="3"
+                        Background="{StaticResource BackgroundTertiary}"
+                        BorderBrush="{StaticResource BorderDefault}"
+                        BorderThickness="1"
+                        CornerRadius="7"
+                        Padding="8,4"
+                        VerticalAlignment="Center"
+                        Margin="8,0,0,0">
                     <TextBlock Text="ESC"
-                               Foreground="#3D4760"
+                               Foreground="{StaticResource TextTertiary}"
                                FontSize="10"
-                               FontFamily="Segoe UI"
-                               FontWeight="SemiBold"/>
+                               FontWeight="700"/>
                 </Border>
             </Grid>
 
-            <!-- ── Divider (only visible when results list is visible) ──────── -->
             <Border x:Name="Divider"
                     Grid.Row="1"
                     Height="1"
-                    Background="#1A2030"
-                    Margin="0"
+                    Background="{StaticResource BorderSubtle}"
                     Visibility="Collapsed"/>
 
-            <!-- ── Results list ───────────────────────────────────────────────
-                 VirtualizingStackPanel so only visible rows are rendered.
-            ── -->
             <ListBox x:Name="ResultsList"
                      Grid.Row="2"
                      Background="Transparent"
                      BorderThickness="0"
-                     Foreground="#E0E6F0"
+                     Foreground="{StaticResource TextPrimary}"
                      SelectionMode="Single"
                      Visibility="Collapsed"
-                     Margin="8,6,8,8"
+                     Margin="10,7,10,10"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      VirtualizingStackPanel.IsVirtualizing="True"
                      VirtualizingStackPanel.VirtualizationMode="Recycling"
@@ -220,7 +270,7 @@
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="Padding" Value="0"/>
-                        <Setter Property="Margin" Value="0,0,0,4"/>
+                        <Setter Property="Margin" Value="0,0,0,5"/>
                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                         <Setter Property="Template">
@@ -230,17 +280,17 @@
                                             Background="Transparent"
                                             BorderBrush="Transparent"
                                             BorderThickness="1"
-                                            CornerRadius="9"
+                                            CornerRadius="10"
                                             Padding="8,7">
                                         <ContentPresenter/>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Bd" Property="Background" Value="#12181F"/>
+                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BackgroundHover}"/>
                                         </Trigger>
                                         <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Bd" Property="Background" Value="#141B2A"/>
-                                            <Setter TargetName="Bd" Property="BorderBrush" Value="#2C3A5C"/>
+                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSubtle}"/>
+                                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentPrimary}"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -259,13 +309,14 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Thumbnail -->
                             <Border Grid.Column="0"
-                                    Width="78"
-                                    Height="52"
-                                    CornerRadius="7"
-                                    Background="#0D1018"
-                                    ClipToBounds="True">
+                                    Width="82"
+                                    Height="54"
+                                    CornerRadius="8"
+                                    Background="{StaticResource BackgroundPrimary}"
+                                    ClipToBounds="True"
+                                    BorderBrush="{StaticResource BorderSubtle}"
+                                    BorderThickness="1">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Style.Triggers>
@@ -280,12 +331,13 @@
                                        RenderOptions.BitmapScalingMode="LowQuality"/>
                             </Border>
 
-                            <!-- No-thumbnail placeholder -->
                             <Border Grid.Column="0"
-                                    Width="78"
-                                    Height="52"
-                                    CornerRadius="7"
-                                    Background="#0D1018">
+                                    Width="82"
+                                    Height="54"
+                                    CornerRadius="8"
+                                    Background="{StaticResource BackgroundPrimary}"
+                                    BorderBrush="{StaticResource BorderSubtle}"
+                                    BorderThickness="1">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -296,42 +348,39 @@
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
-                                <Path Data="M4 4h16v12H4z M8 10l3 3 4-5 5 6H4z"
-                                      Fill="#1E2535"
-                                      Width="20" Height="20"
-                                      Stretch="Uniform"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"/>
+                                <Viewbox Width="22" Height="22">
+                                    <Path Data="M4 5h16v12H4V5zm2 2v8h12V7H6zm2 6l2.5-3 2 2.3L14 11l3 4H7l1-2z"
+                                          Fill="{StaticResource BorderEmphasis}"
+                                          Stretch="Uniform"/>
+                                </Viewbox>
                             </Border>
 
-                            <!-- File info -->
                             <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding FileName}"
-                                           FontWeight="Medium"
+                                           FontWeight="600"
                                            FontSize="12.5"
-                                           FontFamily="Segoe UI"
-                                           Foreground="#C8D4E8"
+                                           Foreground="{StaticResource TextPrimary}"
                                            TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding CreatedAtLabel}"
-                                           FontSize="10"
-                                           FontFamily="Segoe UI"
-                                           Foreground="#3D4760"
+                                           FontSize="10.5"
+                                           Foreground="{StaticResource TextMuted}"
                                            Margin="0,3,0,0"/>
                             </StackPanel>
 
-                            <!-- Action buttons -->
                             <StackPanel Grid.Column="3"
                                         Orientation="Horizontal"
                                         VerticalAlignment="Center"
-                                        Margin="8,0,0,0">
+                                        Margin="10,0,0,0">
                                 <Button Content="Open"
                                         Style="{StaticResource ActionBtn}"
-                                        Width="58" Height="28"
-                                        Margin="0,0,5,0"
+                                        Width="58"
+                                        Height="28"
+                                        Margin="0,0,6,0"
                                         Click="OpenButton_Click"/>
                                 <Button Content="Reveal"
                                         Style="{StaticResource ActionBtn}"
-                                        Width="62" Height="28"
+                                        Width="64"
+                                        Height="28"
                                         Click="RevealButton_Click"/>
                             </StackPanel>
                         </Grid>

@@ -159,9 +159,17 @@ public partial class MainWindow : Window
 
     private void Settings_Click(object sender, RoutedEventArgs e)
     {
-        var settingsWindow = new SettingsWindow { Owner = this };
-        settingsWindow.ShowDialog();
-        _fileWatcherService.Restart();
+        CurrentViewMode = ViewMode.Settings;
+        CurrentCollection = string.Empty;
+        CurrentSearchQuery = string.Empty;
+        SearchBox.Text = string.Empty;
+
+        HomeDashboardPanel.Visibility = Visibility.Collapsed;
+        ResultsPanel.Visibility = Visibility.Collapsed;
+        SettingsPanel.Visibility = Visibility.Visible;
+
+        LoadSettingsFolders();
+        StatusText.Text = "Settings";
     }
 
     private async void IndexNow_Click(object sender, RoutedEventArgs e)
@@ -271,6 +279,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (CurrentViewMode == ViewMode.Settings)
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(query))
         {
             LoadHomeDashboard();
@@ -308,6 +321,7 @@ public partial class MainWindow : Window
         StopThumbnailQueue();
         HomeDashboardPanel.Visibility = Visibility.Visible;
         ResultsPanel.Visibility = Visibility.Collapsed;
+        SettingsPanel.Visibility = Visibility.Collapsed;
 
         ImportedCountText.Text = _repository.Count().ToString("N0");
         OcrReadyCountText.Text = _repository.CountOcrReady().ToString("N0");
@@ -335,6 +349,7 @@ public partial class MainWindow : Window
     {
         HomeDashboardPanel.Visibility = Visibility.Collapsed;
         ResultsPanel.Visibility = Visibility.Visible;
+        SettingsPanel.Visibility = Visibility.Collapsed;
 
         DisplayedScreenshots = results;
         ResultsTitleText.Text = title;
@@ -343,6 +358,95 @@ public partial class MainWindow : Window
         StatusText.Text = $"{results.Count} items";
 
         StartThumbnailQueue(results);
+    }
+
+    private void LoadSettingsFolders()
+    {
+        var settings = _settingsService.Load();
+
+        SettingsFoldersList.Items.Clear();
+
+        foreach (var folder in settings.WatchedFolders.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            SettingsFoldersList.Items.Add(folder);
+        }
+
+        SettingsImportedText.Text = _repository.Count().ToString("N0");
+        SettingsOcrReadyText.Text = _repository.CountOcrReady().ToString("N0");
+        SettingsFolderCountText.Text = SettingsFoldersList.Items.Count.ToString("N0");
+
+        UpdateSettingsFolderListState();
+    }
+
+    private void SaveSettingsFolders()
+    {
+        var settings = new AppSettingsData
+        {
+            WatchedFolders = SettingsFoldersList.Items
+                .Cast<string>()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList()
+        };
+
+        _settingsService.Save(settings);
+        _fileWatcherService.Restart();
+        SettingsFolderCountText.Text = settings.WatchedFolders.Count.ToString("N0");
+    }
+
+    private void AddSettingsFolder_Click(object sender, RoutedEventArgs e)
+    {
+        using var dialog = new Forms.FolderBrowserDialog
+        {
+            Description = "Choose screenshot folder",
+            UseDescriptionForTitle = true,
+            ShowNewFolderButton = false
+        };
+
+        if (dialog.ShowDialog() != Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        var selectedPath = dialog.SelectedPath;
+        var exists = SettingsFoldersList.Items
+            .Cast<string>()
+            .Any(folder => string.Equals(folder, selectedPath, StringComparison.OrdinalIgnoreCase));
+
+        if (exists)
+        {
+            return;
+        }
+
+        SettingsFoldersList.Items.Add(selectedPath);
+        SaveSettingsFolders();
+        UpdateSettingsFolderListState();
+        StatusText.Text = "Folder added";
+    }
+
+    private void RemoveSettingsFolderItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button button || button.Tag is not string folderPath)
+        {
+            return;
+        }
+
+        SettingsFoldersList.Items.Remove(folderPath);
+        SaveSettingsFolders();
+        UpdateSettingsFolderListState();
+        StatusText.Text = "Folder removed";
+    }
+
+    private void UpdateSettingsFolderListState()
+    {
+        var hasFolders = SettingsFoldersList.Items.Count > 0;
+
+        SettingsFoldersList.Visibility = hasFolders
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        SettingsEmptyState.Visibility = hasFolders
+            ? Visibility.Collapsed
+            : Visibility.Visible;
     }
 
     private void StartThumbnailQueue(List<ScreenshotRecord> records)

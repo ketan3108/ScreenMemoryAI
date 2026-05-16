@@ -60,7 +60,7 @@ public class OcrQueueService
                 try
                 {
                     text = await _ocrService.ExtractTextAsync(record.FilePath, ct);
-                    status = string.IsNullOrWhiteSpace(text) ? "failed" : "completed";
+                    status = "completed";
                 }
                 catch (OperationCanceledException)
                 {

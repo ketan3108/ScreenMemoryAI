@@ -4,6 +4,6 @@ public enum ViewMode
 {
     Home,
     Search,
-    Collection
+    Collection,
+    Settings
 }
-
