@@ -1,8 +1,10 @@
 using Dapper;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
+using ScreenMemory.AI.App.Services;
 using ScreenMemory.AI.Core.Data;
 using ScreenMemory.AI.Core.Models;
+using ScreenMemory.AI.Core.Services;
 
 namespace ScreenMemory.AI.Tests;
 
@@ -98,6 +100,46 @@ public sealed class DatabaseMigrationTests : IDisposable
         repository.SearchHybrid("Visual Studio", 10)
             .Should()
             .ContainSingle(x => x.Id == record.Id);
+    }
+
+    [Fact]
+    public async Task SearchServiceAiModeFallsBackToKeywordSearchWhenAiUnavailable()
+    {
+        var database = new DatabaseService(_databasePath);
+        database.Initialize();
+        var repository = new ScreenshotRepository(database);
+
+        var record = new ScreenshotRecord
+        {
+            Id = Guid.NewGuid().ToString(),
+            FilePath = Path.Combine(Path.GetTempPath(), "screenmemory-ai-mode-test.png"),
+            FileName = "screenmemory-ai-mode-test.png",
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow,
+            ImportedAt = DateTime.UtcNow
+        };
+
+        repository.InsertIfNotExists(record);
+        repository.UpdateOcrBatch([(record.Id, "payment receipt from online checkout", "completed")]);
+
+        var results = await ScreenshotSearchService.SearchAsync(
+            repository,
+            new UnavailableSemanticService(),
+            "payment receipt",
+            10,
+            SearchMode.Ai);
+
+        results.Should().ContainSingle(x => x.Id == record.Id);
+    }
+
+    private sealed class UnavailableSemanticService : IAiSemanticService
+    {
+        public bool IsInitialized => false;
+
+        public string AvailabilityState => "Unavailable";
+
+        public Task<AiSemanticResult> AnalyzeAsync(string text, CancellationToken token = default)
+            => Task.FromResult(new AiSemanticResult { ErrorMessage = "Unavailable" });
     }
 
     public void Dispose()

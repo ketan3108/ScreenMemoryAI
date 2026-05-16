@@ -105,6 +105,50 @@
             </Setter>
         </Style>
 
+        <Style x:Key="SearchModeButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource TextTertiary}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="700"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="MinWidth" Value="50"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="7.5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#20232D"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+                            </Trigger>
+                            <Trigger Property="Tag" Value="Selected">
+                                <Setter TargetName="Bd" Property="Background" Value="#2A1C4A"/>
+                                <Setter Property="Foreground" Value="{StaticResource AccentGlow}"/>
+                                <Setter TargetName="Bd" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="8" ShadowDepth="0" Opacity="0.25"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.45"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="SearchBoxStyle" TargetType="TextBox">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
@@ -141,6 +185,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -193,6 +238,31 @@
                 </TextBox>
 
                 <Border Grid.Column="2"
+                        Width="112"
+                        Height="28"
+                        CornerRadius="9"
+                        Background="#15161D"
+                        BorderBrush="{StaticResource BorderDefault}"
+                        BorderThickness="1"
+                        Padding="2"
+                        VerticalAlignment="Center"
+                        Margin="10,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="OverlayKeywordSearchModeButton"
+                                Content="Key"
+                                Style="{StaticResource SearchModeButton}"
+                                Click="KeywordSearchMode_Click"
+                                ToolTip="Search filename, OCR text, and metadata"/>
+                        <Button x:Name="OverlayAiSearchModeButton"
+                                Content="AI"
+                                Style="{StaticResource SearchModeButton}"
+                                Margin="2,0,0,0"
+                                Click="AiSearchMode_Click"
+                                ToolTip="Use AI semantic search"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="3"
                         Height="26"
                         CornerRadius="7"
                         Background="{StaticResource BackgroundTertiary}"
@@ -200,7 +270,7 @@
                         BorderThickness="1"
                         Padding="9,0"
                         VerticalAlignment="Center"
-                        Margin="12,0,0,0">
+                        Margin="10,0,0,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Ctrl"
                                    Foreground="{StaticResource TextTertiary}"
@@ -227,7 +297,7 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="3"
+                <Border Grid.Column="4"
                         Background="{StaticResource BackgroundTertiary}"
                         BorderBrush="{StaticResource BorderDefault}"
                         BorderThickness="1"

@@ -60,6 +60,7 @@ public partial class MainWindow : Window
     private bool _ocrTrackingActive;
     private int _ocrRunTotal;
     private bool _aiBackfillQueued;
+    private SearchMode _searchMode = SearchMode.Keyword;
 
     public ViewMode CurrentViewMode { get; private set; } = ViewMode.Home;
     public string CurrentCollection { get; private set; } = string.Empty;
@@ -85,7 +86,13 @@ public partial class MainWindow : Window
         _fileWatcherService = new FileWatcherService(_settingsService, _indexingService, _thumbnailService, _repository);
         _fileWatcherService.ScreenshotIndexed += FileWatcherService_ScreenshotIndexed;
         _fileWatcherService.Start();
-        _quickSearchOverlay = new QuickSearchOverlay(_repository, OpenImageFromOverlay, RevealInExplorerFromOverlay);
+        _quickSearchOverlay = new QuickSearchOverlay(
+            _repository,
+            _aiSemanticService,
+            _searchMode,
+            SetSearchMode,
+            OpenImageFromOverlay,
+            RevealInExplorerFromOverlay);
         _trayIcon = new Forms.NotifyIcon
         {
             Text = "ScreenMemory AI",
@@ -120,6 +127,7 @@ public partial class MainWindow : Window
         _ocrEtaTimer.Tick += OcrEtaTimer_Tick;
 
         LoadHomeDashboard();
+        UpdateSearchModeUi();
         QueueOcrBackfill();
     }
 
@@ -333,35 +341,63 @@ public partial class MainWindow : Window
         }
 
         ShowResults($"Results for '{query}'", results);
-        ResultsMetaText.Text = $"{results.Count} results for '{query}'";
+        ResultsMetaText.Text = _searchMode == SearchMode.Ai
+            ? $"{results.Count} AI results for '{query}'"
+            : $"{results.Count} results for '{query}'";
     }
 
     private async Task<List<ScreenshotRecord>> SearchRecordsAsync(string query, CancellationToken token)
     {
-        const string semanticPrefix = "semantic:";
-        if (query.StartsWith(semanticPrefix, StringComparison.OrdinalIgnoreCase))
+        return await ScreenshotSearchService.SearchAsync(_repository, _aiSemanticService, query, SearchLimit, _searchMode, token);
+    }
+
+    private void SearchModeKeyword_Click(object sender, RoutedEventArgs e) => SetSearchMode(SearchMode.Keyword);
+
+    private void SearchModeAi_Click(object sender, RoutedEventArgs e) => SetSearchMode(SearchMode.Ai);
+
+    private void SetSearchMode(SearchMode mode)
+    {
+        if (mode == SearchMode.Ai && !_aiSemanticService.IsInitialized)
         {
-            var semanticQuery = query[semanticPrefix.Length..].Trim();
-            if (semanticQuery.Length == 0)
-            {
-                return [];
-            }
-
-            if (!_aiSemanticService.IsInitialized)
-            {
-                return await Task.Run(() => _repository.SearchHybrid(semanticQuery, SearchLimit), token);
-            }
-
-            var semanticResult = await _aiSemanticService.AnalyzeAsync(semanticQuery, token);
-            if (semanticResult.Embeddings.Length == 0)
-            {
-                return await Task.Run(() => _repository.SearchHybrid(semanticQuery, SearchLimit), token);
-            }
-
-            return await Task.Run(() => _repository.SearchByEmbedding(semanticResult.Embeddings, SearchLimit), token);
+            mode = SearchMode.Keyword;
         }
 
-        return await Task.Run(() => _repository.SearchHybrid(query, SearchLimit), token);
+        if (_searchMode == mode)
+        {
+            UpdateSearchModeUi();
+            return;
+        }
+
+        _searchMode = mode;
+        UpdateSearchModeUi();
+        _quickSearchOverlay.SetSearchMode(mode, notifyOwner: false);
+
+        if (!string.IsNullOrWhiteSpace(CurrentSearchQuery) && CurrentViewMode == ViewMode.Search)
+        {
+            SearchBox_TextChanged(SearchBox, new System.Windows.Controls.TextChangedEventArgs(
+                System.Windows.Controls.TextBox.TextChangedEvent,
+                System.Windows.Controls.UndoAction.None));
+        }
+    }
+
+    private void UpdateSearchModeUi()
+    {
+        if (KeywordSearchModeButton is null || AiSearchModeButton is null)
+        {
+            return;
+        }
+
+        var aiAvailable = _aiSemanticService.IsInitialized;
+        AiSearchModeButton.IsEnabled = aiAvailable;
+        AiSearchModeButton.ToolTip = aiAvailable
+            ? "Use AI semantic search"
+            : $"AI search unavailable: {_aiSemanticService.AvailabilityState}";
+
+        KeywordSearchModeButton.Tag = _searchMode == SearchMode.Keyword ? "Selected" : null;
+        AiSearchModeButton.Tag = _searchMode == SearchMode.Ai ? "Selected" : null;
+        SearchBox.ToolTip = _searchMode == SearchMode.Ai
+            ? "AI search by meaning"
+            : "Search screenshots by filename, OCR text, and metadata";
     }
 
     private void LoadHomeDashboard()
@@ -1071,6 +1107,7 @@ public partial class MainWindow : Window
             {
                 _quickSearchOverlay.Owner = this;
             }
+            _quickSearchOverlay.SetSearchMode(_searchMode, notifyOwner: false);
             _quickSearchOverlay.Open();
             handled = true;
         }

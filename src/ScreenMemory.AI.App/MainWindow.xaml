@@ -241,6 +241,51 @@
             </Setter>
         </Style>
 
+        <Style x:Key="SearchModeButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextTertiary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="600"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, sans-serif"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="MinWidth" Value="76"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="9"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#20232D"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+                            </Trigger>
+                            <Trigger Property="Tag" Value="Selected">
+                                <Setter TargetName="border" Property="Background" Value="#2A1C4A"/>
+                                <Setter Property="Foreground" Value="{StaticResource AccentGlow}"/>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="10" ShadowDepth="0" Opacity="0.28"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+                                <Setter TargetName="border" Property="Opacity" Value="0.45"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="ButtonWindowControl" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource TextTertiary}"/>
@@ -752,55 +797,42 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.75*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <TextBox x:Name="SearchBox"
                               Grid.Column="0"
                               MinWidth="360"
-                              Margin="0,0,14,0"
+                              Margin="0,0,12,0"
                               Style="{StaticResource InputSearch}"
                               TextChanged="SearchBox_TextChanged"
                               ToolTip="Search screenshots... (e.g., invoice, error, code)"/>
 
                     <Border Grid.Column="1"
-                            Height="40"
-                            Padding="18,0"
-                            CornerRadius="10"
-                            Background="{StaticResource BackgroundTertiary}"
-                            BorderBrush="{StaticResource BorderSubtle}"
+                            Width="168"
+                            Height="38"
+                            Padding="3"
+                            CornerRadius="11"
+                            Background="#15161D"
+                            BorderBrush="{StaticResource BorderDefault}"
                             BorderThickness="1"
                             VerticalAlignment="Center">
-                        <Grid VerticalAlignment="Center">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Hybrid Search"
-                                       Grid.Column="0"
-                                       Foreground="{StaticResource TextPrimary}"
-                                       FontSize="12.5"
-                                       FontWeight="600"
-                                       Margin="0,0,18,0"
-                                       VerticalAlignment="Center"/>
-                            <TextBlock Text="Filename"
-                                       Grid.Column="1"
-                                       Foreground="{StaticResource TextSecondary}"
-                                       FontSize="12"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Right"
-                                       Margin="0,0,8,0"/>
-                            <CheckBox Grid.Column="2" Style="{StaticResource ToggleSwitchStyle}" IsChecked="True"/>
-                            <TextBlock Text="AI Content"
-                                       Grid.Column="3"
-                                       Foreground="{StaticResource AccentGlow}"
-                                       FontSize="12"
-                                       VerticalAlignment="Center"
-                                       Margin="8,0,0,0"/>
-                        </Grid>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                            <Button x:Name="KeywordSearchModeButton"
+                                    Content="Keyword"
+                                    Style="{StaticResource SearchModeButton}"
+                                    Click="SearchModeKeyword_Click"
+                                    ToolTip="Search filename, OCR text, and metadata"/>
+                            <Button x:Name="AiSearchModeButton"
+                                    Content="AI"
+                                    Style="{StaticResource SearchModeButton}"
+                                    Margin="4,0,0,0"
+                                    Click="SearchModeAi_Click"
+                                    ToolTip="Use AI semantic search"/>
+                        </StackPanel>
                     </Border>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">

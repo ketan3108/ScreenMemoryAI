@@ -11,8 +11,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Controls;
+using ScreenMemory.AI.App.Services;
 using ScreenMemory.AI.Core.Data;
 using ScreenMemory.AI.Core.Models;
+using ScreenMemory.AI.Core.Services;
 
 namespace ScreenMemory.AI.App.Views;
 
@@ -53,8 +55,12 @@ public partial class QuickSearchOverlay : Window
     }
 
     private readonly ScreenshotRepository _repository;
+    private readonly IAiSemanticService _aiSemanticService;
+    private readonly Action<SearchMode> _searchModeChanged;
     private readonly Action<ScreenshotRecord> _openRecord;
     private readonly Action<ScreenshotRecord> _revealRecord;
+    private CancellationTokenSource? _searchCts;
+    private SearchMode _searchMode;
     
     // Atomic lock for search debounce
     private int _searchVersion;
@@ -67,16 +73,23 @@ public partial class QuickSearchOverlay : Window
 
     public QuickSearchOverlay(
         ScreenshotRepository repository,
+        IAiSemanticService aiSemanticService,
+        SearchMode initialSearchMode,
+        Action<SearchMode> searchModeChanged,
         Action<ScreenshotRecord> openRecord,
         Action<ScreenshotRecord> revealRecord)
     {
         InitializeComponent();
         _repository = repository;
+        _aiSemanticService = aiSemanticService;
+        _searchMode = initialSearchMode;
+        _searchModeChanged = searchModeChanged;
         _openRecord = openRecord;
         _revealRecord = revealRecord;
 
         // FIX 1: Strip out the aggressive recycling mode that causes blank rows on resize
         VirtualizingPanel.SetVirtualizationMode(ResultsList, VirtualizationMode.Standard);
+        UpdateSearchModeUi();
     }
 
     public void Open()
@@ -88,8 +101,39 @@ public partial class QuickSearchOverlay : Window
 
         Show();
         Activate();
+        UpdateSearchModeUi();
         SearchBox.Focus();
         SearchBox.Text = string.Empty; 
+    }
+
+    public void SetSearchMode(SearchMode mode, bool notifyOwner = true)
+    {
+        if (mode == SearchMode.Ai && !_aiSemanticService.IsInitialized)
+        {
+            mode = SearchMode.Keyword;
+        }
+
+        if (_searchMode == mode)
+        {
+            UpdateSearchModeUi();
+            return;
+        }
+
+        _searchMode = mode;
+        UpdateSearchModeUi();
+        if (notifyOwner)
+        {
+            _searchModeChanged(mode);
+        }
+
+        var currentVersion = Interlocked.Increment(ref _searchVersion);
+        if (!string.IsNullOrWhiteSpace(SearchBox.Text))
+        {
+            _searchCts?.Cancel();
+            _searchCts?.Dispose();
+            _searchCts = new CancellationTokenSource();
+            _ = RunSearchAsync(SearchBox.Text.Trim(), currentVersion, _searchCts.Token);
+        }
     }
 
     public void InvalidateSearchCache()
@@ -101,6 +145,10 @@ public partial class QuickSearchOverlay : Window
     {
         var query = SearchBox.Text.Trim();
         var currentVersion = Interlocked.Increment(ref _searchVersion);
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
 
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -108,12 +156,19 @@ public partial class QuickSearchOverlay : Window
             return;
         }
 
-        await RunSearchAsync(query, currentVersion);
+        await RunSearchAsync(query, currentVersion, token);
     }
 
-    private async Task RunSearchAsync(string query, int version)
+    private async Task RunSearchAsync(string query, int version, CancellationToken token)
     {
-            await Task.Delay(120);
+        try
+        {
+            await Task.Delay(120, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
         
         // If user typed something else while we were waiting, die instantly
         if (Volatile.Read(ref _searchVersion) != version) return;
@@ -121,15 +176,16 @@ public partial class QuickSearchOverlay : Window
         List<OverlayResultItem> results;
         try
         {
-            results = await Task.Run(() =>
+            var records = await SearchRecordsAsync(query, 10, token);
+            results = await Task.Run(() => records.Select(r => new OverlayResultItem
             {
-                var records = _repository.SearchHybrid(query, 10);
-                return records.Select(r => new OverlayResultItem
-                {
-                    Record = r,
-                    ThumbnailImage = LoadThumbnail(r.ThumbnailPath, r.FilePath)
-                }).ToList();
-            });
+                Record = r,
+                ThumbnailImage = LoadThumbnail(r.ThumbnailPath, r.FilePath)
+            }).ToList(), token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
         catch
         {
@@ -157,6 +213,32 @@ public partial class QuickSearchOverlay : Window
         {
             SetCompactState();
         }
+    }
+
+    private async Task<List<ScreenshotRecord>> SearchRecordsAsync(string query, int limit, CancellationToken token)
+    {
+        return await ScreenshotSearchService.SearchAsync(_repository, _aiSemanticService, query, limit, _searchMode, token);
+    }
+
+    private void KeywordSearchMode_Click(object sender, RoutedEventArgs e) => SetSearchMode(SearchMode.Keyword);
+
+    private void AiSearchMode_Click(object sender, RoutedEventArgs e) => SetSearchMode(SearchMode.Ai);
+
+    private void UpdateSearchModeUi()
+    {
+        if (OverlayKeywordSearchModeButton is null || OverlayAiSearchModeButton is null)
+        {
+            return;
+        }
+
+        var aiAvailable = _aiSemanticService.IsInitialized;
+        OverlayAiSearchModeButton.IsEnabled = aiAvailable;
+        OverlayAiSearchModeButton.ToolTip = aiAvailable
+            ? "Use AI semantic search"
+            : $"AI search unavailable: {_aiSemanticService.AvailabilityState}";
+
+        OverlayKeywordSearchModeButton.Tag = _searchMode == SearchMode.Keyword ? "Selected" : null;
+        OverlayAiSearchModeButton.Tag = _searchMode == SearchMode.Ai ? "Selected" : null;
     }
 
     private void SetCompactState()
@@ -191,6 +273,10 @@ public partial class QuickSearchOverlay : Window
                 break;
             case Key.Enter:
                 OpenSelected();
+                e.Handled = true;
+                break;
+            case Key.I when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                SetSearchMode(_searchMode == SearchMode.Ai ? SearchMode.Keyword : SearchMode.Ai);
                 e.Handled = true;
                 break;
             case Key.Down when ResultsList.Items.Count > 0:
@@ -247,6 +333,13 @@ public partial class QuickSearchOverlay : Window
     {
         base.OnDeactivated(e);
         Hide();
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        base.OnClosed(e);
     }
 
     private static BitmapImage? LoadThumbnail(string thumbnailPath, string sourceImagePath)
