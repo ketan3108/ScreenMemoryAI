@@ -585,6 +585,17 @@
                                    Foreground="{StaticResource TextSecondary}"
                                    TextTrimming="CharacterEllipsis"
                                    ToolTip="{Binding FileName}"/>
+                        <TextBlock Text="{Binding AiCategory}"
+                                   FontSize="10"
+                                   FontWeight="600"
+                                   Foreground="{StaticResource AccentGlow}"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="0,3,0,0"/>
+                        <TextBlock Text="{Binding ApplicationName}"
+                                   FontSize="10"
+                                   Foreground="{StaticResource TextMuted}"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="0,2,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -1149,6 +1160,51 @@
                                                        FontSize="13"
                                                        FontWeight="600"/>
                                         </Grid>
+                                        <Grid Margin="0,10,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="AI Tagged" Style="{StaticResource TypographyBodyDefault}"/>
+                                            <TextBlock Grid.Column="1"
+                                                       x:Name="SettingsAiTaggedText"
+                                                       Text="0"
+                                                       Foreground="{StaticResource TextPrimary}"
+                                                       FontSize="13"
+                                                       FontWeight="600"/>
+                                        </Grid>
+                                        <Grid Margin="0,10,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="AI Pending" Style="{StaticResource TypographyBodyDefault}"/>
+                                            <TextBlock Grid.Column="1"
+                                                       x:Name="SettingsAiPendingText"
+                                                       Text="0"
+                                                       Foreground="{StaticResource TextPrimary}"
+                                                       FontSize="13"
+                                                       FontWeight="600"/>
+                                        </Grid>
+                                        <Grid Margin="0,10,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="AI Mode" Style="{StaticResource TypographyBodyDefault}"/>
+                                            <TextBlock Grid.Column="1"
+                                                       x:Name="SettingsAiModeText"
+                                                       Text="Heuristic"
+                                                       Foreground="{StaticResource AccentGlow}"
+                                                       FontSize="13"
+                                                       FontWeight="600"/>
+                                        </Grid>
+                                        <Button Content="Run AI Backfill"
+                                                Style="{StaticResource ButtonSecondary}"
+                                                Height="34"
+                                                Padding="14,0"
+                                                Margin="0,14,0,0"
+                                                Click="RunAiBackfill_Click"/>
                                     </StackPanel>
                                 </Border>
 
@@ -1285,6 +1341,56 @@
                                 </StackPanel>
                             </Border>
                             <TextBlock x:Name="PreviewOcrStatusText"
+                                       Style="{StaticResource TypographyBodyDefault}"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       VerticalAlignment="Center"
+                                       Margin="10,0,0,0"/>
+                        </StackPanel>
+
+                        <TextBlock Text="AI CATEGORY" Style="{StaticResource TypographyLabel}" Margin="0,0,0,6"/>
+                        <TextBlock x:Name="PreviewAiCategoryText"
+                                   Style="{StaticResource TypographyBodyDefault}"
+                                   Foreground="{StaticResource AccentGlow}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12"/>
+
+                        <TextBlock Text="AI TAGS" Style="{StaticResource TypographyLabel}" Margin="0,0,0,6"/>
+                        <TextBlock x:Name="PreviewAiTagsText"
+                                   Style="{StaticResource TypographyBodySmall}"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,16"/>
+
+                        <TextBlock Text="APPLICATION" Style="{StaticResource TypographyLabel}" Margin="0,0,0,6"/>
+                        <TextBlock x:Name="PreviewApplicationText"
+                                   Style="{StaticResource TypographyBodyDefault}"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12"/>
+
+                        <TextBlock Text="WINDOW" Style="{StaticResource TypographyLabel}" Margin="0,0,0,6"/>
+                        <TextBlock x:Name="PreviewWindowText"
+                                   Style="{StaticResource TypographyBodySmall}"
+                                   Foreground="{StaticResource TextMuted}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,16"/>
+
+                        <TextBlock Text="AI SUMMARY" Style="{StaticResource TypographyLabel}" Margin="0,0,0,6"/>
+                        <TextBlock x:Name="PreviewAiSummaryText"
+                                   Style="{StaticResource TypographyBodySmall}"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,16"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <Border Background="{StaticResource AccentSubtle}"
+                                    BorderBrush="{StaticResource AccentPrimary}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="8,4">
+                                <TextBlock Text="AI" FontSize="10" FontWeight="600" Foreground="{StaticResource AccentGlow}"/>
+                            </Border>
+                            <TextBlock x:Name="PreviewAiStatusText"
                                        Style="{StaticResource TypographyBodyDefault}"
                                        Foreground="{StaticResource TextSecondary}"
                                        VerticalAlignment="Center"

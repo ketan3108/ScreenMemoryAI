@@ -26,6 +26,11 @@ public partial class ScreenshotDetailWindow : Window
         CreatedAtText.Text = _record.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
         FileSizeText.Text = FormatFileSize(_record.FileSizeBytes);
         OcrStatusText.Text = string.IsNullOrWhiteSpace(_record.OcrStatus) ? "pending" : _record.OcrStatus;
+        AiCategoryText.Text = string.IsNullOrWhiteSpace(_record.AiCategory) ? "unknown" : _record.AiCategory;
+        AiTagsText.Text = string.IsNullOrWhiteSpace(_record.AiTags) ? "No tags yet" : _record.AiTags;
+        ApplicationText.Text = string.IsNullOrWhiteSpace(_record.ApplicationName) ? "Unknown" : _record.ApplicationName;
+        ActiveWindowText.Text = string.IsNullOrWhiteSpace(_record.ActiveWindow) ? "Unavailable" : _record.ActiveWindow;
+        AiSummaryText.Text = string.IsNullOrWhiteSpace(_record.AiSummary) ? "No summary yet" : _record.AiSummary;
         OcrTextBox.Text = _record.OcrText ?? string.Empty;
 
         if (_fileExists)

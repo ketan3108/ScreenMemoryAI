@@ -41,6 +41,32 @@ public class ScreenshotRecord : INotifyPropertyChanged
 
     public string OcrStatus { get; set; } = "pending";
 
+    public DateTime? OcrProcessedAt { get; set; }
+
+    public string ActiveWindow { get; set; } = string.Empty;
+
+    public string ProcessName { get; set; } = string.Empty;
+
+    public string ApplicationName { get; set; } = string.Empty;
+
+    public string AiCategory { get; set; } = "unknown";
+
+    public string AiTags { get; set; } = string.Empty;
+
+    public string AiSummary { get; set; } = string.Empty;
+
+    public float AiConfidence { get; set; }
+
+    public string AiStatus { get; set; } = "pending";
+
+    public string? AiError { get; set; }
+
+    public DateTime? AiAnalyzedAt { get; set; }
+
+    public byte[]? EmbeddingVector { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
     public bool IsSelected
     {
         get => _isSelected;
@@ -63,4 +89,24 @@ public class ScreenshotRecord : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
+
+public sealed record OcrUpdate(
+    string Id,
+    string OcrText,
+    string Status,
+    DateTime ProcessedAt);
+
+public sealed record AiMetadataUpdate(
+    string Id,
+    string ActiveWindow,
+    string ProcessName,
+    string ApplicationName,
+    string AiCategory,
+    string AiTags,
+    string AiSummary,
+    float AiConfidence,
+    string AiStatus,
+    DateTime? AiAnalyzedAt,
+    byte[]? EmbeddingVector,
+    string? AiError);
 

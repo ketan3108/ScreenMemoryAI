@@ -365,6 +365,11 @@
                                            FontSize="10.5"
                                            Foreground="{StaticResource TextMuted}"
                                            Margin="0,3,0,0"/>
+                                <TextBlock Text="{Binding MetadataLabel}"
+                                           FontSize="10.5"
+                                           Foreground="{StaticResource AccentGlow}"
+                                           TextTrimming="CharacterEllipsis"
+                                           Margin="0,3,0,0"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="3"

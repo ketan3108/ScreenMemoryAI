@@ -23,6 +23,15 @@ public partial class QuickSearchOverlay : Window
         public ScreenshotRecord Record { get; init; } = new();
         public string FileName => Record.FileName;
         public string CreatedAtLabel => Record.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+        public string MetadataLabel
+        {
+            get
+            {
+                var category = string.IsNullOrWhiteSpace(Record.AiCategory) ? "unknown" : Record.AiCategory;
+                var app = string.IsNullOrWhiteSpace(Record.ApplicationName) ? string.Empty : $" · {Record.ApplicationName}";
+                return $"{category}{app}";
+            }
+        }
 
         private ImageSource? _thumbnailImage;
         public ImageSource? ThumbnailImage
@@ -104,7 +113,7 @@ public partial class QuickSearchOverlay : Window
 
     private async Task RunSearchAsync(string query, int version)
     {
-            await Task.Delay(40);
+            await Task.Delay(120);
         
         // If user typed something else while we were waiting, die instantly
         if (Volatile.Read(ref _searchVersion) != version) return;

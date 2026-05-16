@@ -72,6 +72,21 @@
                         <TextBlock Text="OCR Status" Foreground="#8892A4" FontSize="12"/>
                         <TextBlock x:Name="OcrStatusText" Foreground="#F0F2F8" FontSize="13" Margin="0,0,0,10"/>
 
+                        <TextBlock Text="AI Category" Foreground="#8892A4" FontSize="12"/>
+                        <TextBlock x:Name="AiCategoryText" Foreground="#C4B5FD" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="AI Tags" Foreground="#8892A4" FontSize="12"/>
+                        <TextBlock x:Name="AiTagsText" Foreground="#F0F2F8" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="Application" Foreground="#8892A4" FontSize="12"/>
+                        <TextBlock x:Name="ApplicationText" Foreground="#F0F2F8" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="Window" Foreground="#8892A4" FontSize="12"/>
+                        <TextBlock x:Name="ActiveWindowText" Foreground="#A1A7B3" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="AI Summary" Foreground="#8892A4" FontSize="12"/>
+                        <TextBlock x:Name="AiSummaryText" Foreground="#A1A7B3" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
                         <TextBlock Text="OCR Text" Foreground="#8892A4" FontSize="12" Margin="0,0,0,6"/>
                         <TextBox x:Name="OcrTextBox"
                                  Height="220"

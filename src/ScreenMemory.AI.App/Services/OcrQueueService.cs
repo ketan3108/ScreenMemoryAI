@@ -16,6 +16,7 @@ public class OcrQueueService
     private readonly OcrService _ocrService;
     private readonly ScreenshotRepository _repository;
     private readonly int _maxConcurrency;
+    private AiMetadataQueueService? _aiMetadataQueueService;
     private const int OcrUpdateBatchSize = 25;
 
     public event Action<OcrQueueProgress>? ProgressChanged;
@@ -28,6 +29,11 @@ public class OcrQueueService
         _ocrService = ocrService;
         _repository = repository;
         _maxConcurrency = maxConcurrency ?? Math.Max(2, Math.Min(Environment.ProcessorCount - 1, 6));
+    }
+
+    public void SetAiMetadataQueue(AiMetadataQueueService aiMetadataQueueService)
+    {
+        _aiMetadataQueueService = aiMetadataQueueService;
     }
 
     public async Task ProcessAsync(IEnumerable<ScreenshotRecord> records, CancellationToken token = default)
@@ -60,7 +66,7 @@ public class OcrQueueService
                 try
                 {
                     text = await _ocrService.ExtractTextAsync(record.FilePath, ct);
-                    status = "completed";
+                    status = string.IsNullOrWhiteSpace(text) ? "no_text" : "completed";
                 }
                 catch (OperationCanceledException)
                 {
@@ -72,6 +78,10 @@ public class OcrQueueService
                     text = string.Empty;
                     status = "failed";
                 }
+
+                record.OcrText = text;
+                record.OcrStatus = status;
+                record.OcrProcessedAt = DateTime.UtcNow;
 
                 OcrQueueProgress progress;
                 List<(string Id, string OcrText, string Status)>? flushBatch = null;
@@ -112,6 +122,11 @@ public class OcrQueueService
         if (remaining.Count > 0)
         {
             _repository.UpdateOcrBatch(remaining);
+        }
+
+        if (_aiMetadataQueueService is not null)
+        {
+            await _aiMetadataQueueService.ProcessAsync(pending, token);
         }
     }
 }

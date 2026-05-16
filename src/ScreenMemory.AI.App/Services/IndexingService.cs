@@ -1,5 +1,6 @@
 using ScreenMemory.AI.Core.Data;
 using ScreenMemory.AI.Core.Models;
+using ScreenMemory.AI.Core.Services;
 using System.IO;
 
 namespace ScreenMemory.AI.App.Services;
@@ -18,10 +19,12 @@ public class IndexingService
     ];
 
     private readonly ScreenshotRepository _repository;
+    private readonly IActiveWindowService? _activeWindowService;
 
-    public IndexingService(ScreenshotRepository repository)
+    public IndexingService(ScreenshotRepository repository, IActiveWindowService? activeWindowService = null)
     {
         _repository = repository;
+        _activeWindowService = activeWindowService;
     }
 
     public static bool IsSupportedImage(string path)
@@ -59,6 +62,14 @@ public class IndexingService
             ModifiedAt = fileInfo.LastWriteTimeUtc,
             ThumbnailPath = string.Empty
         };
+
+        if (_activeWindowService is not null)
+        {
+            var windowContext = _activeWindowService.Capture();
+            record.ActiveWindow = windowContext.WindowTitle;
+            record.ProcessName = windowContext.ProcessName;
+            record.ApplicationName = windowContext.ApplicationName;
+        }
 
         await Task.Run(() => _repository.InsertIfNotExists(record), token);
 

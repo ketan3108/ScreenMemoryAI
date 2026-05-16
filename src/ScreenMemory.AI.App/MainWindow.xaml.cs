@@ -25,6 +25,9 @@ public partial class MainWindow : Window
     private readonly ThumbnailQueueService _thumbnailQueueService;
     private readonly OcrService _ocrService = new();
     private readonly OcrQueueService _ocrQueueService;
+    private readonly ActiveWindowService _activeWindowService = new();
+    private readonly AiSemanticService _aiSemanticService = new();
+    private readonly AiMetadataQueueService _aiMetadataQueueService;
     private readonly IndexingService _indexingService;
     private readonly FileWatcherService _fileWatcherService;
     private readonly BackgroundProcessingManager _backgroundProcessingManager;
@@ -43,7 +46,7 @@ public partial class MainWindow : Window
 
     private const int HomeRecentLimit = 12;
     private const int RecentPageLimit = 100;
-    private const int SearchLimit = 100;
+    private const int SearchLimit = 60;
     private const int CollectionLimit = 100;
     private const int OcrBackfillBatchSize = 1000;
     private const int PreviewPanelWidth = 300;
@@ -56,6 +59,7 @@ public partial class MainWindow : Window
     private bool _wndProcAttached;
     private bool _ocrTrackingActive;
     private int _ocrRunTotal;
+    private bool _aiBackfillQueued;
 
     public ViewMode CurrentViewMode { get; private set; } = ViewMode.Home;
     public string CurrentCollection { get; private set; } = string.Empty;
@@ -69,11 +73,14 @@ public partial class MainWindow : Window
 
         _databaseService.Initialize();
         _repository = new ScreenshotRepository(_databaseService);
-        _indexingService = new IndexingService(_repository);
+        _indexingService = new IndexingService(_repository, _activeWindowService);
         _thumbnailQueueService = new ThumbnailQueueService(_thumbnailService, _repository);
         _thumbnailQueueService.ProgressChanged += ThumbnailQueueService_ProgressChanged;
         _ocrQueueService = new OcrQueueService(_ocrService, _repository);
         _ocrQueueService.ProgressChanged += OcrQueueService_ProgressChanged;
+        _aiMetadataQueueService = new AiMetadataQueueService(_repository, _aiSemanticService, _activeWindowService);
+        _aiMetadataQueueService.ProgressChanged += AiMetadataQueueService_ProgressChanged;
+        _ocrQueueService.SetAiMetadataQueue(_aiMetadataQueueService);
         _backgroundProcessingManager = new BackgroundProcessingManager(_thumbnailQueueService, _ocrQueueService);
         _fileWatcherService = new FileWatcherService(_settingsService, _indexingService, _thumbnailService, _repository);
         _fileWatcherService.ScreenshotIndexed += FileWatcherService_ScreenshotIndexed;
@@ -131,6 +138,7 @@ public partial class MainWindow : Window
         }
         _fileWatcherService.ScreenshotIndexed -= FileWatcherService_ScreenshotIndexed;
         _ocrQueueService.ProgressChanged -= OcrQueueService_ProgressChanged;
+        _aiMetadataQueueService.ProgressChanged -= AiMetadataQueueService_ProgressChanged;
         _fileWatcherService.Dispose();
         _backgroundProcessingManager.Dispose();
         _ocrService.Dispose();
@@ -244,16 +252,32 @@ public partial class MainWindow : Window
     }
 
     private void Invoices_Click(object sender, RoutedEventArgs e)
-        => ShowCollection("Invoices", ["invoice", "receipt", "bill", "payment"]);
+        => ShowSmartCollection(
+            "Invoices",
+            ["Financial Data"],
+            ["#financial"],
+            ["invoice", "receipt", "bill", "payment", "amount", "total"]);
 
     private void Errors_Click(object sender, RoutedEventArgs e)
-        => ShowCollection("Errors", ["error", "bug", "exception", "crash"]);
+        => ShowSmartCollection(
+            "Errors",
+            ["Error Log"],
+            ["#error"],
+            ["error", "bug", "exception", "crash", "failed", "stack trace"]);
 
     private void CodeSnippets_Click(object sender, RoutedEventArgs e)
-        => ShowCollection("Code Snippets", ["code", "script", "snippet", "terminal"]);
+        => ShowSmartCollection(
+            "Code Snippets",
+            ["Code Snippet", "Configuration"],
+            ["#code", "#configuration", "#filepath"],
+            ["code", "script", "snippet", "terminal", "class", "function", "async"]);
 
     private void Conversations_Click(object sender, RoutedEventArgs e)
-        => ShowCollection("Conversations", ["chat", "whatsapp", "discord", "slack"]);
+        => ShowSmartCollection(
+            "Conversations",
+            ["Communication"],
+            ["#communication"],
+            ["chat", "whatsapp", "discord", "slack", "teams", "email", "message"]);
 
     private void Favorites_Click(object sender, RoutedEventArgs e)
     {
@@ -272,7 +296,7 @@ public partial class MainWindow : Window
 
         try
         {
-            await Task.Delay(40, token);
+            await Task.Delay(120, token);
         }
         catch (OperationCanceledException)
         {
@@ -296,7 +320,7 @@ public partial class MainWindow : Window
         List<ScreenshotRecord> results;
         try
         {
-            results = await Task.Run(() => _repository.SearchHybrid(query, SearchLimit), token);
+            results = await SearchRecordsAsync(query, token);
         }
         catch (OperationCanceledException)
         {
@@ -310,6 +334,34 @@ public partial class MainWindow : Window
 
         ShowResults($"Results for '{query}'", results);
         ResultsMetaText.Text = $"{results.Count} results for '{query}'";
+    }
+
+    private async Task<List<ScreenshotRecord>> SearchRecordsAsync(string query, CancellationToken token)
+    {
+        const string semanticPrefix = "semantic:";
+        if (query.StartsWith(semanticPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            var semanticQuery = query[semanticPrefix.Length..].Trim();
+            if (semanticQuery.Length == 0)
+            {
+                return [];
+            }
+
+            if (!_aiSemanticService.IsInitialized)
+            {
+                return await Task.Run(() => _repository.SearchHybrid(semanticQuery, SearchLimit), token);
+            }
+
+            var semanticResult = await _aiSemanticService.AnalyzeAsync(semanticQuery, token);
+            if (semanticResult.Embeddings.Length == 0)
+            {
+                return await Task.Run(() => _repository.SearchHybrid(semanticQuery, SearchLimit), token);
+            }
+
+            return await Task.Run(() => _repository.SearchByEmbedding(semanticResult.Embeddings, SearchLimit), token);
+        }
+
+        return await Task.Run(() => _repository.SearchHybrid(query, SearchLimit), token);
     }
 
     private void LoadHomeDashboard()
@@ -333,6 +385,7 @@ public partial class MainWindow : Window
 
         StartThumbnailQueue(recent);
         QueueOcrBackfill();
+        QueueAiBackfill();
     }
 
     private void ShowCollection(string name, IEnumerable<string> keywords)
@@ -342,6 +395,16 @@ public partial class MainWindow : Window
         CurrentSearchQuery = string.Empty;
 
         var results = _repository.SearchByKeywords(keywords, CollectionLimit);
+        ShowResults(name, results);
+    }
+
+    private void ShowSmartCollection(string name, string[] categories, string[] tags, string[] keywords)
+    {
+        CurrentViewMode = ViewMode.Collection;
+        CurrentCollection = name;
+        CurrentSearchQuery = string.Empty;
+
+        var results = _repository.SearchSmartCollection(categories, tags, keywords, CollectionLimit);
         ShowResults(name, results);
     }
 
@@ -373,6 +436,9 @@ public partial class MainWindow : Window
 
         SettingsImportedText.Text = _repository.Count().ToString("N0");
         SettingsOcrReadyText.Text = _repository.CountOcrReady().ToString("N0");
+        SettingsAiTaggedText.Text = _repository.CountAiTagged().ToString("N0");
+        SettingsAiPendingText.Text = _repository.CountPendingAi().ToString("N0");
+        SettingsAiModeText.Text = _aiSemanticService.AvailabilityState;
         SettingsFolderCountText.Text = SettingsFoldersList.Items.Count.ToString("N0");
 
         UpdateSettingsFolderListState();
@@ -434,6 +500,14 @@ public partial class MainWindow : Window
         SaveSettingsFolders();
         UpdateSettingsFolderListState();
         StatusText.Text = "Folder removed";
+    }
+
+    private void RunAiBackfill_Click(object sender, RoutedEventArgs e)
+    {
+        _repository.ResetPendingAiForCompletedOcr();
+        SettingsAiPendingText.Text = _repository.CountPendingAi().ToString("N0");
+        QueueAiBackfill(limit: 5000);
+        StatusText.Text = "AI backfill queued";
     }
 
     private void UpdateSettingsFolderListState()
@@ -554,6 +628,56 @@ public partial class MainWindow : Window
             if (progress.Processed >= progress.Total)
             {
                 QueueOcrBackfill();
+                QueueAiBackfill();
+            }
+        });
+    }
+
+    private void AiMetadataQueueService_ProgressChanged(AiMetadataQueueProgress progress)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            AiTaggedCountText.Text = _repository.CountAiTagged().ToString("N0");
+            if (CurrentViewMode == ViewMode.Settings)
+            {
+                SettingsAiTaggedText.Text = _repository.CountAiTagged().ToString("N0");
+                SettingsAiPendingText.Text = _repository.CountPendingAi().ToString("N0");
+            }
+
+            if (!_ocrTrackingActive && progress.Total > 0)
+            {
+                StatusText.Text = $"AI tagging {progress.Processed}/{progress.Total}";
+            }
+
+            if (progress.Processed >= progress.Total && !_ocrTrackingActive)
+            {
+                StatusText.Text = "Ready";
+            }
+        });
+    }
+
+    private void QueueAiBackfill(int limit = 500)
+    {
+        if (_repository.CountPendingAi() == 0)
+        {
+            return;
+        }
+
+        if (_aiBackfillQueued)
+        {
+            return;
+        }
+
+        _aiBackfillQueued = true;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _aiMetadataQueueService.ProcessPendingAsync(limit);
+            }
+            finally
+            {
+                _aiBackfillQueued = false;
             }
         });
     }
@@ -726,6 +850,12 @@ public partial class MainWindow : Window
         PreviewCreatedAtText.Text   = record.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd  HH:mm");
         PreviewFileSizeText.Text    = FormatFileSize(record.FileSizeBytes);
         PreviewOcrStatusText.Text   = string.IsNullOrWhiteSpace(record.OcrStatus) ? "pending" : record.OcrStatus;
+        PreviewAiStatusText.Text    = string.IsNullOrWhiteSpace(record.AiStatus) ? "pending" : record.AiStatus;
+        PreviewAiCategoryText.Text  = string.IsNullOrWhiteSpace(record.AiCategory) ? "unknown" : record.AiCategory;
+        PreviewAiTagsText.Text      = string.IsNullOrWhiteSpace(record.AiTags) ? "No tags yet" : record.AiTags;
+        PreviewApplicationText.Text = string.IsNullOrWhiteSpace(record.ApplicationName) ? "Unknown" : record.ApplicationName;
+        PreviewWindowText.Text      = string.IsNullOrWhiteSpace(record.ActiveWindow) ? "Unavailable" : record.ActiveWindow;
+        PreviewAiSummaryText.Text   = string.IsNullOrWhiteSpace(record.AiSummary) ? "No summary yet" : record.AiSummary;
 
         // Show placeholder text while image loads.
         PreviewPlaceholderText.Text       = "Loading…";
@@ -867,6 +997,12 @@ public partial class MainWindow : Window
         PreviewCreatedAtText.Text         = string.Empty;
         PreviewFileSizeText.Text          = string.Empty;
         PreviewOcrStatusText.Text         = string.Empty;
+        PreviewAiStatusText.Text          = string.Empty;
+        PreviewAiCategoryText.Text        = string.Empty;
+        PreviewAiTagsText.Text            = string.Empty;
+        PreviewApplicationText.Text       = string.Empty;
+        PreviewWindowText.Text            = string.Empty;
+        PreviewAiSummaryText.Text         = string.Empty;
     }
 
     private static string FormatFileSize(long bytes)
