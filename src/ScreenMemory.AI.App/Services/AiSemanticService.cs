@@ -11,6 +11,7 @@ namespace ScreenMemory.AI.App.Services;
 public sealed class AiSemanticService : IAiSemanticService, IDisposable
 {
     private const int MaxTokens = 128;
+    private const float MinimumCategoryConfidence = 0.58f;
     private readonly SemaphoreSlim _inferenceLock = new(1, 1);
     private InferenceSession? _session;
     private BertTokenizer? _tokenizer;
@@ -18,41 +19,54 @@ public sealed class AiSemanticService : IAiSemanticService, IDisposable
 
     private static readonly Dictionary<string, CategoryProfile> CategoryProfiles = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["code"] = new("Code Snippet", 0.95f,
+        ["code"] = new("Code Snippet", 1.8f, 2,
         [
-            "function", "class ", "public ", "private ", "async ", "await ", "const ", "var ",
-            "let ", "=>", "namespace", "interface ", "return ", "void ", "string ", "bool ",
-            "using ", "import ", "from "
+            new("function", 0.55f), new("class ", 0.65f), new("public ", 0.6f), new("private ", 0.6f),
+            new("async ", 0.55f), new("await ", 0.55f), new("const ", 0.45f), new("var ", 0.35f),
+            new("let ", 0.4f), new("=>", 0.7f), new("namespace", 0.75f), new("interface ", 0.75f),
+            new("return ", 0.5f), new("void ", 0.55f), new("string ", 0.45f), new("bool ", 0.45f),
+            new("using ", 0.45f), new("import ", 0.65f), new("from ", 0.35f), new(".cs", 0.85f),
+            new(".xaml", 0.85f), new(".ts", 0.85f), new(".js", 0.85f), new("task ", 0.55f),
+            new("() {", 0.75f), new("```", 0.9f)
         ]),
-        ["error"] = new("Error Log", 0.93f,
+        ["error"] = new("Error Log", 1.55f, 2,
         [
-            "exception", "error:", "failed", "stack trace", "timeout", "unhandled", "404",
-            "500", "cannot ", "invalid ", "undefined", "nullreference"
+            new("exception", 0.95f), new("error:", 0.85f), new("failed", 0.55f), new("stack trace", 1.0f),
+            new("traceback", 1.0f), new("timeout", 0.55f), new("unhandled", 0.8f), new("404", 0.5f),
+            new("500", 0.5f), new("cannot ", 0.35f), new("invalid ", 0.35f), new("undefined", 0.65f),
+            new("nullreference", 0.95f), new("exit code", 0.7f)
         ]),
-        ["financial"] = new("Financial Data", 0.9f,
+        ["financial"] = new("Financial Data", 1.55f, 2,
         [
-            "$", "invoice", "receipt", "payment", "balance", "total:", "amount", "usd",
-            "profit", "loss", "stock", "market", "trading", "crypto"
+            new("invoice", 1.0f), new("receipt", 1.0f), new("payment", 0.75f), new("balance", 0.65f),
+            new("total:", 0.55f), new("amount", 0.55f), new("amount due", 0.9f), new("subtotal", 0.75f),
+            new("tax", 0.45f), new("usd", 0.55f), new("$", 0.75f), new("profit", 0.65f),
+            new("loss", 0.55f), new("stock", 0.45f), new("trading", 0.65f), new("crypto", 0.65f)
         ]),
-        ["communication"] = new("Communication", 0.88f,
+        ["communication"] = new("Communication", 1.45f, 2,
         [
-            "email", "message", "meeting", "reply", "sent", "received", "subject:", "from:",
-            "to:", "chat", "slack", "teams", "discord"
+            new("email", 0.7f), new("message", 0.55f), new("meeting", 0.75f), new("reply", 0.55f),
+            new("sent", 0.35f), new("received", 0.35f), new("subject:", 0.8f), new("from:", 0.55f),
+            new("to:", 0.35f), new("chat", 0.65f), new("slack", 0.85f), new("teams", 0.75f),
+            new("discord", 0.85f), new("whatsapp", 0.85f)
         ]),
-        ["documentation"] = new("Documentation", 0.86f,
+        ["documentation"] = new("Documentation", 1.35f, 2,
         [
-            "documentation", "readme", "guide", "tutorial", "wiki", "manual", "api reference",
-            "specification", "how to"
+            new("documentation", 0.9f), new("readme", 0.9f), new("guide", 0.55f), new("tutorial", 0.75f),
+            new("wiki", 0.75f), new("manual", 0.65f), new("api reference", 0.9f),
+            new("specification", 0.75f), new("how to", 0.65f)
         ]),
-        ["configuration"] = new("Configuration", 0.87f,
+        ["configuration"] = new("Configuration", 1.35f, 1,
         [
-            "config", "settings", ".json", ".yaml", ".xml", ".env", "connection string",
-            "endpoint", "localhost", "port"
+            new("config", 0.85f), new("settings", 0.55f), new(".json", 0.9f), new(".yaml", 0.9f),
+            new(".yml", 0.9f), new(".xml", 0.75f), new(".env", 1.0f), new("connection string", 0.95f),
+            new("endpoint", 0.65f), new("localhost", 0.75f), new("port:", 0.55f), new("appsettings", 1.0f)
         ]),
-        ["data"] = new("Data & Analytics", 0.85f,
+        ["data"] = new("Data & Analytics", 1.45f, 2,
         [
-            "table", "report", "metrics", "dashboard", "statistics", "chart", "graph",
-            "analytics", "query", "dataset"
+            new("table", 0.45f), new("report", 0.55f), new("metrics", 0.8f), new("dashboard", 0.8f),
+            new("statistics", 0.75f), new("chart", 0.65f), new("graph", 0.65f),
+            new("analytics", 0.9f), new("query", 0.45f), new("dataset", 0.8f)
         ])
     };
 
@@ -102,14 +116,12 @@ public sealed class AiSemanticService : IAiSemanticService, IDisposable
 
         foreach (var (key, profile) in CategoryProfiles)
         {
-            var matches = profile.Keywords.Count(keyword => lowerText.Contains(keyword, StringComparison.Ordinal));
-            if (matches == 0)
+            var score = ScoreCategory(lowerText, profile);
+            if (score < MinimumCategoryConfidence)
             {
                 continue;
             }
 
-            var densityBoost = Math.Min(1.0f, matches / 4f);
-            var score = Math.Min(1.0f, densityBoost * profile.Boost);
             tags.Add($"#{key}");
 
             if (score > bestScore)
@@ -147,7 +159,7 @@ public sealed class AiSemanticService : IAiSemanticService, IDisposable
         }
 
         result.Success = true;
-        result.PrimaryCategory = bestCategory;
+        result.PrimaryCategory = bestScore >= MinimumCategoryConfidence ? bestCategory : "unknown";
         result.CategoryConfidence = bestScore;
         result.Tags = tags
             .Where(tag => !string.IsNullOrWhiteSpace(tag))
@@ -307,7 +319,35 @@ public sealed class AiSemanticService : IAiSemanticService, IDisposable
         return normalized[..180].TrimEnd() + "...";
     }
 
-    private sealed record CategoryProfile(string Name, float Boost, string[] Keywords);
+    private static float ScoreCategory(string lowerText, CategoryProfile profile)
+    {
+        var total = 0f;
+        var matches = 0;
+        var hasStrongSignal = false;
+
+        foreach (var keyword in profile.Keywords)
+        {
+            if (!lowerText.Contains(keyword.Pattern, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            matches++;
+            total += keyword.Weight;
+            hasStrongSignal |= keyword.Weight >= 0.85f;
+        }
+
+        if (matches == 0 || (matches < profile.MinimumMatches && !hasStrongSignal))
+        {
+            return 0f;
+        }
+
+        return Math.Min(0.96f, total / profile.ScoreTarget);
+    }
+
+    private sealed record CategoryProfile(string Name, float ScoreTarget, int MinimumMatches, WeightedKeyword[] Keywords);
+
+    private sealed record WeightedKeyword(string Pattern, float Weight);
 
     public void Dispose()
     {

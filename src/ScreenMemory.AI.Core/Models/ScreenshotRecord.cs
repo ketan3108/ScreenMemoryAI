@@ -6,6 +6,9 @@ namespace ScreenMemory.AI.Core.Models;
 public class ScreenshotRecord : INotifyPropertyChanged
 {
     private string _thumbnailPath = string.Empty;
+    private string _ocrStatus = "pending";
+    private string _aiStatus = "pending";
+    private string _aiCategory = "unknown";
     private bool _isSelected;
     private bool _isFavorite;
 
@@ -40,7 +43,28 @@ public class ScreenshotRecord : INotifyPropertyChanged
 
     public string OcrText { get; set; } = string.Empty;
 
-    public string OcrStatus { get; set; } = "pending";
+    public string OcrStatus
+    {
+        get => _ocrStatus;
+        set
+        {
+            if (_ocrStatus == value)
+            {
+                return;
+            }
+
+            _ocrStatus = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(OcrStatusLabel));
+            OnPropertyChanged(nameof(IsOcrReady));
+            OnPropertyChanged(nameof(IsProcessing));
+        }
+    }
+
+    public string OcrStatusLabel => FormatStatusLabel(OcrStatus);
+
+    public bool IsOcrReady => OcrStatus.Equals("completed", StringComparison.OrdinalIgnoreCase) ||
+                              OcrStatus.Equals("no_text", StringComparison.OrdinalIgnoreCase);
 
     public DateTime? OcrProcessedAt { get; set; }
 
@@ -50,7 +74,26 @@ public class ScreenshotRecord : INotifyPropertyChanged
 
     public string ApplicationName { get; set; } = string.Empty;
 
-    public string AiCategory { get; set; } = "unknown";
+    public string AiCategory
+    {
+        get => _aiCategory;
+        set
+        {
+            if (_aiCategory == value)
+            {
+                return;
+            }
+
+            _aiCategory = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(AiCategoryLabel));
+        }
+    }
+
+    public string AiCategoryLabel => string.IsNullOrWhiteSpace(AiCategory) ||
+                                     AiCategory.Equals("unknown", StringComparison.OrdinalIgnoreCase)
+        ? "Unsorted"
+        : AiCategory;
 
     public string AiTags { get; set; } = string.Empty;
 
@@ -58,7 +101,31 @@ public class ScreenshotRecord : INotifyPropertyChanged
 
     public float AiConfidence { get; set; }
 
-    public string AiStatus { get; set; } = "pending";
+    public string AiStatus
+    {
+        get => _aiStatus;
+        set
+        {
+            if (_aiStatus == value)
+            {
+                return;
+            }
+
+            _aiStatus = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(AiStatusLabel));
+            OnPropertyChanged(nameof(IsAiReady));
+            OnPropertyChanged(nameof(IsProcessing));
+        }
+    }
+
+    public string AiStatusLabel => FormatStatusLabel(AiStatus);
+
+    public bool IsAiReady => AiStatus.Equals("completed", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsProcessing => !IsOcrReady || (OcrStatus.Equals("completed", StringComparison.OrdinalIgnoreCase) && !IsAiReady);
+
+    public bool HasAiSummary => !string.IsNullOrWhiteSpace(AiSummary);
 
     public string? AiError { get; set; }
 
@@ -99,6 +166,17 @@ public class ScreenshotRecord : INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public string CreatedAtLabel => CreatedAt.ToLocalTime().ToString("h:mm tt");
+
+    private static string FormatStatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
+    {
+        "completed" => "Ready",
+        "no_text" => "No text found",
+        "failed" => "Needs review",
+        "pending" or "" or null => "Processing",
+        _ => status
+    };
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {

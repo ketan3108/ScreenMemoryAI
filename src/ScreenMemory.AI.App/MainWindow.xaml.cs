@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -57,8 +58,12 @@ public partial class MainWindow : Window
     private const uint ModShift = 0x0004;
     private const uint VkSpace = 0x20;
     private const int WmHotkey = 0x0312;
+    private const int WmGetMinMaxInfo = 0x0024;
+    private const int MonitorDefaultToNearest = 0x00000002;
     private bool _hotkeyRegistered;
     private bool _wndProcAttached;
+    private bool _isManualMaximized;
+    private System.Windows.Rect _restoreBoundsBeforeManualMaximize;
     private bool _ocrTrackingActive;
     private int _ocrRunTotal;
     private bool _aiBackfillQueued;
@@ -145,6 +150,12 @@ public partial class MainWindow : Window
         EnsureHotkeyRegistration();
     }
 
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        ApplyManualMaximize();
+        SetActiveNavigation("Today");
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         if (_hotkeyRegistered)
@@ -197,6 +208,7 @@ public partial class MainWindow : Window
 
         LoadSettingsFolders();
         StatusText.Text = "Settings";
+        SetActiveNavigation("Settings");
     }
 
     private void License_Click(object sender, RoutedEventArgs e)
@@ -213,6 +225,7 @@ public partial class MainWindow : Window
 
         UpdateLicenseUi();
         StatusText.Text = "License";
+        SetActiveNavigation("License");
     }
 
     private async void IndexNow_Click(object sender, RoutedEventArgs e)
@@ -496,6 +509,7 @@ public partial class MainWindow : Window
         StartThumbnailQueue(recent);
         QueueOcrBackfill();
         QueueAiBackfill();
+        SetActiveNavigation("Today");
     }
 
     private void ShowCollection(string name, IEnumerable<string> keywords)
@@ -529,9 +543,61 @@ public partial class MainWindow : Window
         ResultsTitleText.Text = title;
         ResultsMetaText.Text = $"{results.Count} result(s)";
         ResultsList.ItemsSource = results;
+        ResultsList.Visibility = results.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResultsEmptyState.Visibility = results.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResultsEmptyTitleText.Text = title.Equals("Favourites", StringComparison.OrdinalIgnoreCase)
+            ? "No favourites yet"
+            : "Nothing found yet";
+        ResultsEmptyBodyText.Text = title.Equals("Favourites", StringComparison.OrdinalIgnoreCase)
+            ? "Star screenshots you want to keep close. They will appear here instantly."
+            : "Try searching text, app names, filenames, or window titles.";
         StatusText.Text = $"{results.Count} items";
+        SetActiveNavigation(title);
 
         StartThumbnailQueue(results);
+    }
+
+    private void SetActiveNavigation(string activeSection)
+    {
+        var navButtons = new[]
+        {
+            (Button: NavTodayButton, Key: "Today"),
+            (Button: NavRecentsButton, Key: "Recents"),
+            (Button: NavFavoritesButton, Key: "Favourites"),
+            (Button: NavLicenseButton, Key: "License"),
+            (Button: NavSettingsButton, Key: "Settings")
+        };
+
+        var iconSelected = (System.Windows.Media.Brush)FindResource("AccentGlow");
+        var textSelected = (System.Windows.Media.Brush)FindResource("TextPrimary");
+        var textDefault = (System.Windows.Media.Brush)FindResource("TextTertiary");
+
+        foreach (var (button, key) in navButtons)
+        {
+            var isSelected = activeSection.Equals(key, StringComparison.OrdinalIgnoreCase);
+            button.Tag = isSelected ? "Selected" : null;
+            SetNavigationContentBrush(button, isSelected ? iconSelected : textDefault, isSelected ? textSelected : textDefault, isSelected);
+        }
+    }
+
+    private static void SetNavigationContentBrush(DependencyObject parent, System.Windows.Media.Brush iconBrush, System.Windows.Media.Brush textBrush, bool isSelected)
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+
+            if (child is System.Windows.Shapes.Path path)
+            {
+                path.Fill = iconBrush;
+            }
+            else if (child is TextBlock textBlock)
+            {
+                textBlock.Foreground = textBrush;
+                textBlock.FontWeight = isSelected ? FontWeights.SemiBold : FontWeights.Medium;
+            }
+
+            SetNavigationContentBrush(child, iconBrush, textBrush, isSelected);
+        }
     }
 
     private void LoadSettingsFolders()
@@ -549,7 +615,7 @@ public partial class MainWindow : Window
         SettingsOcrReadyText.Text = _repository.CountOcrReady().ToString("N0");
         SettingsAiTaggedText.Text = _repository.CountAiTagged().ToString("N0");
         SettingsAiPendingText.Text = _repository.CountPendingAi().ToString("N0");
-        SettingsAiModeText.Text = _aiSemanticService.AvailabilityState;
+        SettingsAiModeText.Text = FormatAiModeLabel(_aiSemanticService.AvailabilityState);
         SettingsFolderCountText.Text = SettingsFoldersList.Items.Count.ToString("N0");
         UpdateLicenseUi();
 
@@ -921,6 +987,7 @@ public partial class MainWindow : Window
             StartOrRefreshOcrTracking();
             UpdateOcrTrackingStatus();
             OcrReadyCountText.Text = _repository.CountOcrReady().ToString("N0");
+            RefreshVisibleScreenshotMetadata();
             RefreshSelectedScreenshotMetadata();
 
             if (isComplete)
@@ -956,6 +1023,7 @@ public partial class MainWindow : Window
         {
             var taggedCount = _repository.CountAiTagged();
             AiTaggedCountText.Text = taggedCount.ToString("N0");
+            RefreshVisibleScreenshotMetadata();
             RefreshSelectedScreenshotMetadata();
             if (CurrentViewMode == ViewMode.Settings)
             {
@@ -992,6 +1060,69 @@ public partial class MainWindow : Window
 
         Interlocked.Exchange(ref lastDispatchTicks, now);
         return true;
+    }
+
+    private void RefreshVisibleScreenshotMetadata()
+    {
+        var targetsByPath = new Dictionary<string, List<ScreenshotRecord>>(StringComparer.OrdinalIgnoreCase);
+
+        void AddTarget(ScreenshotRecord? record)
+        {
+            if (record is null || string.IsNullOrWhiteSpace(record.FilePath))
+            {
+                return;
+            }
+
+            if (!targetsByPath.TryGetValue(record.FilePath, out var targets))
+            {
+                targets = [];
+                targetsByPath[record.FilePath] = targets;
+            }
+
+            if (!targets.Any(target => ReferenceEquals(target, record)))
+            {
+                targets.Add(record);
+            }
+        }
+
+        foreach (var record in EnumerateVisibleRecords())
+        {
+            AddTarget(record);
+        }
+
+        AddTarget(_selectedScreenshot);
+
+        if (targetsByPath.Count == 0)
+        {
+            return;
+        }
+
+        var selectedUpdated = false;
+        foreach (var (path, targets) in targetsByPath)
+        {
+            var refreshed = _repository.GetByFilePath(path);
+            if (refreshed is null)
+            {
+                continue;
+            }
+
+            foreach (var target in targets)
+            {
+                ApplyRecordMetadata(target, refreshed);
+                selectedUpdated |= ReferenceEquals(target, _selectedScreenshot);
+            }
+        }
+
+        ResultsList.Items.Refresh();
+        RecentTodayList.Items.Refresh();
+        RecentYesterdayList.Items.Refresh();
+        RecentWeekList.Items.Refresh();
+        RecentOlderList.Items.Refresh();
+
+        if (selectedUpdated && _selectedScreenshot is not null)
+        {
+            UpdatePreviewMetadata(_selectedScreenshot, resetPreviewImage: false);
+        }
     }
 
     private void RefreshSelectedScreenshotMetadata()
@@ -1072,6 +1203,7 @@ public partial class MainWindow : Window
         target.AiStatus = source.AiStatus;
         target.AiError = source.AiError;
         target.AiAnalyzedAt = source.AiAnalyzedAt;
+        target.IsFavorite = source.IsFavorite;
         target.UpdatedAt = source.UpdatedAt;
     }
 
@@ -1216,6 +1348,46 @@ public partial class MainWindow : Window
         SelectScreenshot(record);
     }
 
+    private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (IsTextInputFocused())
+        {
+            return;
+        }
+
+        switch (e.Key)
+        {
+            case Key.OemQuestion:
+            case Key.Divide:
+                SearchBox.Focus();
+                SearchBox.SelectAll();
+                e.Handled = true;
+                break;
+            case Key.Escape:
+                if (PreviewPanel.Visibility == Visibility.Visible)
+                {
+                    ClosePreviewPanel();
+                }
+                else if (CurrentViewMode != ViewMode.Home)
+                {
+                    LoadHomeDashboard();
+                }
+                e.Handled = true;
+                break;
+            case Key.F when _selectedScreenshot is not null:
+                ToggleFavorite(_selectedScreenshot);
+                e.Handled = true;
+                break;
+            case Key.Enter when _selectedScreenshot is not null && File.Exists(_selectedScreenshot.FilePath):
+                OpenImageFromOverlay(_selectedScreenshot);
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private static bool IsTextInputFocused()
+        => Keyboard.FocusedElement is System.Windows.Controls.TextBox or System.Windows.Controls.PasswordBox;
+
     private void FavoriteScreenshot_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: ScreenshotRecord record })
@@ -1277,13 +1449,15 @@ public partial class MainWindow : Window
         PreviewFilePathText.Text    = record.FilePath;
         PreviewCreatedAtText.Text   = record.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd  HH:mm");
         PreviewFileSizeText.Text    = FormatFileSize(record.FileSizeBytes);
-        PreviewOcrStatusText.Text   = string.IsNullOrWhiteSpace(record.OcrStatus) ? "pending" : record.OcrStatus;
-        PreviewAiStatusText.Text    = string.IsNullOrWhiteSpace(record.AiStatus) ? "pending" : record.AiStatus;
-        PreviewAiCategoryText.Text  = string.IsNullOrWhiteSpace(record.AiCategory) ? "unknown" : record.AiCategory;
+        PreviewOcrStatusText.Text   = record.OcrStatusLabel;
+        PreviewAiStatusText.Text    = record.AiStatusLabel;
+        PreviewAiCategoryText.Text  = record.AiCategoryLabel;
         PreviewAiTagsText.Text      = string.IsNullOrWhiteSpace(record.AiTags) ? "No tags yet" : record.AiTags;
         PreviewApplicationText.Text = string.IsNullOrWhiteSpace(record.ApplicationName) ? "Unknown" : record.ApplicationName;
         PreviewWindowText.Text      = string.IsNullOrWhiteSpace(record.ActiveWindow) ? "Unavailable" : record.ActiveWindow;
         PreviewAiSummaryText.Text   = string.IsNullOrWhiteSpace(record.AiSummary) ? "No summary yet" : record.AiSummary;
+        PreviewOcrExcerptText.Text  = FormatOcrExcerpt(record.OcrText);
+        UpdatePreviewTimeline(record);
 
         if (resetPreviewImage)
         {
@@ -1295,25 +1469,43 @@ public partial class MainWindow : Window
         var fileExists = File.Exists(record.FilePath);
         PreviewOpenImageButton.IsEnabled  = fileExists;
         PreviewRevealButton.IsEnabled     = fileExists;
-        UpdatePreviewFavoriteButton(record);
     }
 
-    private void UpdatePreviewFavoriteButton(ScreenshotRecord record)
+    private static string FormatOcrExcerpt(string? text)
     {
-        PreviewFavoriteButton.ToolTip = record.IsFavorite ? "Remove from favourites" : "Add to favourites";
-        PreviewFavoriteButton.Foreground = GetBrush(record.IsFavorite ? "AccentGlow" : "TextSecondary");
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return "No extracted text available yet.";
+        }
+
+        var compact = string.Join(" ", text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return compact.Length <= 220 ? compact : $"{compact[..220]}...";
     }
+
+    private void UpdatePreviewTimeline(ScreenshotRecord record)
+    {
+        ApplyTimelineStep(PreviewCapturedDot, PreviewCapturedStepText, true);
+        ApplyTimelineStep(PreviewOcrDot, PreviewOcrStepText, record.IsOcrReady);
+        ApplyTimelineStep(PreviewAiDot, PreviewAiStepText, record.IsAiReady);
+        ApplyTimelineStep(PreviewSearchableDot, PreviewSearchableStepText, record.IsOcrReady || record.IsAiReady);
+    }
+
+    private void ApplyTimelineStep(System.Windows.Controls.Border dot, System.Windows.Controls.TextBlock label, bool isReady)
+    {
+        dot.Background = GetBrush(isReady ? "AccentPrimary" : "BorderDefault");
+        label.Foreground = GetBrush(isReady ? "TextSecondary" : "TextMuted");
+    }
+
+    private static string FormatAiModeLabel(string? mode) => mode?.Trim() switch
+    {
+        "Onnx" => "Local AI",
+        "HeuristicOnly" => "Fast local",
+        "" or null => "Local AI",
+        _ => mode
+    };
 
     private System.Windows.Media.Brush GetBrush(string resourceKey)
         => TryFindResource(resourceKey) as System.Windows.Media.Brush ?? System.Windows.SystemColors.ControlTextBrush;
-
-    private void PreviewFavorite_Click(object sender, RoutedEventArgs e)
-    {
-        if (_selectedScreenshot is not null)
-        {
-            ToggleFavorite(_selectedScreenshot);
-        }
-    }
 
     private void ToggleFavorite(ScreenshotRecord record)
     {
@@ -1341,7 +1533,6 @@ public partial class MainWindow : Window
             string.Equals(_selectedScreenshot.Id, id, StringComparison.OrdinalIgnoreCase))
         {
             _selectedScreenshot.IsFavorite = isFavorite;
-            UpdatePreviewFavoriteButton(_selectedScreenshot);
         }
 
         ResultsList.Items.Refresh();
@@ -1509,6 +1700,7 @@ public partial class MainWindow : Window
         PreviewApplicationText.Text       = string.Empty;
         PreviewWindowText.Text            = string.Empty;
         PreviewAiSummaryText.Text         = string.Empty;
+        PreviewOcrExcerptText.Text        = string.Empty;
     }
 
     private static string FormatFileSize(long bytes)
@@ -1567,10 +1759,18 @@ public partial class MainWindow : Window
         RecentYesterdaySection.Visibility = yesterdayItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         RecentWeekSection.Visibility = weekItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         RecentOlderSection.Visibility = olderItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        HomeEmptyState.Visibility = recent.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
+        if (msg == WmGetMinMaxInfo)
+        {
+            WmGetMinMaxInfoHandler(hwnd, lParam);
+            handled = true;
+            return IntPtr.Zero;
+        }
+
         if (msg == WmHotkey && wParam.ToInt32() == HotkeyId)
         {
             if (_quickSearchOverlay.Owner is null)
@@ -1585,11 +1785,79 @@ public partial class MainWindow : Window
         return IntPtr.Zero;
     }
 
+    private static void WmGetMinMaxInfoHandler(IntPtr hwnd, IntPtr lParam)
+    {
+        var mmi = Marshal.PtrToStructure<MinMaxInfo>(lParam);
+        var monitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
+
+        if (monitor != IntPtr.Zero)
+        {
+            var monitorInfo = new MonitorInfo
+            {
+                cbSize = Marshal.SizeOf<MonitorInfo>()
+            };
+
+            if (GetMonitorInfo(monitor, ref monitorInfo))
+            {
+                var workArea = monitorInfo.rcWork;
+                var monitorArea = monitorInfo.rcMonitor;
+
+                mmi.ptMaxPosition.X = Math.Abs(workArea.Left - monitorArea.Left);
+                mmi.ptMaxPosition.Y = Math.Abs(workArea.Top - monitorArea.Top);
+                mmi.ptMaxSize.X = Math.Abs(workArea.Right - workArea.Left);
+                mmi.ptMaxSize.Y = Math.Abs(workArea.Bottom - workArea.Top);
+            }
+        }
+
+        Marshal.StructureToPtr(mmi, lParam, true);
+    }
+
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr MonitorFromWindow(IntPtr hwnd, int dwFlags);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MonitorInfo lpmi);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Point
+    {
+        public int X;
+        public int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MinMaxInfo
+    {
+        public Point ptReserved;
+        public Point ptMaxSize;
+        public Point ptMaxPosition;
+        public Point ptMinTrackSize;
+        public Point ptMaxTrackSize;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct MonitorInfo
+    {
+        public int cbSize;
+        public NativeRect rcMonitor;
+        public NativeRect rcWork;
+        public int dwFlags;
+    }
 
     public void EnsureHotkeyRegistration()
     {
@@ -1623,7 +1891,7 @@ public partial class MainWindow : Window
     {
         ShowInTaskbar = true;
         Show();
-        WindowState = WindowState.Maximized;
+        ApplyManualMaximize();
         Activate();
     }
 
@@ -1657,9 +1925,74 @@ public partial class MainWindow : Window
     private void WindowMinimize_Click(object sender, RoutedEventArgs e) => HideToTray();
     private void WindowMaximizeRestore_Click(object sender, RoutedEventArgs e)
     {
-        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        if (_isManualMaximized)
+        {
+            RestoreManualWindow();
+        }
+        else
+        {
+            ApplyManualMaximize();
+        }
     }
     private void WindowClose_Click(object sender, RoutedEventArgs e) => HideToTray();
+
+    private void UpdateMaximizeRestoreButton()
+    {
+        if (WindowMaximizeRestoreButton is null)
+        {
+            return;
+        }
+
+        WindowMaximizeRestoreButton.Content = _isManualMaximized ? "\uE923" : "\uE922";
+        WindowMaximizeRestoreButton.ToolTip = _isManualMaximized ? "Restore" : "Maximize";
+    }
+
+    private void ApplyManualMaximize()
+    {
+        if (!_isManualMaximized)
+        {
+            _restoreBoundsBeforeManualMaximize = new System.Windows.Rect(Left, Top, Width, Height);
+        }
+
+        WindowState = WindowState.Normal;
+        ResizeMode = ResizeMode.NoResize;
+
+        var handle = new WindowInteropHelper(this).Handle;
+        var workingArea = Forms.Screen.FromHandle(handle).WorkingArea;
+        var source = PresentationSource.FromVisual(this);
+        var fromDevice = source?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
+        var topLeft = fromDevice.Transform(new System.Windows.Point(workingArea.Left, workingArea.Top));
+        var bottomRight = fromDevice.Transform(new System.Windows.Point(workingArea.Right, workingArea.Bottom));
+
+        Left = topLeft.X;
+        Top = topLeft.Y;
+        Width = bottomRight.X - topLeft.X;
+        Height = bottomRight.Y - topLeft.Y;
+        _isManualMaximized = true;
+        UpdateMaximizeRestoreButton();
+    }
+
+    private void RestoreManualWindow()
+    {
+        _isManualMaximized = false;
+        ResizeMode = ResizeMode.CanResize;
+        WindowState = WindowState.Normal;
+
+        if (_restoreBoundsBeforeManualMaximize.Width <= 0 || _restoreBoundsBeforeManualMaximize.Height <= 0)
+        {
+            Width = 1240;
+            Height = 780;
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            UpdateMaximizeRestoreButton();
+            return;
+        }
+
+        Left = _restoreBoundsBeforeManualMaximize.Left;
+        Top = _restoreBoundsBeforeManualMaximize.Top;
+        Width = _restoreBoundsBeforeManualMaximize.Width;
+        Height = _restoreBoundsBeforeManualMaximize.Height;
+        UpdateMaximizeRestoreButton();
+    }
 }
 
 

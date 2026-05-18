@@ -23,17 +23,21 @@ public partial class QuickSearchOverlay : Window
     private sealed class OverlayResultItem : INotifyPropertyChanged
     {
         public ScreenshotRecord Record { get; init; } = new();
+        public string Query { get; init; } = string.Empty;
+        public SearchMode SearchMode { get; init; }
         public string FileName => Record.FileName;
         public string CreatedAtLabel => Record.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
         public string MetadataLabel
         {
             get
             {
-                var category = string.IsNullOrWhiteSpace(Record.AiCategory) ? "unknown" : Record.AiCategory;
-                var app = string.IsNullOrWhiteSpace(Record.ApplicationName) ? string.Empty : $" · {Record.ApplicationName}";
+                var category = Record.AiCategoryLabel;
+                var app = string.IsNullOrWhiteSpace(Record.ApplicationName) ? string.Empty : $" - {Record.ApplicationName}";
                 return $"{category}{app}";
             }
         }
+
+        public string SearchModeLabel => SearchMode == SearchMode.Ai ? "AI" : "Keyword";
 
         private ImageSource? _thumbnailImage;
         public ImageSource? ThumbnailImage
@@ -52,6 +56,7 @@ public partial class QuickSearchOverlay : Window
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
     }
 
     private readonly ScreenshotRepository _repository;
@@ -67,9 +72,10 @@ public partial class QuickSearchOverlay : Window
 
     private const double CompactHeight = 108;
     private const double BaseHeight = 118;
-    private const double RowHeight = 76;
+    private const double RowHeight = 86;
     private const double MinOverlayHeight = 108;
     private const double MaxOverlayHeight = 620;
+    private const double ScreenMargin = 24;
 
     public QuickSearchOverlay(
         ScreenshotRepository repository,
@@ -95,9 +101,9 @@ public partial class QuickSearchOverlay : Window
     public void Open()
     {
         var workArea = SystemParameters.WorkArea;
-        MaxHeight = Math.Max(MinOverlayHeight, workArea.Height - 40);
         Left = workArea.Left + ((workArea.Width - Width) / 2);
         Top = workArea.Top + (workArea.Height * 0.2);
+        MaxHeight = GetAvailableOverlayHeight();
 
         Show();
         Activate();
@@ -204,6 +210,8 @@ public partial class QuickSearchOverlay : Window
             results = await Task.Run(() => records.Select(r => new OverlayResultItem
             {
                 Record = r,
+                Query = query,
+                SearchMode = _searchMode,
                 ThumbnailImage = LoadThumbnail(r.ThumbnailPath, r.FilePath)
             }).ToList(), token);
         }
@@ -271,20 +279,45 @@ public partial class QuickSearchOverlay : Window
         Divider.Visibility = Visibility.Collapsed;
         
         // DO NOT set ResultsList to Collapsed. Let the empty ItemsSource handle the 0-height.
-        Height = CompactHeight;
+        ApplyOverlayHeight(CompactHeight);
     }
 
     private void UpdateOverlaySize(int count)
     {
         if (count <= 0)
         {
-            Height = CompactHeight;
+            ApplyOverlayHeight(CompactHeight);
             return;
         }
 
-        var target = BaseHeight + (Math.Min(count, 7) * RowHeight);
-        var maxAllowed = Math.Min(MaxOverlayHeight, MaxHeight);
-        Height = Math.Max(MinOverlayHeight, Math.Min(maxAllowed, target));
+        var visibleRows = Math.Min(count, 7);
+        var target = BaseHeight + (visibleRows * RowHeight);
+        ApplyOverlayHeight(target);
+    }
+
+    private void ApplyOverlayHeight(double requestedHeight)
+    {
+        var workArea = SystemParameters.WorkArea;
+        var maxAllowed = GetAvailableOverlayHeight();
+        var targetHeight = Math.Max(MinOverlayHeight, Math.Min(maxAllowed, requestedHeight));
+
+        if (Top + targetHeight > workArea.Bottom - ScreenMargin)
+        {
+            Top = Math.Max(workArea.Top + ScreenMargin, workArea.Bottom - ScreenMargin - targetHeight);
+            maxAllowed = GetAvailableOverlayHeight();
+            targetHeight = Math.Max(MinOverlayHeight, Math.Min(maxAllowed, requestedHeight));
+        }
+
+        MaxHeight = maxAllowed;
+        Height = targetHeight;
+        ResultsList.MaxHeight = Math.Max(0, targetHeight - BaseHeight + 8);
+    }
+
+    private double GetAvailableOverlayHeight()
+    {
+        var workArea = SystemParameters.WorkArea;
+        var availableBelow = workArea.Bottom - Math.Max(Top, workArea.Top + ScreenMargin) - ScreenMargin;
+        return Math.Max(MinOverlayHeight, Math.Min(MaxOverlayHeight, availableBelow));
     }
 
     private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
