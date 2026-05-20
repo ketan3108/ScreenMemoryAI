@@ -172,7 +172,7 @@ public class ScreenshotRecord : INotifyPropertyChanged
     private static string FormatStatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
     {
         "completed" => "Ready",
-        "no_text" => "No text found",
+        "no_text" => "No text",
         "failed" => "Needs review",
         "pending" or "" or null => "Processing",
         _ => status

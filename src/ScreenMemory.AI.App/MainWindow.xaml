@@ -361,7 +361,7 @@
                                 <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
                             </Trigger>
                             <Trigger Property="Tag" Value="Selected">
-                                <Setter TargetName="border" Property="Background" Value="#2A1C4A"/>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource AccentSubtle}"/>
                                 <Setter Property="Foreground" Value="{StaticResource AccentGlow}"/>
                                 <Setter TargetName="border" Property="Effect">
                                     <Setter.Value>
@@ -1105,7 +1105,7 @@
                             Height="38"
                             Padding="3"
                             CornerRadius="11"
-                            Background="#15161D"
+                            Background="{StaticResource GlassInputBrush}"
                             BorderBrush="{StaticResource BorderDefault}"
                             BorderThickness="1"
                             VerticalAlignment="Center">
@@ -1126,9 +1126,10 @@
                         </StackPanel>
                     </Border>
 
-                    <Grid Grid.Column="2"
-                          Margin="12,0,0,0"
-                          VerticalAlignment="Center">
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center">
                         <TextBlock x:Name="HeaderLicensePlanText"
                                    Text="Free"
                                    Visibility="Collapsed"/>
@@ -1148,7 +1149,7 @@
                                 <TextBlock Text="Upgrade" FontWeight="700" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                    </Grid>
+                    </StackPanel>
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">
                         <Button Content="&#xE921;" Style="{StaticResource ButtonWindowControl}" Click="WindowMinimize_Click" ToolTip="Minimize"/>
@@ -1416,6 +1417,61 @@
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
 
+                        <WrapPanel x:Name="ResultsLoadingSkeleton"
+                                   Visibility="Collapsed"
+                                   Margin="0,0,28,0">
+                            <Border Width="196" Height="170" CornerRadius="12" Margin="0,0,16,18"
+                                    Background="{StaticResource GlassPanelBrush}"
+                                    BorderBrush="{StaticResource BorderSubtle}"
+                                    BorderThickness="1">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="112"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Border CornerRadius="10" Background="{StaticResource GlassInputBrush}"/>
+                                    <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                                        <Border Height="9" Width="118" HorizontalAlignment="Left" CornerRadius="5" Background="{StaticResource BorderDefault}" Opacity="0.55"/>
+                                        <Border Height="8" Width="74" HorizontalAlignment="Left" CornerRadius="4" Background="{StaticResource BorderSubtle}" Margin="0,8,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <Border Width="196" Height="170" CornerRadius="12" Margin="0,0,16,18"
+                                    Background="{StaticResource GlassPanelBrush}"
+                                    BorderBrush="{StaticResource BorderSubtle}"
+                                    BorderThickness="1"
+                                    Opacity="0.82">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="112"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Border CornerRadius="10" Background="{StaticResource GlassInputBrush}"/>
+                                    <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                                        <Border Height="9" Width="132" HorizontalAlignment="Left" CornerRadius="5" Background="{StaticResource BorderDefault}" Opacity="0.5"/>
+                                        <Border Height="8" Width="86" HorizontalAlignment="Left" CornerRadius="4" Background="{StaticResource BorderSubtle}" Margin="0,8,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <Border Width="196" Height="170" CornerRadius="12" Margin="0,0,16,18"
+                                    Background="{StaticResource GlassPanelBrush}"
+                                    BorderBrush="{StaticResource BorderSubtle}"
+                                    BorderThickness="1"
+                                    Opacity="0.64">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="112"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Border CornerRadius="10" Background="{StaticResource GlassInputBrush}"/>
+                                    <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                                        <Border Height="9" Width="104" HorizontalAlignment="Left" CornerRadius="5" Background="{StaticResource BorderDefault}" Opacity="0.45"/>
+                                        <Border Height="8" Width="70" HorizontalAlignment="Left" CornerRadius="4" Background="{StaticResource BorderSubtle}" Margin="0,8,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </WrapPanel>
+
                         <Border x:Name="ResultsEmptyState"
                                 Visibility="Collapsed"
                                 Background="{StaticResource GlassPanelBrush}"
@@ -1509,7 +1565,6 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                         <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
                                     <StackPanel Grid.Row="0">
@@ -1556,7 +1611,7 @@
                                     </Button>
 
                                     <Border x:Name="SettingsEmptyState"
-                                            Grid.Row="3"
+                                            Grid.Row="2"
                                             Background="Transparent"
                                             BorderThickness="0"
                                             Padding="0,4"
@@ -1576,26 +1631,51 @@
                                     </Border>
 
                                     <ListBox x:Name="SettingsFoldersList"
-                                             Grid.Row="3"
+                                             Grid.Row="2"
                                              Background="Transparent"
                                              BorderThickness="0"
                                              ItemContainerStyle="{StaticResource FolderListItem}"
-                                             MinHeight="70"
-                                             MaxHeight="180"
+                                             MinHeight="56"
+                                             MaxHeight="130"
                                              Visibility="Collapsed"
                                              Margin="0,0,0,12"
-                                             VerticalAlignment="Bottom"/>
+                                             VerticalAlignment="Bottom"
+                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
 
-                                    <Button Style="{StaticResource ButtonSecondary}"
-                                            Grid.Row="4"
-                                            Height="34"
-                                            VerticalAlignment="Bottom"
-                                            Click="AddSettingsFolder_Click">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="+" FontSize="16" FontWeight="600" Margin="0,-2,8,0"/>
-                                            <TextBlock Text="Add Folder" FontWeight="600"/>
-                                        </StackPanel>
-                                    </Button>
+                                    <Grid Grid.Row="3" VerticalAlignment="Bottom">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Button Grid.Column="0"
+                                                Style="{StaticResource ButtonSecondary}"
+                                                Height="34"
+                                                Click="AddSettingsFolder_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="+" FontSize="16" FontWeight="600" Margin="0,-2,8,0"/>
+                                                <TextBlock Text="Add Folder" FontWeight="600"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Grid.Column="2"
+                                                Style="{StaticResource ButtonPrimary}"
+                                                Height="34"
+                                                Padding="14,0"
+                                                Click="IndexNow_Click"
+                                                ToolTip="Scan watched folders and index screenshots now">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE8F4;"
+                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontSize="12"
+                                                           Margin="0,0,8,0"
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Text="Index Now" FontWeight="600"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
                                 </Grid>
                             </Border>
 
@@ -1970,7 +2050,7 @@
                                         Opacity="0.55"
                                         IsHitTestVisible="False"/>
                                 <Image x:Name="PreviewImage" Stretch="Uniform" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="PreviewPlaceholderText" Text="Loading" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextMuted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="PreviewPlaceholderText" Text="Loading preview..." Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextMuted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
 

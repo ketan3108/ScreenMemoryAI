@@ -72,7 +72,7 @@ public partial class QuickSearchOverlay : Window
 
     private const double CompactHeight = 108;
     private const double BaseHeight = 118;
-    private const double RowHeight = 86;
+    private const double RowHeight = 82;
     private const double MinOverlayHeight = 108;
     private const double MaxOverlayHeight = 620;
     private const double ScreenMargin = 24;

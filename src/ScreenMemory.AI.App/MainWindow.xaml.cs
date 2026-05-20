@@ -45,6 +45,7 @@ public partial class MainWindow : Window
     private readonly LinkedList<string> _previewCacheOrder = [];
     private readonly DispatcherTimer _ocrEtaTimer;
     private readonly System.Diagnostics.Stopwatch _ocrRunStopwatch = new();
+    private CancellationTokenSource? _navigationCts;
     private const int PreviewCacheLimit = 10;
 
     private const int HomeRecentLimit = 12;
@@ -177,6 +178,8 @@ public partial class MainWindow : Window
         _previewLoadCts?.Dispose();
         _searchCts?.Cancel();
         _searchCts?.Dispose();
+        _navigationCts?.Cancel();
+        _navigationCts?.Dispose();
         _ocrEtaTimer.Stop();
         _ocrEtaTimer.Tick -= OcrEtaTimer_Tick;
         base.OnClosed(e);
@@ -287,7 +290,16 @@ public partial class MainWindow : Window
             });
 
             _quickSearchOverlay.InvalidateSearchCache();
-            LoadHomeDashboard();
+            if (CurrentViewMode == ViewMode.Settings)
+            {
+                LoadSettingsFolders();
+                StatusText.Text = "Indexing complete";
+            }
+            else
+            {
+                LoadHomeDashboard();
+            }
+
             QueueOcrBackfill(limit: 10000);
             UpdateLicenseUi();
             if (!_licenseService.IsPro && _repository.Count() >= LicenseService.FreeScreenshotLimit)
@@ -310,12 +322,31 @@ public partial class MainWindow : Window
         LoadHomeDashboard();
     }
 
-    private void Recent_Click(object sender, RoutedEventArgs e)
+    private async void Recent_Click(object sender, RoutedEventArgs e)
     {
         CurrentViewMode = ViewMode.Collection;
         CurrentCollection = "Recents";
         CurrentSearchQuery = string.Empty;
-        ShowResults("Recents", _repository.GetRecent(RecentPageLimit));
+
+        _navigationCts?.Cancel();
+        _navigationCts?.Dispose();
+        _navigationCts = new CancellationTokenSource();
+        var token = _navigationCts.Token;
+
+        ShowResultsLoading("Recents");
+
+        try
+        {
+            var results = await Task.Run(() => _repository.GetRecentCards(RecentPageLimit), token);
+            if (!token.IsCancellationRequested && CurrentViewMode == ViewMode.Collection && CurrentCollection == "Recents")
+            {
+                ShowResults("Recents", results);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation moved elsewhere.
+        }
     }
 
     private void Invoices_Click(object sender, RoutedEventArgs e)
@@ -385,6 +416,7 @@ public partial class MainWindow : Window
 
         CurrentViewMode = ViewMode.Search;
         CurrentCollection = string.Empty;
+        ShowResultsLoading("Search", "Searching screenshots", "Checking filenames, text, app names, and AI metadata.");
 
         List<ScreenshotRecord> results;
         try
@@ -544,6 +576,7 @@ public partial class MainWindow : Window
         ResultsMetaText.Text = $"{results.Count} result(s)";
         ResultsList.ItemsSource = results;
         ResultsList.Visibility = results.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResultsLoadingSkeleton.Visibility = Visibility.Collapsed;
         ResultsEmptyState.Visibility = results.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         ResultsEmptyTitleText.Text = title.Equals("Favourites", StringComparison.OrdinalIgnoreCase)
             ? "No favourites yet"
@@ -555,6 +588,27 @@ public partial class MainWindow : Window
         SetActiveNavigation(title);
 
         StartThumbnailQueue(results);
+    }
+
+    private void ShowResultsLoading(string title, string loadingTitle = "Loading recents", string loadingBody = "Preparing your latest screenshots.")
+    {
+        StopThumbnailQueue();
+        HomeDashboardPanel.Visibility = Visibility.Collapsed;
+        ResultsPanel.Visibility = Visibility.Visible;
+        SettingsPanel.Visibility = Visibility.Collapsed;
+        LicensePanel.Visibility = Visibility.Collapsed;
+
+        DisplayedScreenshots = [];
+        ResultsTitleText.Text = title;
+        ResultsMetaText.Text = "Loading...";
+        ResultsList.ItemsSource = null;
+        ResultsList.Visibility = Visibility.Collapsed;
+        ResultsLoadingSkeleton.Visibility = Visibility.Visible;
+        ResultsEmptyState.Visibility = Visibility.Visible;
+        ResultsEmptyTitleText.Text = loadingTitle;
+        ResultsEmptyBodyText.Text = loadingBody;
+        StatusText.Text = loadingTitle;
+        SetActiveNavigation(title);
     }
 
     private void SetActiveNavigation(string activeSection)
@@ -624,13 +678,11 @@ public partial class MainWindow : Window
 
     private void SaveSettingsFolders()
     {
-        var settings = new AppSettingsData
-        {
-            WatchedFolders = SettingsFoldersList.Items
-                .Cast<string>()
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList()
-        };
+        var settings = _settingsService.Load();
+        settings.WatchedFolders = SettingsFoldersList.Items
+            .Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
         _settingsService.Save(settings);
         _fileWatcherService.Restart();
@@ -855,7 +907,7 @@ public partial class MainWindow : Window
             if (CurrentViewMode == ViewMode.Collection &&
                 string.Equals(CurrentCollection, "Recents", StringComparison.OrdinalIgnoreCase))
             {
-                ShowResults("Recents", _repository.GetRecent(RecentPageLimit));
+                ShowResults("Recents", _repository.GetRecentCards(RecentPageLimit));
                 return;
             }
         });
@@ -935,7 +987,7 @@ public partial class MainWindow : Window
         switch (CurrentCollection)
         {
             case "Recents":
-                ShowResults("Recents", _repository.GetRecent(RecentPageLimit));
+                ShowResults("Recents", _repository.GetRecentCards(RecentPageLimit));
                 break;
             case "Favourites":
                 ShowResults("Favourites", _repository.GetFavorites(CollectionLimit));
@@ -1440,7 +1492,30 @@ public partial class MainWindow : Window
         PreviewPanel.Visibility = Visibility.Visible;
 
         UpdatePreviewMetadata(record);
+        _ = LoadFullPreviewMetadataAsync(record);
         _ = LoadPreviewImageAsync(record);
+    }
+
+    private async Task LoadFullPreviewMetadataAsync(ScreenshotRecord selectedRecord)
+    {
+        try
+        {
+            var fullRecord = await Task.Run(() => _repository.GetById(selectedRecord.Id));
+            if (fullRecord is null ||
+                _selectedScreenshot is null ||
+                !string.Equals(_selectedScreenshot.Id, selectedRecord.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            fullRecord.IsSelected = selectedRecord.IsSelected;
+            _selectedScreenshot = fullRecord;
+            UpdatePreviewMetadata(fullRecord, resetPreviewImage: false);
+        }
+        catch
+        {
+            // Keep the lightweight card metadata if a preview refresh fails.
+        }
     }
 
     private void UpdatePreviewMetadata(ScreenshotRecord record, bool resetPreviewImage = true)
@@ -1461,7 +1536,7 @@ public partial class MainWindow : Window
 
         if (resetPreviewImage)
         {
-            PreviewPlaceholderText.Text       = "Loading…";
+            PreviewPlaceholderText.Text       = "Loading preview...";
             PreviewPlaceholderText.Visibility = Visibility.Visible;
             PreviewImage.Source               = null;
         }
@@ -1687,7 +1762,7 @@ public partial class MainWindow : Window
         PreviewPanel.Visibility   = Visibility.Collapsed;
 
         PreviewImage.Source               = null;
-        PreviewPlaceholderText.Text       = "Loading…";
+        PreviewPlaceholderText.Text       = "Loading preview...";
         PreviewPlaceholderText.Visibility = Visibility.Visible;
         PreviewFileNameText.Text          = string.Empty;
         PreviewFilePathText.Text          = string.Empty;

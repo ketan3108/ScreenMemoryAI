@@ -233,6 +233,86 @@ public class ScreenshotRepository
             .ToList();
     }
 
+    public List<ScreenshotRecord> GetRecentCards(int limit = 50)
+    {
+        using var connection = _databaseService.CreateConnection();
+        connection.Open();
+
+        const string sql =
+        """
+        SELECT
+            id AS Id,
+            file_path AS FilePath,
+            file_name AS FileName,
+            file_size_bytes AS FileSizeBytes,
+            created_at AS CreatedAt,
+            modified_at AS ModifiedAt,
+            thumbnail_path AS ThumbnailPath,
+            ocr_status AS OcrStatus,
+            imported_at AS ImportedAt,
+            ocr_processed_at AS OcrProcessedAt,
+            active_window AS ActiveWindow,
+            process_name AS ProcessName,
+            application_name AS ApplicationName,
+            ai_category AS AiCategory,
+            ai_tags AS AiTags,
+            ai_confidence AS AiConfidence,
+            ai_status AS AiStatus,
+            ai_error AS AiError,
+            ai_analyzed_at AS AiAnalyzedAt,
+            is_favorite AS IsFavorite,
+            updated_at AS UpdatedAt
+        FROM screenshots
+        ORDER BY COALESCE(NULLIF(created_at, ''), NULLIF(modified_at, ''), imported_at) DESC
+        LIMIT @Limit;
+        """;
+
+        return connection.Query<ScreenshotRecord>(sql, new { Limit = limit })
+            .OrderByDescending(GetBestTimestamp)
+            .Take(limit)
+            .ToList();
+    }
+
+    public ScreenshotRecord? GetById(string id)
+    {
+        using var connection = _databaseService.CreateConnection();
+        connection.Open();
+
+        const string sql =
+        """
+        SELECT
+            id AS Id,
+            file_path AS FilePath,
+            file_name AS FileName,
+            file_size_bytes AS FileSizeBytes,
+            created_at AS CreatedAt,
+            modified_at AS ModifiedAt,
+            thumbnail_path AS ThumbnailPath,
+            ocr_text AS OcrText,
+            ocr_status AS OcrStatus,
+            imported_at AS ImportedAt,
+            ocr_processed_at AS OcrProcessedAt,
+            active_window AS ActiveWindow,
+            process_name AS ProcessName,
+            application_name AS ApplicationName,
+            ai_category AS AiCategory,
+            ai_tags AS AiTags,
+            ai_summary AS AiSummary,
+            ai_confidence AS AiConfidence,
+            ai_status AS AiStatus,
+            ai_error AS AiError,
+            ai_analyzed_at AS AiAnalyzedAt,
+            embedding_vector AS EmbeddingVector,
+            is_favorite AS IsFavorite,
+            updated_at AS UpdatedAt
+        FROM screenshots
+        WHERE id = @Id
+        LIMIT 1;
+        """;
+
+        return connection.QueryFirstOrDefault<ScreenshotRecord>(sql, new { Id = id });
+    }
+
     public List<ScreenshotRecord> GetFavorites(int limit = 100)
     {
         using var connection = _databaseService.CreateConnection();
