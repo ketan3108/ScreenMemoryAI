@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -38,22 +39,29 @@ public partial class MainWindow : Window
     private readonly Forms.NotifyIcon _trayIcon;
     private CancellationTokenSource? _previewLoadCts;
     private CancellationTokenSource? _searchCts;
+    private CancellationTokenSource? _resultsBindCts;
     private bool _allowClose;
     private bool _trayDisposed;
     private ScreenshotRecord? _selectedScreenshot;
+    private List<ScreenshotRecord> _recentCardsCache = [];
+    private readonly Dictionary<string, List<ScreenshotRecord>> _searchResultCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly LinkedList<string> _searchResultCacheOrder = [];
     private readonly Dictionary<string, BitmapSource> _previewCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly LinkedList<string> _previewCacheOrder = [];
     private readonly DispatcherTimer _ocrEtaTimer;
     private readonly System.Diagnostics.Stopwatch _ocrRunStopwatch = new();
     private CancellationTokenSource? _navigationCts;
     private const int PreviewCacheLimit = 10;
+    private const int SearchCacheLimit = 5;
+    private const int InitialResultsBatchSize = 18;
+    private const int ResultsBatchSize = 12;
 
     private const int HomeRecentLimit = 12;
-    private const int RecentPageLimit = 100;
+    private const int RecentPageLimit = 72;
     private const int SearchLimit = 60;
     private const int CollectionLimit = 100;
     private const int OcrBackfillBatchSize = 1000;
-    private const int PreviewPanelWidth = 300;
+    private const int PreviewPanelWidth = 340;
     private const int HotkeyId = 9001;
     private const uint ModControl = 0x0002;
     private const uint ModShift = 0x0004;
@@ -66,6 +74,8 @@ public partial class MainWindow : Window
     private bool _isManualMaximized;
     private System.Windows.Rect _restoreBoundsBeforeManualMaximize;
     private bool _ocrTrackingActive;
+    private bool _servicesReady;
+    private bool _processingEnabled = true;
     private int _ocrRunTotal;
     private bool _aiBackfillQueued;
     private SearchMode _searchMode = SearchMode.Keyword;
@@ -140,6 +150,7 @@ public partial class MainWindow : Window
         };
         _ocrEtaTimer.Tick += OcrEtaTimer_Tick;
 
+        _servicesReady = true;
         LoadHomeDashboard();
         UpdateSearchModeUi();
         QueueOcrBackfill();
@@ -289,7 +300,7 @@ public partial class MainWindow : Window
                 _repository.InsertManyIfNotExists(records);
             });
 
-            _quickSearchOverlay.InvalidateSearchCache();
+            InvalidateSearchCaches();
             if (CurrentViewMode == ViewMode.Settings)
             {
                 LoadSettingsFolders();
@@ -322,6 +333,21 @@ public partial class MainWindow : Window
         LoadHomeDashboard();
     }
 
+    private void HomeEmptyPrimary_Click(object sender, RoutedEventArgs e)
+    {
+        if (_settingsService.Load().WatchedFolders.Count == 0)
+        {
+            if (TryAddWatchedFolderFromDialog())
+            {
+                _ = Dispatcher.InvokeAsync(() => IndexNow_Click(sender, e), DispatcherPriority.Background);
+            }
+
+            return;
+        }
+
+        IndexNow_Click(sender, e);
+    }
+
     private async void Recent_Click(object sender, RoutedEventArgs e)
     {
         CurrentViewMode = ViewMode.Collection;
@@ -333,13 +359,22 @@ public partial class MainWindow : Window
         _navigationCts = new CancellationTokenSource();
         var token = _navigationCts.Token;
 
-        ShowResultsLoading("Recents");
+        if (_recentCardsCache.Count > 0)
+        {
+            ShowResults("Recents", _recentCardsCache);
+            ResultsMetaText.Text = "Loading latest...";
+        }
+        else
+        {
+            ShowResultsLoading("Recents");
+        }
 
         try
         {
             var results = await Task.Run(() => _repository.GetRecentCards(RecentPageLimit), token);
             if (!token.IsCancellationRequested && CurrentViewMode == ViewMode.Collection && CurrentCollection == "Recents")
             {
+                _recentCardsCache = results;
                 ShowResults("Recents", results);
             }
         }
@@ -465,7 +500,16 @@ public partial class MainWindow : Window
 
     private async Task<List<ScreenshotRecord>> SearchRecordsAsync(string query, CancellationToken token)
     {
-        return await ScreenshotSearchService.SearchAsync(_repository, _aiSemanticService, query, SearchLimit, _searchMode, token);
+        var cacheKey = GetSearchCacheKey(_searchMode, query);
+        if (_searchResultCache.TryGetValue(cacheKey, out var cached))
+        {
+            TouchSearchCacheKey(cacheKey);
+            return cached.Select(CloneSearchRecord).ToList();
+        }
+
+        var results = await ScreenshotSearchService.SearchAsync(_repository, _aiSemanticService, query, SearchLimit, _searchMode, token);
+        StoreSearchCache(cacheKey, results);
+        return results;
     }
 
     private void SearchModeKeyword_Click(object sender, RoutedEventArgs e) => SetSearchMode(SearchMode.Keyword);
@@ -534,7 +578,9 @@ public partial class MainWindow : Window
         AiTaggedCountText.Text = _repository.CountAiTagged().ToString("N0");
 
         var recent = _repository.GetRecent(HomeRecentLimit);
+        _recentCardsCache = recent;
         BindRecentBuckets(recent);
+        UpdateHomeEmptyState(recent.Count);
         StatusText.Text = "Ready";
         UpdateLicenseUi();
 
@@ -542,6 +588,32 @@ public partial class MainWindow : Window
         QueueOcrBackfill();
         QueueAiBackfill();
         SetActiveNavigation("Today");
+    }
+
+    private void UpdateHomeEmptyState(int recentCount)
+    {
+        var watchedFolderCount = _settingsService.Load().WatchedFolders.Count;
+        var hasRecent = recentCount > 0;
+
+        HomeEmptyState.Visibility = hasRecent ? Visibility.Collapsed : Visibility.Visible;
+        if (hasRecent)
+        {
+            return;
+        }
+
+        if (watchedFolderCount == 0)
+        {
+            HomeEmptyTitleText.Text = "Start building your screenshot memory";
+            HomeEmptyBodyText.Text = "Choose the folder where your screenshots are saved. ScreenMemory will index them locally and keep new captures searchable.";
+            HomeEmptyPrimaryButton.Content = "Add Folder";
+            HomeEmptySecondaryButton.Visibility = Visibility.Visible;
+            return;
+        }
+
+        HomeEmptyTitleText.Text = "Index your existing screenshots";
+        HomeEmptyBodyText.Text = "Your watched folder is ready. Run an index now to import existing screenshots, then new captures will appear automatically.";
+        HomeEmptyPrimaryButton.Content = "Index Now";
+        HomeEmptySecondaryButton.Visibility = Visibility.Visible;
     }
 
     private void ShowCollection(string name, IEnumerable<string> keywords)
@@ -566,6 +638,10 @@ public partial class MainWindow : Window
 
     private void ShowResults(string title, List<ScreenshotRecord> results)
     {
+        _resultsBindCts?.Cancel();
+        _resultsBindCts?.Dispose();
+        _resultsBindCts = new CancellationTokenSource();
+
         HomeDashboardPanel.Visibility = Visibility.Collapsed;
         ResultsPanel.Visibility = Visibility.Visible;
         SettingsPanel.Visibility = Visibility.Collapsed;
@@ -574,18 +650,31 @@ public partial class MainWindow : Window
         DisplayedScreenshots = results;
         ResultsTitleText.Text = title;
         ResultsMetaText.Text = $"{results.Count} result(s)";
-        ResultsList.ItemsSource = results;
-        ResultsList.Visibility = results.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResultsList.ItemsSource = null;
+        ResultsList.Visibility = Visibility.Collapsed;
         ResultsLoadingSkeleton.Visibility = Visibility.Collapsed;
         ResultsEmptyState.Visibility = results.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         ResultsEmptyTitleText.Text = title.Equals("Favourites", StringComparison.OrdinalIgnoreCase)
             ? "No favourites yet"
+            : CurrentViewMode == ViewMode.Search
+                ? "No matching screenshots"
             : "Nothing found yet";
         ResultsEmptyBodyText.Text = title.Equals("Favourites", StringComparison.OrdinalIgnoreCase)
             ? "Star screenshots you want to keep close. They will appear here instantly."
+            : CurrentViewMode == ViewMode.Search
+                ? $"Try a screenshot phrase, app name, window title, or switch search mode. Current mode: {_searchMode}."
             : "Try searching text, app names, filenames, or window titles.";
         StatusText.Text = $"{results.Count} items";
         SetActiveNavigation(title);
+
+        if (results.Count > 0)
+        {
+            _ = BindResultsBucketsIncrementallyAsync(results, _resultsBindCts.Token);
+        }
+        else
+        {
+            ResetResultsBuckets();
+        }
 
         StartThumbnailQueue(results);
     }
@@ -603,6 +692,7 @@ public partial class MainWindow : Window
         ResultsMetaText.Text = "Loading...";
         ResultsList.ItemsSource = null;
         ResultsList.Visibility = Visibility.Collapsed;
+        ResetResultsBuckets();
         ResultsLoadingSkeleton.Visibility = Visibility.Visible;
         ResultsEmptyState.Visibility = Visibility.Visible;
         ResultsEmptyTitleText.Text = loadingTitle;
@@ -671,9 +761,56 @@ public partial class MainWindow : Window
         SettingsAiPendingText.Text = _repository.CountPendingAi().ToString("N0");
         SettingsAiModeText.Text = FormatAiModeLabel(_aiSemanticService.AvailabilityState);
         SettingsFolderCountText.Text = SettingsFoldersList.Items.Count.ToString("N0");
+        SettingsProcessingToggle.IsChecked = _processingEnabled;
+        SettingsProcessingStateText.Text = _processingEnabled ? "Active" : "Paused";
+        SettingsProcessingStateText.Foreground = _processingEnabled
+            ? (System.Windows.Media.Brush)FindResource("StatusSuccessGlow")
+            : (System.Windows.Media.Brush)FindResource("TextTertiary");
+        SettingsStatsDetails.Visibility = SettingsStatsToggle.IsChecked == true
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         UpdateLicenseUi();
 
         UpdateSettingsFolderListState();
+    }
+
+    private void SettingsProcessingToggle_Changed(object sender, RoutedEventArgs e)
+    {
+        if (SettingsProcessingToggle is null || SettingsProcessingStateText is null)
+        {
+            return;
+        }
+
+        _processingEnabled = SettingsProcessingToggle.IsChecked == true;
+        SettingsProcessingStateText.Text = _processingEnabled ? "Active" : "Paused";
+        SettingsProcessingStateText.Foreground = _processingEnabled
+            ? (System.Windows.Media.Brush)FindResource("StatusSuccessGlow")
+            : (System.Windows.Media.Brush)FindResource("TextTertiary");
+
+        if (!_servicesReady)
+        {
+            return;
+        }
+
+        StatusText.Text = _processingEnabled ? "Local processing resumed" : "Local processing paused";
+
+        if (_processingEnabled)
+        {
+            QueueOcrBackfill();
+            QueueAiBackfill();
+        }
+    }
+
+    private void SettingsStatsToggle_Changed(object sender, RoutedEventArgs e)
+    {
+        if (SettingsStatsDetails is null || SettingsStatsToggle is null)
+        {
+            return;
+        }
+
+        SettingsStatsDetails.Visibility = SettingsStatsToggle.IsChecked == true
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
     private void SaveSettingsFolders()
@@ -690,6 +827,9 @@ public partial class MainWindow : Window
     }
 
     private void AddSettingsFolder_Click(object sender, RoutedEventArgs e)
+        => TryAddWatchedFolderFromDialog();
+
+    private bool TryAddWatchedFolderFromDialog()
     {
         using var dialog = new Forms.FolderBrowserDialog
         {
@@ -700,23 +840,35 @@ public partial class MainWindow : Window
 
         if (dialog.ShowDialog() != Forms.DialogResult.OK)
         {
-            return;
+            return false;
         }
 
         var selectedPath = dialog.SelectedPath;
-        var exists = SettingsFoldersList.Items
-            .Cast<string>()
+        var settings = _settingsService.Load();
+        var watchedFolders = settings.WatchedFolders
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var exists = watchedFolders
             .Any(folder => string.Equals(folder, selectedPath, StringComparison.OrdinalIgnoreCase));
 
         if (exists)
         {
-            return;
+            StatusText.Text = "Folder already added";
+            return false;
         }
 
-        SettingsFoldersList.Items.Add(selectedPath);
-        SaveSettingsFolders();
-        UpdateSettingsFolderListState();
+        watchedFolders.Add(selectedPath);
+        settings.WatchedFolders = watchedFolders;
+        _settingsService.Save(settings);
+        _fileWatcherService.Restart();
+
+        if (CurrentViewMode == ViewMode.Settings)
+        {
+            LoadSettingsFolders();
+        }
+
         StatusText.Text = "Folder added";
+        return true;
     }
 
     private void RemoveSettingsFolderItem_Click(object sender, RoutedEventArgs e)
@@ -734,6 +886,12 @@ public partial class MainWindow : Window
 
     private void RunAiBackfill_Click(object sender, RoutedEventArgs e)
     {
+        if (!_processingEnabled)
+        {
+            StatusText.Text = "Local processing is paused";
+            return;
+        }
+
         _repository.ResetPendingAiForCompletedOcr();
         SettingsAiPendingText.Text = _repository.CountPendingAi().ToString("N0");
         QueueAiBackfill(limit: 5000);
@@ -820,6 +978,11 @@ public partial class MainWindow : Window
 
     private void StartThumbnailQueue(List<ScreenshotRecord> records)
     {
+        if (!_processingEnabled)
+        {
+            return;
+        }
+
         var pending = records
             .Where(r => string.IsNullOrWhiteSpace(r.ThumbnailPath) || !File.Exists(r.ThumbnailPath))
             .ToList();
@@ -835,6 +998,11 @@ public partial class MainWindow : Window
 
     private void StartOcrQueueForRecords(List<ScreenshotRecord> records)
     {
+        if (!_processingEnabled)
+        {
+            return;
+        }
+
         if (records.Count == 0) return;
         _backgroundProcessingManager.EnqueueOcr(records, JobPriority.High);
         StartOrRefreshOcrTracking();
@@ -842,6 +1010,11 @@ public partial class MainWindow : Window
 
     private void QueueOcrBackfill(int limit = OcrBackfillBatchSize)
     {
+        if (!_processingEnabled)
+        {
+            return;
+        }
+
         var pending = _repository.GetPendingOcr(limit);
         if (pending.Count == 0)
         {
@@ -870,7 +1043,7 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            _quickSearchOverlay.InvalidateSearchCache();
+            InvalidateSearchCaches();
             ImportedCountText.Text = _repository.Count().ToString("N0");
             UpdateLicenseUi();
             StartOcrQueueForRecords([e.Record]);
@@ -878,6 +1051,7 @@ public partial class MainWindow : Window
             if (CurrentViewMode == ViewMode.Home)
             {
                 var recent = _repository.GetRecent(HomeRecentLimit);
+                _recentCardsCache = recent;
                 BindRecentBuckets(recent);
                 StartThumbnailQueue(recent);
                 StatusText.Text = "New screenshot indexed";
@@ -907,7 +1081,9 @@ public partial class MainWindow : Window
             if (CurrentViewMode == ViewMode.Collection &&
                 string.Equals(CurrentCollection, "Recents", StringComparison.OrdinalIgnoreCase))
             {
-                ShowResults("Recents", _repository.GetRecentCards(RecentPageLimit));
+                var refreshed = _repository.GetRecentCards(RecentPageLimit);
+                _recentCardsCache = refreshed;
+                ShowResults("Recents", refreshed);
                 return;
             }
         });
@@ -917,7 +1093,7 @@ public partial class MainWindow : Window
     {
         Dispatcher.BeginInvoke(() =>
         {
-            _quickSearchOverlay.InvalidateSearchCache();
+            InvalidateSearchCaches();
             RemovePreviewCacheEntry(e.Record.FilePath);
 
             if (_selectedScreenshot is not null &&
@@ -942,6 +1118,7 @@ public partial class MainWindow : Window
             case ViewMode.Home:
                 {
                     var recent = _repository.GetRecent(HomeRecentLimit);
+                    _recentCardsCache = recent;
                     BindRecentBuckets(recent);
                     StartThumbnailQueue(recent);
                     break;
@@ -987,7 +1164,9 @@ public partial class MainWindow : Window
         switch (CurrentCollection)
         {
             case "Recents":
-                ShowResults("Recents", _repository.GetRecentCards(RecentPageLimit));
+                var refreshed = _repository.GetRecentCards(RecentPageLimit);
+                _recentCardsCache = refreshed;
+                ShowResults("Recents", refreshed);
                 break;
             case "Favourites":
                 ShowResults("Favourites", _repository.GetFavorites(CollectionLimit));
@@ -1044,6 +1223,7 @@ public partial class MainWindow : Window
 
             if (isComplete)
             {
+                InvalidateSearchCaches();
                 QueueOcrBackfill();
             }
         });
@@ -1090,6 +1270,7 @@ public partial class MainWindow : Window
 
             if (isComplete && !_ocrTrackingActive)
             {
+                InvalidateSearchCaches();
                 StatusText.Text = "Ready";
             }
         });
@@ -1165,7 +1346,7 @@ public partial class MainWindow : Window
             }
         }
 
-        ResultsList.Items.Refresh();
+        RefreshResultBucketItems();
         RecentTodayList.Items.Refresh();
         RecentYesterdayList.Items.Refresh();
         RecentWeekList.Items.Refresh();
@@ -1200,7 +1381,7 @@ public partial class MainWindow : Window
         }
 
         UpdatePreviewMetadata(_selectedScreenshot, resetPreviewImage: false);
-        ResultsList.Items.Refresh();
+        RefreshResultBucketItems();
         RefreshRecentBucketsIfVisible(refreshed);
     }
 
@@ -1259,8 +1440,80 @@ public partial class MainWindow : Window
         target.UpdatedAt = source.UpdatedAt;
     }
 
+    private static ScreenshotRecord CloneSearchRecord(ScreenshotRecord source) => new()
+    {
+        Id = source.Id,
+        FilePath = source.FilePath,
+        FileName = source.FileName,
+        FileSizeBytes = source.FileSizeBytes,
+        CreatedAt = source.CreatedAt,
+        ModifiedAt = source.ModifiedAt,
+        ImportedAt = source.ImportedAt,
+        ThumbnailPath = source.ThumbnailPath,
+        OcrText = source.OcrText,
+        OcrStatus = source.OcrStatus,
+        OcrProcessedAt = source.OcrProcessedAt,
+        ActiveWindow = source.ActiveWindow,
+        ProcessName = source.ProcessName,
+        ApplicationName = source.ApplicationName,
+        AiCategory = source.AiCategory,
+        AiTags = source.AiTags,
+        AiSummary = source.AiSummary,
+        AiConfidence = source.AiConfidence,
+        AiStatus = source.AiStatus,
+        AiError = source.AiError,
+        AiAnalyzedAt = source.AiAnalyzedAt,
+        EmbeddingVector = source.EmbeddingVector,
+        UpdatedAt = source.UpdatedAt,
+        IsFavorite = source.IsFavorite
+    };
+
+    private static string GetSearchCacheKey(SearchMode mode, string query)
+        => $"{mode}:{query.Trim().ToLowerInvariant()}";
+
+    private void StoreSearchCache(string cacheKey, List<ScreenshotRecord> results)
+    {
+        _searchResultCache[cacheKey] = results.Select(CloneSearchRecord).ToList();
+        TouchSearchCacheKey(cacheKey);
+
+        while (_searchResultCacheOrder.Count > SearchCacheLimit)
+        {
+            var oldest = _searchResultCacheOrder.Last?.Value;
+            if (oldest is null)
+            {
+                break;
+            }
+
+            _searchResultCacheOrder.RemoveLast();
+            _searchResultCache.Remove(oldest);
+        }
+    }
+
+    private void TouchSearchCacheKey(string cacheKey)
+    {
+        var existing = _searchResultCacheOrder.Find(cacheKey);
+        if (existing is not null)
+        {
+            _searchResultCacheOrder.Remove(existing);
+        }
+
+        _searchResultCacheOrder.AddFirst(cacheKey);
+    }
+
+    private void InvalidateSearchCaches()
+    {
+        _searchResultCache.Clear();
+        _searchResultCacheOrder.Clear();
+        _quickSearchOverlay.InvalidateSearchCache();
+    }
+
     private void QueueAiBackfill(int limit = 500)
     {
+        if (!_processingEnabled)
+        {
+            return;
+        }
+
         if (_repository.CountPendingAi() == 0)
         {
             return;
@@ -1508,8 +1761,6 @@ public partial class MainWindow : Window
                 return;
             }
 
-            fullRecord.IsSelected = selectedRecord.IsSelected;
-            _selectedScreenshot = fullRecord;
             UpdatePreviewMetadata(fullRecord, resetPreviewImage: false);
         }
         catch
@@ -1610,7 +1861,7 @@ public partial class MainWindow : Window
             _selectedScreenshot.IsFavorite = isFavorite;
         }
 
-        ResultsList.Items.Refresh();
+        RefreshResultBucketItems();
         RecentTodayList.Items.Refresh();
         RecentYesterdayList.Items.Refresh();
         RecentWeekList.Items.Refresh();
@@ -1793,12 +2044,75 @@ public partial class MainWindow : Window
         };
     }
 
+    private void RefreshResultBucketItems()
+    {
+        ResultsList.Items.Refresh();
+        ResultsTodayList.Items.Refresh();
+        ResultsYesterdayList.Items.Refresh();
+        ResultsWeekList.Items.Refresh();
+        ResultsOlderList.Items.Refresh();
+    }
+
+    private async Task BindResultsBucketsIncrementallyAsync(List<ScreenshotRecord> results, CancellationToken token)
+    {
+        try
+        {
+            var todayItems = new ObservableCollection<ScreenshotRecord>();
+            var yesterdayItems = new ObservableCollection<ScreenshotRecord>();
+            var weekItems = new ObservableCollection<ScreenshotRecord>();
+            var olderItems = new ObservableCollection<ScreenshotRecord>();
+
+            ResultsTodayList.ItemsSource = todayItems;
+            ResultsYesterdayList.ItemsSource = yesterdayItems;
+            ResultsWeekList.ItemsSource = weekItems;
+            ResultsOlderList.ItemsSource = olderItems;
+            ResetResultsBucketVisibility();
+
+            var ordered = results
+                .OrderByDescending(ScreenshotRepository.GetBestTimestamp)
+                .ToList();
+
+            for (var i = 0; i < ordered.Count; i++)
+            {
+                token.ThrowIfCancellationRequested();
+                AddToTemporalBucket(ordered[i], todayItems, yesterdayItems, weekItems, olderItems);
+                UpdateResultsBucketVisibility(todayItems.Count, yesterdayItems.Count, weekItems.Count, olderItems.Count);
+
+                if (i + 1 == InitialResultsBatchSize ||
+                    (i + 1 > InitialResultsBatchSize && (i + 1 - InitialResultsBatchSize) % ResultsBatchSize == 0))
+                {
+                    await Dispatcher.Yield(DispatcherPriority.Background);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer navigation/search replaced this binding pass.
+        }
+    }
+
+    private void ResetResultsBuckets()
+    {
+        ResultsTodayList.ItemsSource = null;
+        ResultsYesterdayList.ItemsSource = null;
+        ResultsWeekList.ItemsSource = null;
+        ResultsOlderList.ItemsSource = null;
+        ResetResultsBucketVisibility();
+    }
+
+    private void ResetResultsBucketVisibility()
+        => UpdateResultsBucketVisibility(0, 0, 0, 0);
+
+    private void UpdateResultsBucketVisibility(int todayCount, int yesterdayCount, int weekCount, int olderCount)
+    {
+        ResultsTodaySection.Visibility = todayCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResultsYesterdaySection.Visibility = yesterdayCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResultsWeekSection.Visibility = weekCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResultsOlderSection.Visibility = olderCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void BindRecentBuckets(List<ScreenshotRecord> recent)
     {
-        var now = DateTime.Now;
-        var today = now.Date;
-        var startOfWeek = today.AddDays(-(int)((7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7));
-
         var todayItems = new List<ScreenshotRecord>();
         var yesterdayItems = new List<ScreenshotRecord>();
         var weekItems = new List<ScreenshotRecord>();
@@ -1806,23 +2120,7 @@ public partial class MainWindow : Window
 
         foreach (var item in recent.OrderByDescending(ScreenshotRepository.GetBestTimestamp))
         {
-            var ts = ScreenshotRepository.GetBestTimestamp(item).ToLocalTime();
-            if (ts.Date == today)
-            {
-                todayItems.Add(item);
-            }
-            else if (ts.Date == today.AddDays(-1))
-            {
-                yesterdayItems.Add(item);
-            }
-            else if (ts.Date >= startOfWeek)
-            {
-                weekItems.Add(item);
-            }
-            else
-            {
-                olderItems.Add(item);
-            }
+            AddToTemporalBucket(item, todayItems, yesterdayItems, weekItems, olderItems);
         }
 
         RecentTodayList.ItemsSource = todayItems;
@@ -1834,7 +2132,35 @@ public partial class MainWindow : Window
         RecentYesterdaySection.Visibility = yesterdayItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         RecentWeekSection.Visibility = weekItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         RecentOlderSection.Visibility = olderItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        HomeEmptyState.Visibility = recent.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private static void AddToTemporalBucket<TCollection>(
+        ScreenshotRecord item,
+        TCollection todayItems,
+        TCollection yesterdayItems,
+        TCollection weekItems,
+        TCollection olderItems)
+        where TCollection : ICollection<ScreenshotRecord>
+    {
+        var today = DateTime.Now.Date;
+        var startOfWeek = today.AddDays(-(int)((7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7));
+        var ts = ScreenshotRepository.GetBestTimestamp(item).ToLocalTime();
+        if (ts.Date == today)
+        {
+            todayItems.Add(item);
+        }
+        else if (ts.Date == today.AddDays(-1))
+        {
+            yesterdayItems.Add(item);
+        }
+        else if (ts.Date >= startOfWeek)
+        {
+            weekItems.Add(item);
+        }
+        else
+        {
+            olderItems.Add(item);
+        }
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

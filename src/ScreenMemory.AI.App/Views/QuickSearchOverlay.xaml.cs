@@ -64,6 +64,8 @@ public partial class QuickSearchOverlay : Window
     private readonly Action<SearchMode> _searchModeChanged;
     private readonly Action<ScreenshotRecord> _openRecord;
     private readonly Action<ScreenshotRecord> _revealRecord;
+    private readonly Dictionary<string, List<ScreenshotRecord>> _searchCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly LinkedList<string> _searchCacheOrder = [];
     private CancellationTokenSource? _searchCts;
     private SearchMode _searchMode;
     
@@ -76,6 +78,7 @@ public partial class QuickSearchOverlay : Window
     private const double MinOverlayHeight = 108;
     private const double MaxOverlayHeight = 620;
     private const double ScreenMargin = 24;
+    private const int SearchCacheLimit = 5;
 
     public QuickSearchOverlay(
         ScreenshotRepository repository,
@@ -144,7 +147,8 @@ public partial class QuickSearchOverlay : Window
 
     public void InvalidateSearchCache()
     {
-        // No-op: cache intentionally removed
+        _searchCache.Clear();
+        _searchCacheOrder.Clear();
     }
 
     private async void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -249,7 +253,45 @@ public partial class QuickSearchOverlay : Window
 
     private async Task<List<ScreenshotRecord>> SearchRecordsAsync(string query, int limit, CancellationToken token)
     {
-        return await ScreenshotSearchService.SearchAsync(_repository, _aiSemanticService, query, limit, _searchMode, token);
+        var cacheKey = $"{_searchMode}:{limit}:{query.Trim().ToLowerInvariant()}";
+        if (_searchCache.TryGetValue(cacheKey, out var cached))
+        {
+            TouchSearchCacheKey(cacheKey);
+            return cached.ToList();
+        }
+
+        var records = await ScreenshotSearchService.SearchAsync(_repository, _aiSemanticService, query, limit, _searchMode, token);
+        StoreSearchCache(cacheKey, records);
+        return records;
+    }
+
+    private void StoreSearchCache(string cacheKey, List<ScreenshotRecord> records)
+    {
+        _searchCache[cacheKey] = records.ToList();
+        TouchSearchCacheKey(cacheKey);
+
+        while (_searchCacheOrder.Count > SearchCacheLimit)
+        {
+            var oldest = _searchCacheOrder.Last?.Value;
+            if (oldest is null)
+            {
+                break;
+            }
+
+            _searchCacheOrder.RemoveLast();
+            _searchCache.Remove(oldest);
+        }
+    }
+
+    private void TouchSearchCacheKey(string cacheKey)
+    {
+        var existing = _searchCacheOrder.Find(cacheKey);
+        if (existing is not null)
+        {
+            _searchCacheOrder.Remove(existing);
+        }
+
+        _searchCacheOrder.AddFirst(cacheKey);
     }
 
     private void KeywordSearchMode_Click(object sender, RoutedEventArgs e) => SetSearchMode(SearchMode.Keyword);

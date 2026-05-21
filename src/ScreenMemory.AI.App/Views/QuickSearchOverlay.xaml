@@ -19,37 +19,37 @@
         KeyDown="Window_KeyDown">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="BackgroundDeep" Color="#0B0C0E"/>
-        <SolidColorBrush x:Key="BackgroundPrimary" Color="#0E0E10"/>
-        <SolidColorBrush x:Key="BackgroundSecondary" Color="#121317"/>
-        <SolidColorBrush x:Key="BackgroundTertiary" Color="#1A1B1F"/>
-        <SolidColorBrush x:Key="BackgroundElevated" Color="#1E1F24"/>
-        <SolidColorBrush x:Key="BackgroundHover" Color="#292A2E"/>
-        <SolidColorBrush x:Key="BorderSubtle" Color="#14FFFFFF"/>
-        <SolidColorBrush x:Key="BorderDefault" Color="#26FFFFFF"/>
-        <SolidColorBrush x:Key="BorderEmphasis" Color="#3D4459"/>
-        <SolidColorBrush x:Key="AccentPrimary" Color="#8B5CF6"/>
-        <SolidColorBrush x:Key="AccentGlow" Color="#D0BCFF"/>
-        <SolidColorBrush x:Key="AccentSubtle" Color="#1A8B5CF6"/>
-        <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="TextSecondary" Color="#CBC3D7"/>
-        <SolidColorBrush x:Key="TextTertiary" Color="#A1A1AA"/>
-        <SolidColorBrush x:Key="TextMuted" Color="#6F687A"/>
+        <SolidColorBrush x:Key="BackgroundDeep" Color="#171520"/>
+        <SolidColorBrush x:Key="BackgroundPrimary" Color="#191722"/>
+        <SolidColorBrush x:Key="BackgroundSecondary" Color="#1F1D2A"/>
+        <SolidColorBrush x:Key="BackgroundTertiary" Color="#252333"/>
+        <SolidColorBrush x:Key="BackgroundElevated" Color="#2B293A"/>
+        <SolidColorBrush x:Key="BackgroundHover" Color="#343145"/>
+        <SolidColorBrush x:Key="BorderSubtle" Color="#18FFFFFF"/>
+        <SolidColorBrush x:Key="BorderDefault" Color="#2EFFFFFF"/>
+        <SolidColorBrush x:Key="BorderEmphasis" Color="#5A536D"/>
+        <SolidColorBrush x:Key="AccentPrimary" Color="#A855F7"/>
+        <SolidColorBrush x:Key="AccentGlow" Color="#E9D5FF"/>
+        <SolidColorBrush x:Key="AccentSubtle" Color="#24A855F7"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#F5F3FF"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#D8D2E8"/>
+        <SolidColorBrush x:Key="TextTertiary" Color="#AFA7BF"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#81788F"/>
 
         <LinearGradientBrush x:Key="OverlayGlassBrush" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#F216171B" Offset="0"/>
-            <GradientStop Color="#E5121317" Offset="0.55"/>
-            <GradientStop Color="#D51A1B1F" Offset="1"/>
+            <GradientStop Color="#F2232130" Offset="0"/>
+            <GradientStop Color="#E5191722" Offset="0.55"/>
+            <GradientStop Color="#D5252333" Offset="1"/>
         </LinearGradientBrush>
 
         <LinearGradientBrush x:Key="HintGlassBrush" StartPoint="0,0" EndPoint="0,1">
-            <GradientStop Color="#701A1B1F" Offset="0"/>
-            <GradientStop Color="#45121317" Offset="1"/>
+            <GradientStop Color="#78252333" Offset="0"/>
+            <GradientStop Color="#56191722" Offset="1"/>
         </LinearGradientBrush>
 
         <LinearGradientBrush x:Key="LiquidEdgeBrush" StartPoint="0,0" EndPoint="1,0">
             <GradientStop Color="#00FFFFFF" Offset="0"/>
-            <GradientStop Color="#30FFFFFF" Offset="0.5"/>
+            <GradientStop Color="#38FFFFFF" Offset="0.5"/>
             <GradientStop Color="#00FFFFFF" Offset="1"/>
         </LinearGradientBrush>
 
@@ -60,7 +60,7 @@
                           Opacity="0.72"/>
 
         <DropShadowEffect x:Key="AccentAura"
-                          Color="#8B5CF6"
+                          Color="#A855F7"
                           BlurRadius="18"
                           ShadowDepth="0"
                           Opacity="0.28"/>
@@ -170,7 +170,7 @@
                                 <Setter Property="Foreground" Value="{StaticResource AccentGlow}"/>
                                 <Setter TargetName="Bd" Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="7" ShadowDepth="0" Opacity="0.14"/>
+                                        <DropShadowEffect Color="#A855F7" BlurRadius="7" ShadowDepth="0" Opacity="0.14"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
@@ -244,7 +244,7 @@
                         Margin="0,0,12,0"
                         VerticalAlignment="Center">
                     <Border.Effect>
-                        <DropShadowEffect Color="#8B5CF6" BlurRadius="12" ShadowDepth="0" Opacity="0.35"/>
+                        <DropShadowEffect Color="#A855F7" BlurRadius="12" ShadowDepth="0" Opacity="0.28"/>
                     </Border.Effect>
                     <Viewbox Width="17" Height="17">
                         <Path Data="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 13.73 14l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"

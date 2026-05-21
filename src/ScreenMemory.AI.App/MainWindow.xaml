@@ -11,7 +11,7 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         FontFamily="Inter, Segoe UI Variable Display, Segoe UI Variable, Segoe UI, sans-serif"
-        Background="#0B0C0E"
+        Background="#171520"
         SnapsToDevicePixels="True"
         UseLayoutRounding="True"
         Loaded="Window_Loaded"
@@ -24,83 +24,93 @@
         ═══════════════════════════════════════════════════════ -->
         
         <!-- Core Backgrounds -->
-        <SolidColorBrush x:Key="BackgroundDeep"       Color="#0B0C0E"/>
-        <SolidColorBrush x:Key="BackgroundPrimary"    Color="#0E0E10"/>
-        <SolidColorBrush x:Key="BackgroundSecondary"  Color="#121317"/>
-        <SolidColorBrush x:Key="BackgroundTertiary"   Color="#1A1B1F"/>
-        <SolidColorBrush x:Key="BackgroundElevated"   Color="#1E1F24"/>
-        <SolidColorBrush x:Key="BackgroundHover"      Color="#292A2E"/>
-        <SolidColorBrush x:Key="SurfaceBright"        Color="#38393D"/>
-        <SolidColorBrush x:Key="SurfaceGlass"         Color="#B216171B"/>
+        <SolidColorBrush x:Key="BackgroundDeep"       Color="#171520"/>
+        <SolidColorBrush x:Key="BackgroundPrimary"    Color="#191722"/>
+        <SolidColorBrush x:Key="BackgroundSecondary"  Color="#1F1D2A"/>
+        <SolidColorBrush x:Key="BackgroundTertiary"   Color="#252333"/>
+        <SolidColorBrush x:Key="BackgroundElevated"   Color="#2B293A"/>
+        <SolidColorBrush x:Key="BackgroundHover"      Color="#343145"/>
+        <SolidColorBrush x:Key="SurfaceBright"        Color="#464258"/>
+        <SolidColorBrush x:Key="SurfaceGlass"         Color="#B2232130"/>
         
         <!-- Borders -->
-        <SolidColorBrush x:Key="BorderSubtle"        Color="#14FFFFFF"/>
-        <SolidColorBrush x:Key="BorderDefault"       Color="#26FFFFFF"/>
-        <SolidColorBrush x:Key="BorderEmphasis"       Color="#494454"/>
+        <SolidColorBrush x:Key="BorderSubtle"        Color="#18FFFFFF"/>
+        <SolidColorBrush x:Key="BorderDefault"       Color="#2EFFFFFF"/>
+        <SolidColorBrush x:Key="BorderEmphasis"       Color="#5A536D"/>
         
         <!-- Neon Purple Accent System -->
-        <SolidColorBrush x:Key="AccentPrimary"        Color="#8B5CF6"/>
-        <SolidColorBrush x:Key="AccentHover"          Color="#A78BFA"/>
-        <SolidColorBrush x:Key="AccentPressed"        Color="#6D3BD7"/>
-        <SolidColorBrush x:Key="AccentSubtle"         Color="#1A8B5CF6"/>
-        <SolidColorBrush x:Key="AccentMuted"          Color="#5B4A8C"/>
-        <SolidColorBrush x:Key="AccentGlow"           Color="#D0BCFF"/>
-        <SolidColorBrush x:Key="AccentGlowIntense"    Color="#E9DDFF"/>
-        <SolidColorBrush x:Key="AccentSecondary"      Color="#3B82F6"/>
+        <SolidColorBrush x:Key="AccentPrimary"        Color="#A855F7"/>
+        <SolidColorBrush x:Key="AccentHover"          Color="#C084FC"/>
+        <SolidColorBrush x:Key="AccentPressed"        Color="#7E22CE"/>
+        <SolidColorBrush x:Key="AccentSubtle"         Color="#24A855F7"/>
+        <SolidColorBrush x:Key="AccentMuted"          Color="#7A5CA8"/>
+        <SolidColorBrush x:Key="AccentGlow"           Color="#E9D5FF"/>
+        <SolidColorBrush x:Key="AccentGlowIntense"    Color="#F3E8FF"/>
+        <SolidColorBrush x:Key="AccentSecondary"      Color="#60A5FA"/>
         
         <!-- Gradient for Glow Effects -->
         <LinearGradientBrush x:Key="AccentGlowGradient" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#8B5CF6" Offset="0"/>
-            <GradientStop Color="#3B82F6" Offset="1"/>
+            <GradientStop Color="#A855F7" Offset="0"/>
+            <GradientStop Color="#60A5FA" Offset="1"/>
         </LinearGradientBrush>
         
         <LinearGradientBrush x:Key="AccentVerticalGlow" StartPoint="0,0" EndPoint="0,1">
-            <GradientStop Color="#8B5CF6" Offset="0"/>
-            <GradientStop Color="#6366F1" Offset="1"/>
+            <GradientStop Color="#A855F7" Offset="0"/>
+            <GradientStop Color="#7C3AED" Offset="1"/>
         </LinearGradientBrush>
 
         <LinearGradientBrush x:Key="GlassPanelBrush" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#D116171B" Offset="0"/>
-            <GradientStop Color="#B2121317" Offset="0.55"/>
-            <GradientStop Color="#A01A1B1F" Offset="1"/>
+            <GradientStop Color="#E0232130" Offset="0"/>
+            <GradientStop Color="#C71F1D2A" Offset="0.55"/>
+            <GradientStop Color="#B8252333" Offset="1"/>
         </LinearGradientBrush>
 
         <LinearGradientBrush x:Key="GlassInputBrush" StartPoint="0,0" EndPoint="0,1">
-            <GradientStop Color="#801A1B1F" Offset="0"/>
-            <GradientStop Color="#55121317" Offset="1"/>
+            <GradientStop Color="#8A252333" Offset="0"/>
+            <GradientStop Color="#66191722" Offset="1"/>
         </LinearGradientBrush>
 
         <LinearGradientBrush x:Key="ChromeGlassBrush" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#E1141519" Offset="0"/>
-            <GradientStop Color="#C50E0F13" Offset="0.55"/>
-            <GradientStop Color="#B8171820" Offset="1"/>
+            <GradientStop Color="#EA232130" Offset="0"/>
+            <GradientStop Color="#D1191722" Offset="0.55"/>
+            <GradientStop Color="#C1252333" Offset="1"/>
         </LinearGradientBrush>
 
         <LinearGradientBrush x:Key="LiquidEdgeBrush" StartPoint="0,0" EndPoint="1,0">
             <GradientStop Color="#00FFFFFF" Offset="0"/>
-            <GradientStop Color="#28FFFFFF" Offset="0.5"/>
+            <GradientStop Color="#36FFFFFF" Offset="0.5"/>
             <GradientStop Color="#00FFFFFF" Offset="1"/>
         </LinearGradientBrush>
+
+        <RadialGradientBrush x:Key="StudioBackgroundBrush"
+                             Center="0.5,0.08"
+                             GradientOrigin="0.5,0.08"
+                             RadiusX="0.95"
+                             RadiusY="0.95">
+            <GradientStop Color="#232130" Offset="0"/>
+            <GradientStop Color="#191722" Offset="0.58"/>
+            <GradientStop Color="#171520" Offset="1"/>
+        </RadialGradientBrush>
         
         <!-- Status Colors -->
         <SolidColorBrush x:Key="StatusSuccess"        Color="#10B981"/>
         <SolidColorBrush x:Key="StatusSuccessGlow"   Color="#34D399"/>
         <SolidColorBrush x:Key="StatusSuccessSubtle"  Color="#0D2E22"/>
-        <SolidColorBrush x:Key="StatusInfo"          Color="#3B82F6"/>
-        <SolidColorBrush x:Key="StatusInfoSubtle"    Color="#0D1E3D"/>
+        <SolidColorBrush x:Key="StatusInfo"          Color="#60A5FA"/>
+        <SolidColorBrush x:Key="StatusInfoSubtle"    Color="#172A48"/>
         
         <!-- Text Colors -->
-        <SolidColorBrush x:Key="TextPrimary"          Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="TextSecondary"        Color="#CBC3D7"/>
-        <SolidColorBrush x:Key="TextTertiary"        Color="#A1A1AA"/>
-        <SolidColorBrush x:Key="TextMuted"            Color="#6F687A"/>
+        <SolidColorBrush x:Key="TextPrimary"          Color="#F5F3FF"/>
+        <SolidColorBrush x:Key="TextSecondary"        Color="#D8D2E8"/>
+        <SolidColorBrush x:Key="TextTertiary"        Color="#AFA7BF"/>
+        <SolidColorBrush x:Key="TextMuted"            Color="#81788F"/>
 
         <!-- ═══════════════════════════════════════════════════════
              DROP SHADOW EFFECTS
         ═══════════════════════════════════════════════════════ -->
         
         <DropShadowEffect x:Key="NeonGlowShadow"
-                          Color="#8B5CF6"
+                          Color="#A855F7"
                           BlurRadius="20"
                           ShadowDepth="0"
                           Opacity="0.4"/>
@@ -117,12 +127,24 @@
                           ShadowDepth="0"
                           Opacity="0.18"/>
 
+        <DropShadowEffect x:Key="PanelLiftShadow"
+                          Color="#000000"
+                          BlurRadius="30"
+                          ShadowDepth="0"
+                          Opacity="0.22"/>
+
+        <DropShadowEffect x:Key="ProCardGlowShadow"
+                          Color="#A855F7"
+                          BlurRadius="36"
+                          ShadowDepth="0"
+                          Opacity="0.16"/>
+
         <!-- ═══════════════════════════════════════════════════════
              TYPOGRAPHY
         ═══════════════════════════════════════════════════════ -->
         
         <Style x:Key="TypographyTitleLarge" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontSize" Value="23"/>
             <Setter Property="FontWeight" Value="600"/>
             <Setter Property="FontFamily" Value="Inter, Segoe UI Variable Display, Segoe UI, sans-serif"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
@@ -178,8 +200,8 @@
             <Setter Property="Background">
                 <Setter.Value>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#8B5CF6" Offset="0"/>
-                        <GradientStop Color="#3B82F6" Offset="1"/>
+                        <GradientStop Color="#A855F7" Offset="0"/>
+                        <GradientStop Color="#60A5FA" Offset="1"/>
                     </LinearGradientBrush>
                 </Setter.Value>
             </Setter>
@@ -212,13 +234,13 @@
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                             <GradientStop Color="#A78BFA" Offset="0"/>
-                                            <GradientStop Color="#3B82F6" Offset="1"/>
+                                            <GradientStop Color="#60A5FA" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Setter.Value>
                                 </Setter>
                                 <Setter TargetName="border" Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="15" ShadowDepth="0" Opacity="0.4"/>
+                                        <DropShadowEffect Color="#A855F7" BlurRadius="15" ShadowDepth="0" Opacity="0.34"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
@@ -227,7 +249,7 @@
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                             <GradientStop Color="#7C3AED" Offset="0"/>
-                                            <GradientStop Color="#3B82F6" Offset="1"/>
+                                            <GradientStop Color="#60A5FA" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Setter.Value>
                                 </Setter>
@@ -261,13 +283,13 @@
                                 Padding="{TemplateBinding Padding}">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#8B5CF6" Offset="0"/>
+                                    <GradientStop Color="#A855F7" Offset="0"/>
                                     <GradientStop Color="#6D5DF6" Offset="0.48"/>
-                                    <GradientStop Color="#3B82F6" Offset="1"/>
+                                    <GradientStop Color="#60A5FA" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                             <Border.Effect>
-                                <DropShadowEffect Color="#8B5CF6" BlurRadius="13" ShadowDepth="0" Opacity="0.22"/>
+                                <DropShadowEffect Color="#A855F7" BlurRadius="13" ShadowDepth="0" Opacity="0.2"/>
                             </Border.Effect>
                             <Grid>
                                 <Border Height="1"
@@ -283,7 +305,7 @@
                                 <Setter TargetName="ButtonChrome" Property="BorderBrush" Value="#70D0BCFF"/>
                                 <Setter TargetName="ButtonChrome" Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="18" ShadowDepth="0" Opacity="0.32"/>
+                                        <DropShadowEffect Color="#A855F7" BlurRadius="18" ShadowDepth="0" Opacity="0.28"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
@@ -365,7 +387,7 @@
                                 <Setter Property="Foreground" Value="{StaticResource AccentGlow}"/>
                                 <Setter TargetName="border" Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="8" ShadowDepth="0" Opacity="0.16"/>
+                                        <DropShadowEffect Color="#A855F7" BlurRadius="8" ShadowDepth="0" Opacity="0.16"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
@@ -445,7 +467,7 @@
             <Setter Property="Foreground" Value="{StaticResource TextTertiary}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="10,10"/>
             <Setter Property="Margin" Value="0,1"/>
             <Setter Property="FontSize" Value="12.5"/>
             <Setter Property="FontWeight" Value="500"/>
@@ -465,7 +487,7 @@
                             </Border>
                             <Border x:Name="SelectedRail"
                                     Width="3"
-                                    Height="22"
+                                    Height="30"
                                     CornerRadius="0,3,3,0"
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Center"
@@ -479,9 +501,7 @@
                                 <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
                             </Trigger>
                             <Trigger Property="Tag" Value="Selected">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource AccentSubtle}"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource BorderDefault}"/>
-                                <Setter TargetName="border" Property="BorderThickness" Value="1"/>
+                                <Setter TargetName="border" Property="Background" Value="#1FA855F7"/>
                                 <Setter TargetName="SelectedRail" Property="Opacity" Value="1"/>
                                 <Setter Property="Foreground" Value="{StaticResource AccentGlow}"/>
                             </Trigger>
@@ -502,15 +522,15 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
                         <Border x:Name="SwitchTrack"
-                                Width="38"
-                                Height="22"
-                                CornerRadius="11"
+                                Width="28"
+                                Height="16"
+                                CornerRadius="8"
                                 Background="{StaticResource BackgroundTertiary}"
                                 BorderBrush="{StaticResource BorderDefault}"
                                 BorderThickness="1">
                             <Ellipse x:Name="SwitchKnob"
-                                     Width="16"
-                                     Height="16"
+                                     Width="10"
+                                     Height="10"
                                      Fill="{StaticResource TextSecondary}"
                                      HorizontalAlignment="Left"
                                      Margin="3,0,0,0"/>
@@ -625,7 +645,10 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="1"
-                                CornerRadius="10">
+                                CornerRadius="14">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="0" Opacity="0.12"/>
+                            </Border.Effect>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="48"/>
@@ -637,7 +660,7 @@
                                          HorizontalAlignment="Center"
                                          VerticalAlignment="Center">
                                     <Path Data="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" 
-                                          Fill="{StaticResource TextMuted}" Stretch="Uniform"/>
+                                          Fill="#9CA3AF" Stretch="Uniform"/>
                                 </Viewbox>
                                 <TextBlock x:Name="SearchPlaceholder"
                                            Grid.Column="1"
@@ -661,7 +684,7 @@
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource ChromeGlassBrush}"/>
                                 <Setter TargetName="border" Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="10" ShadowDepth="0" Opacity="0.18"/>
+                                        <DropShadowEffect Color="#A855F7" BlurRadius="10" ShadowDepth="0" Opacity="0.16"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
@@ -683,6 +706,7 @@
         
         <Style TargetType="ScrollBar">
             <Setter Property="Width" Value="6"/>
+            <Setter Property="Height" Value="6"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -696,7 +720,7 @@
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Border Background="{StaticResource BorderDefault}" CornerRadius="3" Margin="1"/>
+                                                <Border Background="#55FFFFFF" CornerRadius="3" Margin="1"/>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -716,9 +740,9 @@
         ═══════════════════════════════════════════════════════ -->
         
         <DataTemplate x:Key="ScreenshotCardTemplate">
-            <Border Width="196"
-                    Height="170"
-                    Margin="0,0,16,18"
+            <Border Width="180"
+                    Height="158"
+                    Margin="0,0,12,14"
                     CornerRadius="12"
                     Cursor="Hand"
                     RenderTransformOrigin="0.5,0.5"
@@ -746,11 +770,11 @@
                             </Trigger>
                             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                 <Setter Property="BorderBrush" Value="{StaticResource AccentPrimary}"/>
-                                <Setter Property="BorderThickness" Value="1.5"/>
-                                <Setter Property="Background" Value="{StaticResource AccentSubtle}"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Background" Value="{StaticResource BackgroundElevated}"/>
                                 <Setter Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="12" ShadowDepth="0" Opacity="0.18"/>
+                                        <DropShadowEffect Color="#A855F7" BlurRadius="18" ShadowDepth="0" Opacity="0.20"/>
                                     </Setter.Value>
                                 </Setter>
                             </DataTrigger>
@@ -759,9 +783,27 @@
                 </Border.Style>
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="118"/>
+                        <RowDefinition Height="108"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+
+                    <Border Width="3"
+                            HorizontalAlignment="Left"
+                            Margin="0,10,0,10"
+                            CornerRadius="0,3,3,0"
+                            Background="{StaticResource AccentPrimary}"
+                            Panel.ZIndex="5">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Opacity" Value="0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
 
                     <StackPanel Grid.Row="0"
                                 Orientation="Horizontal"
@@ -769,8 +811,8 @@
                                 VerticalAlignment="Top"
                                 Margin="0,10,10,0"
                                 Panel.ZIndex="4">
-                        <Button Width="26"
-                                Height="26"
+                        <Button Width="24"
+                                Height="24"
                                 Padding="0"
                                 Style="{StaticResource ButtonSecondary}"
                                 Background="#C0121317"
@@ -782,7 +824,7 @@
                                 Click="FavoriteScreenshot_Click">
                             <TextBlock Text="&#xE734;"
                                        FontFamily="Segoe MDL2 Assets"
-                                       FontSize="11">
+                                       FontSize="10.5">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Foreground" Value="{StaticResource TextTertiary}"/>
@@ -804,8 +846,8 @@
                             Background="#E01A1428"
                             BorderBrush="{StaticResource AccentPrimary}"
                             BorderThickness="1"
-                            CornerRadius="9"
-                            Padding="7,4"
+                            CornerRadius="8"
+                            Padding="6,3"
                             Panel.ZIndex="4">
                         <Border.Style>
                             <Style TargetType="Border">
@@ -826,7 +868,7 @@
                                     VerticalAlignment="Center">
                             </Border>
                             <TextBlock Text="Processing"
-                                       FontSize="9.5"
+                                       FontSize="9"
                                        FontWeight="600"
                                        Foreground="{StaticResource AccentGlow}"/>
                         </StackPanel>
@@ -834,15 +876,15 @@
 
                     <Border Grid.Row="0"
                             Background="{StaticResource BackgroundPrimary}"
-                            CornerRadius="11,11,0,0"
+                            CornerRadius="10,10,0,0"
                             ClipToBounds="True"
-                            Margin="5,5,5,0">
+                            Margin="4,4,4,0">
                         <Grid>
                             <Border>
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                         <GradientStop Color="#181920" Offset="0"/>
-                                        <GradientStop Color="#101116" Offset="0.55"/>
+                                        <GradientStop Color="#191722" Offset="0.55"/>
                                         <GradientStop Color="#1B1726" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -869,9 +911,9 @@
                     </Border>
 
                     <Border Grid.Row="0"
-                            Height="28"
+                            Height="24"
                             VerticalAlignment="Bottom"
-                            Margin="5,0,5,0"
+                            Margin="4,0,4,0"
                             IsHitTestVisible="False">
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -885,21 +927,21 @@
                             Background="#E0141519"
                             BorderBrush="{StaticResource BorderSubtle}"
                             BorderThickness="0,1,0,0"
-                            Padding="10,7,10,8">
+                            Padding="10,6,10,7">
                         <StackPanel>
                             <TextBlock Text="{Binding FileName}"
-                                       FontSize="11.5"
+                                       FontSize="11"
                                        FontWeight="600"
                                        Foreground="{StaticResource TextPrimary}"
                                        TextTrimming="CharacterEllipsis"
                                        ToolTip="{Binding FileName}"/>
-                            <Grid Margin="0,6,0,0">
+                            <Grid Margin="0,5,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="{Binding AiCategoryLabel}"
-                                           FontSize="10.5"
+                                           FontSize="10"
                                            FontWeight="500"
                                            Foreground="{StaticResource TextSecondary}"
                                            TextTrimming="CharacterEllipsis"/>
@@ -911,7 +953,7 @@
                                         Padding="6,2"
                                         Margin="8,0,0,0">
                                     <TextBlock Text="{Binding OcrStatusLabel}"
-                                               FontSize="9.5"
+                                               FontSize="9"
                                                FontWeight="600"
                                                Foreground="{StaticResource TextTertiary}"/>
                                 </Border>
@@ -929,10 +971,18 @@
     ═══════════════════════════════════════════════════════ -->
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="220"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition x:Name="PreviewColumn" Width="0"/>
         </Grid.ColumnDefinitions>
+
+        <Border Grid.ColumnSpan="3"
+                Height="1"
+                VerticalAlignment="Top"
+                Margin="0,72,0,0"
+                Background="{StaticResource BorderSubtle}"
+                Panel.ZIndex="20"
+                IsHitTestVisible="False"/>
 
         <!-- ╔════════════════════════════════════════════════════╗
              ║                    SIDEBAR                        ║
@@ -945,17 +995,17 @@
 
                 <!-- Brand Header -->
                 <Border DockPanel.Dock="Top"
-                        Padding="16,16,16,14"
-                        BorderBrush="{StaticResource BorderSubtle}"
-                        BorderThickness="0,0,0,1">
-                    <StackPanel Orientation="Horizontal">
+                        Height="72"
+                        Padding="16,0"
+                        BorderThickness="0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- App Icon with Neon Glow -->
                         <Border Width="36" Height="36" CornerRadius="10" ClipToBounds="True"
                                 Background="{StaticResource BackgroundTertiary}"
                                 BorderBrush="{StaticResource AccentPrimary}"
                                 BorderThickness="1.5">
                             <Border.Effect>
-                                <DropShadowEffect Color="#8B5CF6" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                                <DropShadowEffect Color="#A855F7" BlurRadius="10" ShadowDepth="0" Opacity="0.36"/>
                             </Border.Effect>
                             <Image Source="pack://application:,,,/Assets/AppIcon.ico"
                                    Stretch="UniformToFill"
@@ -964,16 +1014,10 @@
                         <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="ScreenMemory"
                                        Style="{StaticResource TypographyTitleSmall}"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                <Border Width="6" Height="6" CornerRadius="3" Background="{StaticResource AccentPrimary}" Margin="0,0,6,0">
-                                    <Border.Effect>
-                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="4" ShadowDepth="0" Opacity="0.6"/>
-                                    </Border.Effect>
-                                </Border>
-                                <TextBlock Text="AI-Powered"
-                                           Style="{StaticResource TypographyBodySmall}"
-                                           Foreground="{StaticResource AccentGlow}"/>
-                            </StackPanel>
+                            <TextBlock Text="AI-Powered"
+                                       Style="{StaticResource TypographyBodySmall}"
+                                       Foreground="{StaticResource AccentGlow}"
+                                       Margin="0,3,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -982,14 +1026,14 @@
                         Padding="12,12"
                         BorderBrush="{StaticResource BorderSubtle}"
                         BorderThickness="0,1,0,0">
-                    <Border BorderBrush="#1A3D2E"
+                    <Border BorderBrush="#3310B981"
                             BorderThickness="1"
-                            CornerRadius="10"
+                            CornerRadius="16"
                             Padding="10,8">
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#0D2E22" Offset="0"/>
-                                <GradientStop Color="#0A1F1A" Offset="1"/>
+                                <GradientStop Color="#1A10B981" Offset="0"/>
+                                <GradientStop Color="#1010B981" Offset="1"/>
                             </LinearGradientBrush>
                         </Border.Background>
                         <StackPanel Orientation="Horizontal">
@@ -1005,8 +1049,8 @@
                                 </Ellipse.Effect>
                             </Ellipse>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Local Processing Only" FontSize="11" FontWeight="600" Foreground="{StaticResource StatusSuccess}"/>
-                                <TextBlock x:Name="StatusText" Text="Ready" FontSize="10" FontWeight="500" Foreground="{StaticResource TextTertiary}" Margin="0,2,0,0"/>
+                                <TextBlock Text="Local Processing Only" FontSize="10.5" FontWeight="600" Foreground="{StaticResource StatusSuccessGlow}"/>
+                                <TextBlock x:Name="StatusText" Text="Ready" FontSize="9.5" FontWeight="500" Foreground="{StaticResource TextTertiary}" Margin="0,2,0,0"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -1066,16 +1110,17 @@
         <!-- ╔════════════════════════════════════════════════════╗
              ║               MAIN CONTENT AREA                  ║
              ╚════════════════════════════════════════════════════╝ -->
-        <DockPanel Grid.Column="1" Background="{StaticResource BackgroundPrimary}">
+        <DockPanel Grid.Column="1" Background="{StaticResource StudioBackgroundBrush}">
 
             <!-- Title Bar -->
             <Border DockPanel.Dock="Top"
                     Background="{StaticResource ChromeGlassBrush}"
                     BorderBrush="{StaticResource BorderSubtle}"
-                    BorderThickness="0,0,0,1"
-                    Padding="20,12"
+                    BorderThickness="0"
+                    Height="72"
+                    Padding="22,0"
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                <Grid>
+                <Grid VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -1087,7 +1132,7 @@
                             VerticalAlignment="Top"
                             Background="{StaticResource LiquidEdgeBrush}"
                             Opacity="0.65"
-                            Margin="0,-12,0,0"
+                            Margin="0,-18,0,0"
                             IsHitTestVisible="False"/>
 
                     <TextBox x:Name="SearchBox"
@@ -1163,8 +1208,8 @@
             <ScrollViewer x:Name="MainContentScrollViewer"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
-                          Padding="28,24,24,24"
-                          Background="{StaticResource BackgroundPrimary}">
+                          Padding="22,20,20,20"
+                          Background="{StaticResource StudioBackgroundBrush}">
                 <Grid>
 
                     <!-- ══════════════════════════════════════════════
@@ -1187,96 +1232,90 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Quiet stats strip -->
-                        <Border BorderBrush="{StaticResource BorderSubtle}"
-                                BorderThickness="1"
-                                CornerRadius="14"
-                                Margin="0,0,0,24"
-                                Padding="0"
-                                Effect="{StaticResource SubtleShadow}">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#15161B" Offset="0"/>
-                                    <GradientStop Color="#111217" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="1"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="1"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                        <!-- Bento stats -->
+                        <Grid Margin="0,0,0,18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                                <!-- Imported -->
-                                <StackPanel Grid.Column="0" Margin="20,16" Orientation="Horizontal">
-                                    <Border Width="4" Height="40" CornerRadius="2" 
-                                            Background="{StaticResource AccentPrimary}"
-                                            Opacity="0.58"
-                                            Margin="0,0,16,0">
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="#8B5CF6" BlurRadius="6" ShadowDepth="0" Opacity="0.18"/>
-                                        </Border.Effect>
-                                    </Border>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock x:Name="ImportedCountText" Text="0" FontSize="22" FontWeight="600" Foreground="{StaticResource TextPrimary}"/>
-                                        <TextBlock Text="Imported" Style="{StaticResource TypographyBodySmall}" Margin="0,2,0,0"/>
+                            <Border Grid.Column="0"
+                                    CornerRadius="14"
+                                    Padding="16,13"
+                                    Effect="{StaticResource PanelLiftShadow}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#2B293A" Offset="0"/>
+                                        <GradientStop Color="#232130" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Grid>
+                                    <Border Height="1" VerticalAlignment="Top" Background="{StaticResource LiquidEdgeBrush}" Opacity="0.45"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="4" Height="36" CornerRadius="2" Background="{StaticResource AccentPrimary}" Opacity="0.5" Margin="0,0,8,0"/>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock x:Name="ImportedCountText" Text="0" FontSize="24" FontWeight="700" Foreground="{StaticResource TextPrimary}"/>
+                                            <TextBlock Text="Imported" Style="{StaticResource TypographyBodySmall}" Foreground="{StaticResource TextMuted}" Margin="0,1,0,0"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
+                                </Grid>
+                            </Border>
 
-                                <Border Grid.Column="1" Background="{StaticResource BorderSubtle}"/>
-
-                                <!-- OCR Ready -->
-                                <StackPanel Grid.Column="2" Margin="20,16" Orientation="Horizontal">
-                                    <Border Width="4" Height="40" CornerRadius="2" 
-                                            Background="{StaticResource StatusInfo}"
-                                            Opacity="0.58"
-                                            Margin="0,0,16,0">
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="#3B82F6" BlurRadius="6" ShadowDepth="0" Opacity="0.18"/>
-                                        </Border.Effect>
-                                    </Border>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock x:Name="OcrReadyCountText" Text="0" FontSize="22" FontWeight="600" Foreground="{StaticResource TextPrimary}"/>
-                                        <TextBlock Text="Text Indexed" Style="{StaticResource TypographyBodySmall}" Margin="0,2,0,0"/>
+                            <Border Grid.Column="2"
+                                    CornerRadius="14"
+                                    Padding="16,13"
+                                    Effect="{StaticResource PanelLiftShadow}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#2B293A" Offset="0"/>
+                                        <GradientStop Color="#232130" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Grid>
+                                    <Border Height="1" VerticalAlignment="Top" Background="{StaticResource LiquidEdgeBrush}" Opacity="0.45"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="4" Height="36" CornerRadius="2" Background="{StaticResource StatusInfo}" Opacity="0.5" Margin="0,0,8,0"/>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock x:Name="OcrReadyCountText" Text="0" FontSize="24" FontWeight="700" Foreground="{StaticResource TextPrimary}"/>
+                                            <TextBlock Text="Text Indexed" Style="{StaticResource TypographyBodySmall}" Foreground="{StaticResource TextMuted}" Margin="0,1,0,0"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
+                                </Grid>
+                            </Border>
 
-                                <Border Grid.Column="3" Background="{StaticResource BorderSubtle}"/>
-
-                                <!-- AI Tagged -->
-                                <StackPanel Grid.Column="4" Margin="20,16" Orientation="Horizontal">
-                                    <Border Width="4" Height="40" CornerRadius="2" 
-                                            Background="{StaticResource StatusSuccess}"
-                                            Opacity="0.58"
-                                            Margin="0,0,16,0">
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="#10B981" BlurRadius="6" ShadowDepth="0" Opacity="0.18"/>
-                                        </Border.Effect>
-                                    </Border>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock x:Name="AiTaggedCountText" Text="0" FontSize="22" FontWeight="600" Foreground="{StaticResource TextPrimary}"/>
-                                        <TextBlock Text="AI Organized" Style="{StaticResource TypographyBodySmall}" Margin="0,2,0,0"/>
+                            <Border Grid.Column="4"
+                                    CornerRadius="14"
+                                    Padding="16,13"
+                                    Effect="{StaticResource PanelLiftShadow}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#2B293A" Offset="0"/>
+                                        <GradientStop Color="#232130" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Grid>
+                                    <Border Height="1" VerticalAlignment="Top" Background="{StaticResource LiquidEdgeBrush}" Opacity="0.45"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="4" Height="36" CornerRadius="2" Background="{StaticResource StatusSuccess}" Opacity="0.5" Margin="0,0,8,0"/>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock x:Name="AiTaggedCountText" Text="0" FontSize="24" FontWeight="700" Foreground="{StaticResource TextPrimary}"/>
+                                            <TextBlock Text="AI Organized" Style="{StaticResource TypographyBodySmall}" Foreground="{StaticResource TextMuted}" Margin="0,1,0,0"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
+                                </Grid>
+                            </Border>
+                        </Grid>
 
                         <!-- Recent Screenshots Section -->
-                        <Grid Margin="0,0,0,14">
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                <Border Width="8" Height="8" CornerRadius="4" 
-                                        Background="{StaticResource AccentPrimary}"
-                                        Margin="0,0,10,0" VerticalAlignment="Center">
-                                    <Border.Effect>
-                                        <DropShadowEffect Color="#8B5CF6" BlurRadius="6" ShadowDepth="0" Opacity="0.6"/>
-                                    </Border.Effect>
-                                </Border>
                                 <TextBlock Text="Recent Screenshots"
                                            Style="{StaticResource TypographyTitleSmall}"
                                            Foreground="{StaticResource TextSecondary}"
@@ -1297,12 +1336,12 @@
                                 BorderBrush="{StaticResource BorderDefault}"
                                 BorderThickness="1"
                                 CornerRadius="18"
-                                Padding="34"
-                                Margin="0,6,28,0">
+                                Padding="24"
+                                Margin="0,4,0,0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="18"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
@@ -1319,9 +1358,11 @@
                                     </Viewbox>
                                 </Border>
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                    <TextBlock Text="Start building your screenshot memory"
+                                    <TextBlock x:Name="HomeEmptyTitleText"
+                                               Text="Start building your screenshot memory"
                                                Style="{StaticResource TypographyTitleMedium}"/>
-                                    <TextBlock Text="Choose a folder to index screenshots locally. Searchable memory starts as soon as new captures arrive."
+                                    <TextBlock x:Name="HomeEmptyBodyText"
+                                               Text="Choose a folder to index screenshots locally. Searchable memory starts as soon as new captures arrive."
                                                Style="{StaticResource TypographyBodyDefault}"
                                                TextWrapping="Wrap"
                                                Margin="0,6,0,0"/>
@@ -1330,18 +1371,28 @@
                                                Foreground="{StaticResource StatusSuccessGlow}"
                                                Margin="0,10,0,0"/>
                                 </StackPanel>
-                                <Button Grid.Column="3"
-                                        Content="Add Folder"
-                                        Style="{StaticResource ButtonPrimary}"
-                                        Height="36"
-                                        Padding="18,0"
-                                        VerticalAlignment="Center"
-                                        Click="Settings_Click"/>
+                                <StackPanel Grid.Column="3"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Button x:Name="HomeEmptyPrimaryButton"
+                                            Content="Add Folder"
+                                            Style="{StaticResource ButtonPrimary}"
+                                            Height="36"
+                                            Padding="18,0"
+                                            Click="HomeEmptyPrimary_Click"/>
+                                    <Button x:Name="HomeEmptySecondaryButton"
+                                            Content="Settings"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            Height="36"
+                                            Padding="14,0"
+                                            Margin="8,0,0,0"
+                                            Click="Settings_Click"/>
+                                </StackPanel>
                             </Grid>
                         </Border>
 
-                        <StackPanel x:Name="RecentTodaySection" Margin="0,0,0,16">
-                            <TextBlock Text="Today" Style="{StaticResource TypographyLabel}" Margin="0,0,0,10"/>
+                        <StackPanel x:Name="RecentTodaySection" Margin="0,0,0,12">
+                            <TextBlock Text="Today" Style="{StaticResource TypographyLabel}" Margin="0,0,0,8"/>
                             <ItemsControl x:Name="RecentTodayList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
@@ -1349,8 +1400,8 @@
                             </ItemsControl>
                         </StackPanel>
 
-                        <StackPanel x:Name="RecentYesterdaySection" Margin="0,0,0,16">
-                            <TextBlock Text="Yesterday" Style="{StaticResource TypographyLabel}" Margin="0,0,0,10"/>
+                        <StackPanel x:Name="RecentYesterdaySection" Margin="0,0,0,12">
+                            <TextBlock Text="Yesterday" Style="{StaticResource TypographyLabel}" Margin="0,0,0,8"/>
                             <ItemsControl x:Name="RecentYesterdayList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
@@ -1358,8 +1409,8 @@
                             </ItemsControl>
                         </StackPanel>
 
-                        <StackPanel x:Name="RecentWeekSection" Margin="0,0,0,16">
-                            <TextBlock Text="This Week" Style="{StaticResource TypographyLabel}" Margin="0,0,0,10"/>
+                        <StackPanel x:Name="RecentWeekSection" Margin="0,0,0,12">
+                            <TextBlock Text="This Week" Style="{StaticResource TypographyLabel}" Margin="0,0,0,8"/>
                             <ItemsControl x:Name="RecentWeekList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
@@ -1368,7 +1419,7 @@
                         </StackPanel>
 
                         <StackPanel x:Name="RecentOlderSection">
-                            <TextBlock Text="Older" Style="{StaticResource TypographyLabel}" Margin="0,0,0,10"/>
+                            <TextBlock Text="Older" Style="{StaticResource TypographyLabel}" Margin="0,0,0,8"/>
                             <ItemsControl x:Name="RecentOlderList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
@@ -1383,33 +1434,15 @@
                     ══════════════════════════════════════════════ -->
                     <StackPanel x:Name="ResultsPanel" Visibility="Collapsed">
 
-                        <Grid Margin="0,0,28,14">
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock x:Name="ResultsTitleText" Text="Results" Style="{StaticResource TypographyTitleLarge}"/>
                                 <TextBlock x:Name="ResultsMetaText" Text="0 result(s)" Style="{StaticResource TypographyBodyDefault}" Margin="0,4,0,0"/>
                             </StackPanel>
-                            <Button Grid.Column="1"
-                                    Style="{StaticResource ButtonSecondary}"
-                                    Width="74"
-                                    Height="34"
-                                    Padding="0"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Top"
-                                    Content="Back"
-                                    Click="Home_Click"/>
                         </Grid>
-
-                        <Border Height="3" Width="40" HorizontalAlignment="Left"
-                                Background="{StaticResource AccentPrimary}" CornerRadius="1.5"
-                                Margin="0,0,0,20">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#8B5CF6" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
-                            </Border.Effect>
-                        </Border>
 
                         <ItemsControl x:Name="ResultsList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
                             <ItemsControl.ItemsPanel>
@@ -1417,16 +1450,52 @@
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
 
+                        <StackPanel x:Name="ResultsTodaySection" Margin="0,0,0,12" Visibility="Collapsed">
+                            <TextBlock Text="Today" Style="{StaticResource TypographyLabel}" Margin="0,0,0,8"/>
+                            <ItemsControl x:Name="ResultsTodayList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel x:Name="ResultsYesterdaySection" Margin="0,0,0,12" Visibility="Collapsed">
+                            <TextBlock Text="Yesterday" Style="{StaticResource TypographyLabel}" Margin="0,0,0,8"/>
+                            <ItemsControl x:Name="ResultsYesterdayList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel x:Name="ResultsWeekSection" Margin="0,0,0,12" Visibility="Collapsed">
+                            <TextBlock Text="This Week" Style="{StaticResource TypographyLabel}" Margin="0,0,0,8"/>
+                            <ItemsControl x:Name="ResultsWeekList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel x:Name="ResultsOlderSection" Visibility="Collapsed">
+                            <TextBlock Text="Earlier" Style="{StaticResource TypographyLabel}" Margin="0,0,0,8"/>
+                            <ItemsControl x:Name="ResultsOlderList" ItemTemplate="{StaticResource ScreenshotCardTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+
                         <WrapPanel x:Name="ResultsLoadingSkeleton"
                                    Visibility="Collapsed"
-                                   Margin="0,0,28,0">
-                            <Border Width="196" Height="170" CornerRadius="12" Margin="0,0,16,18"
+                                   Margin="0">
+                            <Border Width="180" Height="158" CornerRadius="12" Margin="0,0,12,14"
                                     Background="{StaticResource GlassPanelBrush}"
                                     BorderBrush="{StaticResource BorderSubtle}"
                                     BorderThickness="1">
                                 <Grid Margin="10">
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="112"/>
+                                        <RowDefinition Height="102"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
                                     <Border CornerRadius="10" Background="{StaticResource GlassInputBrush}"/>
@@ -1436,14 +1505,14 @@
                                     </StackPanel>
                                 </Grid>
                             </Border>
-                            <Border Width="196" Height="170" CornerRadius="12" Margin="0,0,16,18"
+                            <Border Width="180" Height="158" CornerRadius="12" Margin="0,0,12,14"
                                     Background="{StaticResource GlassPanelBrush}"
                                     BorderBrush="{StaticResource BorderSubtle}"
                                     BorderThickness="1"
                                     Opacity="0.82">
                                 <Grid Margin="10">
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="112"/>
+                                        <RowDefinition Height="102"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
                                     <Border CornerRadius="10" Background="{StaticResource GlassInputBrush}"/>
@@ -1453,14 +1522,14 @@
                                     </StackPanel>
                                 </Grid>
                             </Border>
-                            <Border Width="196" Height="170" CornerRadius="12" Margin="0,0,16,18"
+                            <Border Width="180" Height="158" CornerRadius="12" Margin="0,0,12,14"
                                     Background="{StaticResource GlassPanelBrush}"
                                     BorderBrush="{StaticResource BorderSubtle}"
                                     BorderThickness="1"
                                     Opacity="0.64">
                                 <Grid Margin="10">
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="112"/>
+                                        <RowDefinition Height="102"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
                                     <Border CornerRadius="10" Background="{StaticResource GlassInputBrush}"/>
@@ -1478,8 +1547,8 @@
                                 BorderBrush="{StaticResource BorderDefault}"
                                 BorderThickness="1"
                                 CornerRadius="16"
-                                Padding="28"
-                                Margin="0,4,28,0"
+                                Padding="22"
+                                Margin="0,4,0,0"
                                 HorizontalAlignment="Stretch">
                             <StackPanel HorizontalAlignment="Center">
                                 <TextBlock x:Name="ResultsEmptyTitleText"
@@ -1505,14 +1574,13 @@
                           Width="{Binding ViewportWidth, ElementName=MainContentScrollViewer}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="0"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="0" Margin="0,0,28,14">
+                        <Grid Grid.Row="0" Margin="0,0,0,24">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Settings" Style="{StaticResource TypographyTitleLarge}"/>
@@ -1520,33 +1588,25 @@
                                            Style="{StaticResource TypographyBodyDefault}"
                                            Margin="0,4,0,0"/>
                             </StackPanel>
-                            <Button Grid.Column="1"
-                                    Style="{StaticResource ButtonSecondary}"
-                                    Width="74"
-                                    Height="34"
-                                    Padding="0"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Top"
-                                    Content="Back"
-                                    Click="Home_Click"/>
                         </Grid>
 
                         <Border Grid.Row="1"
+                                Visibility="Collapsed"
                                 Height="3"
                                 Width="40"
                                 HorizontalAlignment="Left"
                                 Background="{StaticResource AccentPrimary}"
                                 CornerRadius="1.5"
-                                Margin="0,0,0,20">
+                                Margin="0,0,0,16">
                             <Border.Effect>
-                                <DropShadowEffect Color="#8B5CF6" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                                <DropShadowEffect Color="#A855F7" BlurRadius="8" ShadowDepth="0" Opacity="0.34"/>
                             </Border.Effect>
                         </Border>
 
-                        <Grid Grid.Row="2" Margin="0,0,28,0">
+                        <Grid Grid.Row="2" Margin="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="1*"/>
-                                <ColumnDefinition Width="24"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="1*"/>
                             </Grid.ColumnDefinitions>
 
@@ -1555,7 +1615,7 @@
                                     BorderBrush="{StaticResource BorderDefault}"
                                     BorderThickness="1"
                                     CornerRadius="16"
-                                    Padding="18"
+                                    Padding="16"
                                     VerticalAlignment="Top"
                                     Height="{Binding ActualHeight, ElementName=SettingsStatusColumn}"
                                     Effect="{StaticResource SubtleShadow}">
@@ -1571,7 +1631,7 @@
                                         <TextBlock Text="Watched Folders" Style="{StaticResource TypographyTitleSmall}" FontSize="16"/>
                                         <TextBlock Text="Choose folders ScreenMemory should monitor and index."
                                                    Style="{StaticResource TypographyBodyDefault}"
-                                                   Margin="0,4,0,12"/>
+                                                   Margin="0,4,0,10"/>
                                     </StackPanel>
 
                                     <Button Background="Transparent"
@@ -1582,14 +1642,14 @@
                                             HorizontalContentAlignment="Stretch"
                                             Cursor="Hand"
                                             Click="AddSettingsFolder_Click">
-                                        <Grid Height="104" Margin="0,0,0,10" HorizontalAlignment="Stretch">
+                                        <Grid Height="96" Margin="0,0,0,8" HorizontalAlignment="Stretch">
                                             <Rectangle RadiusX="14"
                                                        RadiusY="14"
-                                                       Fill="{StaticResource GlassInputBrush}"
-                                                       Stroke="{StaticResource AccentPrimary}"
-                                                       StrokeThickness="1.2"
+                                                       Fill="#15131F"
+                                                       Stroke="#1AFFFFFF"
+                                                       StrokeThickness="1"
                                                        StrokeDashArray="4 4"
-                                                       Opacity="0.82"/>
+                                                       Opacity="1"/>
                                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <Viewbox Width="26" Height="26" HorizontalAlignment="Center">
                                                     <Path Data="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"
@@ -1601,7 +1661,7 @@
                                                            FontSize="13"
                                                            FontWeight="700"
                                                            HorizontalAlignment="Center"
-                                                           Margin="0,8,0,0"/>
+                                                           Margin="0,7,0,0"/>
                                                 <TextBlock Text="or click to browse"
                                                            Style="{StaticResource TypographyBodySmall}"
                                                            HorizontalAlignment="Center"
@@ -1615,7 +1675,7 @@
                                             Background="Transparent"
                                             BorderThickness="0"
                                             Padding="0,4"
-                                            Margin="0,0,0,12"
+                                            Margin="0,0,0,10"
                                             VerticalAlignment="Bottom">
                                         <StackPanel HorizontalAlignment="Center">
                                             <TextBlock Text="No folders added yet"
@@ -1623,8 +1683,10 @@
                                                        FontWeight="600"
                                                        Foreground="{StaticResource TextSecondary}"
                                                        HorizontalAlignment="Center"/>
-                                            <TextBlock Text="Add a folder to start local OCR and AI indexing."
+                                            <TextBlock Text="Add your screenshots folder. Then use Index Now to import existing captures."
                                                        Style="{StaticResource TypographyBodySmall}"
+                                                       TextAlignment="Center"
+                                                       TextWrapping="Wrap"
                                                        HorizontalAlignment="Center"
                                                        Margin="0,4,0,0"/>
                                         </StackPanel>
@@ -1638,7 +1700,7 @@
                                              MinHeight="56"
                                              MaxHeight="130"
                                              Visibility="Collapsed"
-                                             Margin="0,0,0,12"
+                                             Margin="0,0,0,10"
                                              VerticalAlignment="Bottom"
                                              ScrollViewer.VerticalScrollBarVisibility="Auto"
                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
@@ -1684,26 +1746,30 @@
                                         BorderBrush="{StaticResource BorderDefault}"
                                         BorderThickness="1"
                                         CornerRadius="16"
-                                        Padding="18"
-                                        Margin="0,0,0,12"
+                                        Padding="16"
+                                        Margin="0,0,0,10"
                                         Effect="{StaticResource SubtleShadow}">
                                     <StackPanel>
-                                        <Grid Margin="0,0,0,12">
+                                        <Grid Margin="0,0,0,10">
                                             <StackPanel>
                                                 <TextBlock Text="Processing Status" Style="{StaticResource TypographyTitleSmall}" FontSize="16"/>
                                                 <TextBlock Text="Local OCR and AI processing"
                                                            Style="{StaticResource TypographyBodySmall}"
                                                            Margin="0,4,0,0"/>
-                                                <TextBlock Text="Active"
+                                                <TextBlock x:Name="SettingsProcessingStateText"
+                                                           Text="Active"
                                                            Foreground="{StaticResource StatusSuccessGlow}"
                                                            FontSize="12"
                                                            FontWeight="700"
                                                            Margin="0,2,0,0"/>
                                             </StackPanel>
-                                            <CheckBox HorizontalAlignment="Right"
+                                            <CheckBox x:Name="SettingsProcessingToggle"
+                                                      HorizontalAlignment="Right"
                                                       VerticalAlignment="Top"
                                                       Style="{StaticResource ToggleSwitchStyle}"
-                                                      IsChecked="True"/>
+                                                      IsChecked="True"
+                                                      Checked="SettingsProcessingToggle_Changed"
+                                                      Unchecked="SettingsProcessingToggle_Changed"/>
                                         </Grid>
 
                                         <Grid Margin="0,0,0,8">
@@ -1730,7 +1796,7 @@
                                             <TextBlock Text="Processing Queue" Style="{StaticResource TypographyBodyDefault}"/>
                                             <TextBlock Grid.Column="1" x:Name="SettingsAiPendingText" Text="0" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="700"/>
                                         </Grid>
-                                        <Grid Margin="0,0,0,12">
+                                        <Grid Margin="0,0,0,10">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
@@ -1750,12 +1816,18 @@
                                         BorderBrush="{StaticResource BorderDefault}"
                                         BorderThickness="1"
                                         CornerRadius="16"
-                                        Padding="18">
+                                        Padding="16">
                                     <StackPanel>
-                                        <Grid Margin="0,0,0,14">
+                                        <Grid Margin="0,0,0,12">
                                             <TextBlock Text="Library Statistics" Style="{StaticResource TypographyTitleSmall}" FontSize="16"/>
-                                            <CheckBox HorizontalAlignment="Right" Style="{StaticResource ToggleSwitchStyle}" IsChecked="True"/>
+                                            <CheckBox x:Name="SettingsStatsToggle"
+                                                      HorizontalAlignment="Right"
+                                                      Style="{StaticResource ToggleSwitchStyle}"
+                                                      IsChecked="True"
+                                                      Checked="SettingsStatsToggle_Changed"
+                                                      Unchecked="SettingsStatsToggle_Changed"/>
                                         </Grid>
+                                        <StackPanel x:Name="SettingsStatsDetails">
                                         <Grid Margin="0,0,0,10">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
@@ -1772,6 +1844,7 @@
                                             <TextBlock Text="Watched Folders" Style="{StaticResource TypographyBodyDefault}"/>
                                             <TextBlock Grid.Column="1" x:Name="SettingsFolderCountText" Text="0" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="700"/>
                                         </Grid>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -1786,14 +1859,13 @@
                           Width="{Binding ViewportWidth, ElementName=MainContentScrollViewer}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="0"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="0" Margin="0,0,28,14">
+                        <Grid Grid.Row="0" Margin="0,0,0,24">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="License" Style="{StaticResource TypographyTitleLarge}"/>
@@ -1801,16 +1873,7 @@
                                            Style="{StaticResource TypographyBodyDefault}"
                                            Margin="0,4,0,0"/>
                             </StackPanel>
-                            <Button Grid.Column="1"
-                                        Style="{StaticResource ButtonSecondary}"
-                                        Width="74"
-                                        Height="34"
-                                        Padding="0"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Top"
-                                        Content="Back"
-                                        Click="Home_Click"/>
-                            <Button Grid.Column="1"
+                            <Button Grid.Column="0"
                                     x:Name="LicensePageUpgradeButton"
                                     Style="{StaticResource ButtonPrimary}"
                                     Height="36"
@@ -1821,21 +1884,22 @@
                         </Grid>
 
                         <Border Grid.Row="1"
+                                Visibility="Collapsed"
                                 Height="3"
                                 Width="40"
                                 HorizontalAlignment="Left"
                                 Background="{StaticResource AccentPrimary}"
                                 CornerRadius="1.5"
-                                Margin="0,0,0,20">
+                                Margin="0,0,0,16">
                             <Border.Effect>
-                                <DropShadowEffect Color="#8B5CF6" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                                <DropShadowEffect Color="#A855F7" BlurRadius="8" ShadowDepth="0" Opacity="0.34"/>
                             </Border.Effect>
                         </Border>
 
-                        <Grid Grid.Row="2" Margin="0,0,28,0">
+                        <Grid Grid.Row="2" Margin="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="1*"/>
-                                <ColumnDefinition Width="24"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="1*"/>
                             </Grid.ColumnDefinitions>
 
@@ -1844,7 +1908,7 @@
                                     BorderBrush="{StaticResource BorderDefault}"
                                     BorderThickness="1"
                                     CornerRadius="16"
-                                    Padding="18"
+                                    Padding="16"
                                     VerticalAlignment="Top"
                                     Height="{Binding ActualHeight, ElementName=LicensePlansColumn}"
                                     Effect="{StaticResource SubtleShadow}">
@@ -1856,7 +1920,7 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <Grid Grid.Row="0" Margin="0,0,0,14">
+                                    <Grid Grid.Row="0" Margin="0,0,0,12">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -1867,7 +1931,7 @@
                                             <TextBlock x:Name="SettingsLicenseUsageText"
                                                        Text="0/200 free screenshots"
                                                        Style="{StaticResource TypographyBodyDefault}"
-                                                       Margin="0,5,0,0"/>
+                                                       Margin="0,4,0,0"/>
                                         </StackPanel>
                                         <Border Grid.Column="1"
                                                 Background="{StaticResource AccentSubtle}"
@@ -1890,7 +1954,7 @@
                                             Background="{StaticResource BackgroundPrimary}"
                                             BorderBrush="{StaticResource BorderSubtle}"
                                             BorderThickness="1"
-                                            Margin="0,0,0,12">
+                                            Margin="0,0,0,10">
                                         <Grid ClipToBounds="True">
                                             <Border x:Name="LicenseUsageBar"
                                                     Width="0"
@@ -1910,18 +1974,18 @@
                                     <StackPanel Grid.Row="3" VerticalAlignment="Bottom">
                                         <TextBlock Text="License key"
                                                    Style="{StaticResource TypographyLabel}"
-                                                   Margin="0,0,0,8"/>
+                                                   Margin="0,4,0,6"/>
                                         <TextBox x:Name="SettingsLicenseKeyBox"
                                                  Height="40"
-                                                 Background="{StaticResource GlassInputBrush}"
+                                                 Background="#15131F"
                                                  Foreground="{StaticResource TextPrimary}"
                                                  CaretBrush="{StaticResource AccentPrimary}"
-                                                 BorderBrush="{StaticResource BorderDefault}"
+                                                 BorderBrush="#14FFFFFF"
                                                  BorderThickness="1"
                                                  Padding="12,0"
                                                  VerticalContentAlignment="Center"
                                                  FontSize="12"
-                                                 Margin="0,0,0,12"
+                                                 Margin="0,0,0,10"
                                                  ToolTip="Paste your Lemon Squeezy license key"/>
                                         <StackPanel Orientation="Horizontal">
                                             <Button Content="Activate License"
@@ -1934,7 +1998,7 @@
                                                     Style="{StaticResource ButtonSecondary}"
                                                     Height="36"
                                                     Padding="16,0"
-                                                    Margin="10,0,0,0"
+                                                    Margin="8,0,0,0"
                                                     Click="DeactivateLicense_Click"/>
                                         </StackPanel>
                                     </StackPanel>
@@ -1946,38 +2010,39 @@
                                         BorderBrush="{StaticResource BorderDefault}"
                                         BorderThickness="1"
                                         CornerRadius="16"
-                                        Padding="18"
-                                        Margin="0,0,0,12"
+                                        Padding="16"
+                                        Margin="0,0,0,10"
                                         Effect="{StaticResource SubtleShadow}">
                                     <StackPanel>
                                         <TextBlock Text="Free" Style="{StaticResource TypographyTitleSmall}"/>
                                         <TextBlock Text="Try the full product with a local screenshot memory limit."
                                                    Style="{StaticResource TypographyBodySmall}"
                                                    TextWrapping="Wrap"
-                                                   Margin="0,5,0,12"/>
+                                                   Margin="0,4,0,10"/>
                                         <TextBlock Text="200 screenshots" Style="{StaticResource TypographyBodyDefault}"/>
-                                        <TextBlock Text="OCR + AI search included" Style="{StaticResource TypographyBodyDefault}" Margin="0,8,0,0"/>
-                                        <TextBlock Text="Local-only processing" Style="{StaticResource TypographyBodyDefault}" Margin="0,8,0,0"/>
+                                        <TextBlock Text="OCR + AI search included" Style="{StaticResource TypographyBodyDefault}" Margin="0,6,0,0"/>
+                                        <TextBlock Text="Local-only processing" Style="{StaticResource TypographyBodyDefault}" Margin="0,6,0,0"/>
                                     </StackPanel>
                                 </Border>
 
                                 <Border Background="{StaticResource GlassPanelBrush}"
-                                        BorderBrush="{StaticResource AccentPrimary}"
+                                        BorderBrush="#66A855F7"
                                         BorderThickness="1"
                                         CornerRadius="16"
-                                        Padding="18">
+                                        Padding="16"
+                                        Effect="{StaticResource ProCardGlowShadow}">
                                     <StackPanel>
                                         <TextBlock Text="Pro"
                                                    Style="{StaticResource TypographyTitleSmall}"
                                                    Foreground="{StaticResource AccentGlow}"
-                                                   Margin="0,0,0,8"/>
+                                                   Margin="0,0,0,6"/>
                                         <TextBlock Text="Unlimited local memory for screenshots and semantic search."
                                                    Style="{StaticResource TypographyBodySmall}"
                                                    TextWrapping="Wrap"
-                                                   Margin="0,0,0,12"/>
+                                                   Margin="0,0,0,10"/>
                                         <TextBlock Text="Unlimited screenshots" Style="{StaticResource TypographyBodyDefault}"/>
-                                        <TextBlock Text="Device activation via Lemon Squeezy" Style="{StaticResource TypographyBodyDefault}" Margin="0,8,0,0"/>
-                                        <TextBlock Text="Works offline after activation" Style="{StaticResource TypographyBodyDefault}" Margin="0,8,0,0"/>
+                                        <TextBlock Text="Device activation via Lemon Squeezy" Style="{StaticResource TypographyBodyDefault}" Margin="0,6,0,0"/>
+                                        <TextBlock Text="Works offline after activation" Style="{StaticResource TypographyBodyDefault}" Margin="0,6,0,0"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -1994,27 +2059,22 @@
         <Border x:Name="PreviewPanel"
                 Grid.Column="2"
                 Background="{StaticResource ChromeGlassBrush}"
-                BorderBrush="{StaticResource BorderSubtle}"
-                BorderThickness="1,0,0,0">
+                BorderBrush="#0DFFFFFF"
+                BorderThickness="1,0,0,0"
+                Effect="{StaticResource PanelLiftShadow}">
             <DockPanel>
 
                 <Border DockPanel.Dock="Top"
-                        Padding="18,14,14,14"
+                        Height="72"
+                        Padding="14,0,12,0"
                         BorderBrush="{StaticResource BorderSubtle}"
-                        BorderThickness="0,0,0,1">
-                    <Grid>
+                        BorderThickness="0">
+                    <Grid VerticalAlignment="Center">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Width="8" Height="8" CornerRadius="4" 
-                                    Background="{StaticResource AccentPrimary}"
-                                    Margin="0,0,10,0">
-                                <Border.Effect>
-                                    <DropShadowEffect Color="#8B5CF6" BlurRadius="6" ShadowDepth="0" Opacity="0.6"/>
-                                </Border.Effect>
-                            </Border>
                             <TextBlock Text="Preview" Style="{StaticResource TypographyTitleSmall}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <Button Grid.Column="1" Content="&#xE8BB;" Style="{StaticResource ButtonWindowControlClose}" Width="30" Height="30" Click="PreviewClose_Click"/>
@@ -2022,7 +2082,7 @@
                 </Border>
 
                 <Border DockPanel.Dock="Bottom"
-                        Padding="14,14"
+                        Padding="12,12"
                         BorderBrush="{StaticResource BorderSubtle}"
                         BorderThickness="0,1,0,0">
                     <StackPanel Orientation="Horizontal">
@@ -2032,34 +2092,29 @@
                     </StackPanel>
                 </Border>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16,0">
-                    <StackPanel Margin="0,16,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12,0">
+                    <StackPanel Margin="0,12,0,0">
 
-                        <Border Height="210"
+                        <Border Height="226"
                                 Background="{StaticResource GlassInputBrush}"
-                                BorderBrush="{StaticResource BorderDefault}"
-                                BorderThickness="1"
+                                BorderThickness="0"
                                 CornerRadius="12"
-                                Margin="0,0,0,18"
+                                Margin="0,0,0,12"
                                 ClipToBounds="True"
                                 Effect="{StaticResource SubtleShadow}">
                             <Grid>
-                                <Border Height="1"
-                                        VerticalAlignment="Top"
-                                        Background="{StaticResource LiquidEdgeBrush}"
-                                        Opacity="0.55"
-                                        IsHitTestVisible="False"/>
-                                <Image x:Name="PreviewImage" Stretch="Uniform" VerticalAlignment="Center"/>
+                                <Image x:Name="PreviewImage" Stretch="Uniform" VerticalAlignment="Center" Margin="12"/>
                                 <TextBlock x:Name="PreviewPlaceholderText" Text="Loading preview..." Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextMuted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
 
                         <Border Background="{StaticResource GlassPanelBrush}"
-                                BorderBrush="{StaticResource BorderDefault}"
+                                BorderBrush="#0DFFFFFF"
                                 BorderThickness="1"
-                                CornerRadius="14"
+                                CornerRadius="16"
                                 Padding="12"
-                                Margin="0,0,0,16">
+                                Margin="0,0,0,12"
+                                Effect="{StaticResource SubtleShadow}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -2067,35 +2122,41 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
+                                <Border Grid.ColumnSpan="4"
+                                        Height="1"
+                                        Margin="22,4,22,0"
+                                        VerticalAlignment="Top"
+                                        Background="{StaticResource BorderSubtle}"/>
 
                                 <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                                    <Border x:Name="PreviewCapturedDot" Width="9" Height="9" CornerRadius="5" Background="{StaticResource AccentPrimary}" Margin="0,0,0,7"/>
-                                    <TextBlock x:Name="PreviewCapturedStepText" Text="Captured" FontSize="9.5" FontWeight="700" Foreground="{StaticResource TextSecondary}"/>
+                                    <Border x:Name="PreviewCapturedDot" Width="9" Height="9" CornerRadius="5" Background="{StaticResource AccentPrimary}" Margin="0,0,0,5"/>
+                                    <TextBlock x:Name="PreviewCapturedStepText" Text="Captured" FontSize="8.5" FontWeight="700" Foreground="{StaticResource TextSecondary}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                                    <Border x:Name="PreviewOcrDot" Width="9" Height="9" CornerRadius="5" Background="{StaticResource BorderDefault}" Margin="0,0,0,7"/>
-                                    <TextBlock x:Name="PreviewOcrStepText" Text="Text" FontSize="9.5" FontWeight="700" Foreground="{StaticResource TextMuted}"/>
+                                    <Border x:Name="PreviewOcrDot" Width="9" Height="9" CornerRadius="5" Background="{StaticResource BorderDefault}" Margin="0,0,0,5"/>
+                                    <TextBlock x:Name="PreviewOcrStepText" Text="Text" FontSize="8.5" FontWeight="700" Foreground="{StaticResource TextMuted}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                                    <Border x:Name="PreviewAiDot" Width="9" Height="9" CornerRadius="5" Background="{StaticResource BorderDefault}" Margin="0,0,0,7"/>
-                                    <TextBlock x:Name="PreviewAiStepText" Text="Organized" FontSize="9.5" FontWeight="700" Foreground="{StaticResource TextMuted}"/>
+                                    <Border x:Name="PreviewAiDot" Width="9" Height="9" CornerRadius="5" Background="{StaticResource BorderDefault}" Margin="0,0,0,5"/>
+                                    <TextBlock x:Name="PreviewAiStepText" Text="Organized" FontSize="8.5" FontWeight="700" Foreground="{StaticResource TextMuted}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                                    <Border x:Name="PreviewSearchableDot" Width="9" Height="9" CornerRadius="5" Background="{StaticResource BorderDefault}" Margin="0,0,0,7"/>
-                                    <TextBlock x:Name="PreviewSearchableStepText" Text="Searchable" FontSize="9.5" FontWeight="700" Foreground="{StaticResource TextMuted}"/>
+                                    <Border x:Name="PreviewSearchableDot" Width="9" Height="9" CornerRadius="5" Background="{StaticResource BorderDefault}" Margin="0,0,0,5"/>
+                                    <TextBlock x:Name="PreviewSearchableStepText" Text="Searchable" FontSize="8.5" FontWeight="700" Foreground="{StaticResource TextMuted}"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
 
                         <Border Background="{StaticResource GlassPanelBrush}"
-                                BorderBrush="{StaticResource BorderSubtle}"
+                                BorderBrush="#0DFFFFFF"
                                 BorderThickness="1"
                                 CornerRadius="14"
-                                Padding="13"
-                                Margin="0,0,0,16">
+                                Padding="12"
+                                Margin="0,0,0,12"
+                                Effect="{StaticResource SubtleShadow}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="74"/>
+                                    <ColumnDefinition Width="64"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
@@ -2109,47 +2170,48 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Text="File" Style="{StaticResource TypographyLabel}" Margin="0,0,12,9"/>
-                                <TextBlock Grid.Row="0" Grid.Column="1" x:Name="PreviewFileNameText" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextPrimary}" TextWrapping="Wrap" Margin="0,0,0,9"/>
+                                <TextBlock Grid.Row="0" Text="File" Style="{StaticResource TypographyLabel}" Foreground="#71717A" Margin="0,0,10,8"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" x:Name="PreviewFileNameText" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextPrimary}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                                <TextBlock Grid.Row="1" Text="Created" Style="{StaticResource TypographyLabel}" Margin="0,0,12,9"/>
-                                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="PreviewCreatedAtText" Style="{StaticResource TypographyBodyDefault}" Margin="0,0,0,9"/>
+                                <TextBlock Grid.Row="1" Text="Created" Style="{StaticResource TypographyLabel}" Foreground="#71717A" Margin="0,0,10,8"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="PreviewCreatedAtText" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,8"/>
 
-                                <TextBlock Grid.Row="2" Text="Size" Style="{StaticResource TypographyLabel}" Margin="0,0,12,9"/>
-                                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="PreviewFileSizeText" Style="{StaticResource TypographyBodyDefault}" Margin="0,0,0,9"/>
+                                <TextBlock Grid.Row="2" Text="Size" Style="{StaticResource TypographyLabel}" Foreground="#71717A" Margin="0,0,10,8"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="PreviewFileSizeText" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,8"/>
 
-                                <TextBlock Grid.Row="3" Text="Text" Style="{StaticResource TypographyLabel}" Margin="0,0,12,9"/>
-                                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="PreviewOcrStatusText" Style="{StaticResource TypographyBodyDefault}" Margin="0,0,0,9"/>
+                                <TextBlock Grid.Row="3" Text="Text" Style="{StaticResource TypographyLabel}" Foreground="#71717A" Margin="0,0,10,8"/>
+                                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="PreviewOcrStatusText" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,8"/>
 
-                                <TextBlock Grid.Row="4" Text="AI" Style="{StaticResource TypographyLabel}" Margin="0,0,12,9"/>
-                                <TextBlock Grid.Row="4" Grid.Column="1" x:Name="PreviewAiStatusText" Style="{StaticResource TypographyBodyDefault}" Margin="0,0,0,9"/>
+                                <TextBlock Grid.Row="4" Text="AI" Style="{StaticResource TypographyLabel}" Foreground="#71717A" Margin="0,0,10,8"/>
+                                <TextBlock Grid.Row="4" Grid.Column="1" x:Name="PreviewAiStatusText" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,8"/>
 
-                                <TextBlock Grid.Row="5" Text="Category" Style="{StaticResource TypographyLabel}" Margin="0,0,12,9"/>
-                                <TextBlock Grid.Row="5" Grid.Column="1" x:Name="PreviewAiCategoryText" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,9"/>
+                                <TextBlock Grid.Row="5" Text="Category" Style="{StaticResource TypographyLabel}" Foreground="#71717A" Margin="0,0,10,8"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1" x:Name="PreviewAiCategoryText" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                                <TextBlock Grid.Row="6" Text="App" Style="{StaticResource TypographyLabel}" Margin="0,0,12,9"/>
-                                <TextBlock Grid.Row="6" Grid.Column="1" x:Name="PreviewApplicationText" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextPrimary}" TextWrapping="Wrap" Margin="0,0,0,9"/>
+                                <TextBlock Grid.Row="6" Text="App" Style="{StaticResource TypographyLabel}" Foreground="#71717A" Margin="0,0,10,8"/>
+                                <TextBlock Grid.Row="6" Grid.Column="1" x:Name="PreviewApplicationText" Style="{StaticResource TypographyBodyDefault}" Foreground="{StaticResource TextPrimary}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                                <TextBlock Grid.Row="7" Text="Window" Style="{StaticResource TypographyLabel}" Margin="0,0,12,0"/>
-                                <TextBlock Grid.Row="7" Grid.Column="1" x:Name="PreviewWindowText" Style="{StaticResource TypographyBodySmall}" Foreground="{StaticResource TextMuted}" TextWrapping="Wrap"/>
+                                <TextBlock Grid.Row="7" Text="Window" Style="{StaticResource TypographyLabel}" Foreground="#71717A" Margin="0,0,10,0"/>
+                                <TextBlock Grid.Row="7" Grid.Column="1" x:Name="PreviewWindowText" Style="{StaticResource TypographyBodySmall}" Foreground="{StaticResource TextSecondary}" TextWrapping="Wrap"/>
                             </Grid>
                         </Border>
-
-                        <TextBlock Text="TAGS" Style="{StaticResource TypographyLabel}" Margin="0,0,0,6"/>
-                        <TextBlock x:Name="PreviewAiTagsText"
-                                   Style="{StaticResource TypographyBodySmall}"
-                                   Foreground="{StaticResource TextSecondary}"
-                                   TextWrapping="Wrap"
-                                   Margin="0,0,0,16"/>
 
                         <Border Background="{StaticResource GlassPanelBrush}"
                                 BorderBrush="{StaticResource BorderDefault}"
                                 BorderThickness="1"
                                 CornerRadius="14"
-                                Padding="13"
-                                Margin="0,0,0,16">
+                                Padding="12"
+                                Margin="0,0,0,12">
                             <StackPanel>
-                                <TextBlock Text="AI SUMMARY" Style="{StaticResource TypographyLabel}" Margin="0,0,0,7"/>
+                                <Grid Margin="0,0,0,8">
+                                    <TextBlock Text="AI SUMMARY" Style="{StaticResource TypographyLabel}"/>
+                                    <TextBlock x:Name="PreviewAiTagsText"
+                                               Style="{StaticResource TypographyBodySmall}"
+                                               Foreground="{StaticResource TextMuted}"
+                                               TextTrimming="CharacterEllipsis"
+                                               HorizontalAlignment="Right"
+                                               MaxWidth="130"/>
+                                </Grid>
                                 <TextBlock x:Name="PreviewAiSummaryText"
                                            Style="{StaticResource TypographyBodySmall}"
                                            Foreground="{StaticResource TextSecondary}"
@@ -2161,8 +2223,8 @@
                                 BorderBrush="{StaticResource BorderSubtle}"
                                 BorderThickness="1"
                                 CornerRadius="14"
-                                Padding="13"
-                                Margin="0,0,0,16">
+                                Padding="12"
+                                Margin="0,0,0,12">
                             <StackPanel>
                                 <TextBlock Text="TEXT EXCERPT" Style="{StaticResource TypographyLabel}" Margin="0,0,0,7"/>
                                 <TextBlock x:Name="PreviewOcrExcerptText"

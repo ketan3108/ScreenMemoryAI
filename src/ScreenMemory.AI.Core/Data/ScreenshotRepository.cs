@@ -755,6 +755,46 @@ public class ScreenshotRepository
             append(SearchBroadLike(trimmed, Math.Min(limit, 30)));
         }
 
+        return merged
+            .OrderByDescending(GetBestTimestamp)
+            .Take(limit)
+            .ToList();
+    }
+
+    public List<ScreenshotRecord> SearchAiPractical(
+        string query,
+        float[] queryEmbedding,
+        int limit = 100)
+    {
+        var exactMatches = SearchHybrid(query, limit)
+            .OrderByDescending(GetBestTimestamp)
+            .ToList();
+
+        if (queryEmbedding.Length == 0)
+        {
+            return exactMatches.Take(limit).ToList();
+        }
+
+        var semanticMatches = SearchByEmbedding(queryEmbedding, limit * 2, minimumScore: 0.34, relativeDrop: 0.14)
+            .Where(record => IsPracticalAiMatch(query, record))
+            .OrderByDescending(GetBestTimestamp);
+
+        var merged = new List<ScreenshotRecord>(limit);
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in exactMatches.Concat(semanticMatches))
+        {
+            if (merged.Count >= limit)
+            {
+                break;
+            }
+
+            if (seen.Add(item.Id))
+            {
+                merged.Add(item);
+            }
+        }
+
         return merged;
     }
 
@@ -988,7 +1028,11 @@ public class ScreenshotRepository
         connection.Execute(sql, new { UpdatedAt = DateTime.UtcNow });
     }
 
-    public List<ScreenshotRecord> SearchByEmbedding(float[] queryEmbedding, int limit = 100)
+    public List<ScreenshotRecord> SearchByEmbedding(
+        float[] queryEmbedding,
+        int limit = 100,
+        double minimumScore = 0.34,
+        double relativeDrop = 0.14)
     {
         if (queryEmbedding.Length == 0)
         {
@@ -1032,13 +1076,25 @@ public class ScreenshotRepository
         LIMIT 2000;
         """;
 
-        return connection.Query<ScreenshotRecord>(sql)
+        var scored = connection.Query<ScreenshotRecord>(sql)
             .Select(record => new
             {
                 Record = record,
                 Score = CosineSimilarity(queryEmbedding, record.EmbeddingVector)
             })
             .Where(item => item.Score > 0)
+            .ToList();
+
+        if (scored.Count == 0)
+        {
+            return [];
+        }
+
+        var bestScore = scored.Max(item => item.Score);
+        var threshold = Math.Max(minimumScore, bestScore - relativeDrop);
+
+        return scored
+            .Where(item => item.Score >= threshold)
             .OrderByDescending(item => item.Score)
             .ThenByDescending(item => GetBestTimestamp(item.Record))
             .Take(limit)
@@ -1049,6 +1105,35 @@ public class ScreenshotRepository
             })
             .ToList();
     }
+
+    private static bool IsPracticalAiMatch(string query, ScreenshotRecord record)
+    {
+        var normalizedTerms = NormalizeSearchTerms(query);
+        if (normalizedTerms.Count == 0)
+        {
+            return true;
+        }
+
+        var searchableText = string.Join(' ',
+            record.FileName,
+            record.ApplicationName,
+            record.ProcessName,
+            record.ActiveWindow,
+            record.AiCategory,
+            record.AiTags,
+            record.AiSummary,
+            record.OcrText).ToLowerInvariant();
+
+        return normalizedTerms.Any(searchableText.Contains);
+    }
+
+    private static List<string> NormalizeSearchTerms(string query)
+        => (query ?? string.Empty)
+            .Split([' ', '\t', '\r', '\n', '.', ',', ':', ';', '-', '_', '/', '\\', '"', '\''], StringSplitOptions.RemoveEmptyEntries)
+            .Select(term => term.Trim().ToLowerInvariant())
+            .Where(term => term.Length >= 3)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
     public int CountOcrReady()
     {

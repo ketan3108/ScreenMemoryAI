@@ -39,7 +39,7 @@ public static class ScreenshotSearchService
                 return await Task.Run(() => repository.SearchHybrid(searchText, limit), token);
             }
 
-            return await Task.Run(() => repository.SearchByEmbedding(semanticResult.Embeddings, limit), token);
+            return await Task.Run(() => repository.SearchAiPractical(searchText, semanticResult.Embeddings, limit), token);
         }
 
         return await Task.Run(() => repository.SearchHybrid(searchText, limit), token);
